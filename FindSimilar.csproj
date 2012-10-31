@@ -33,7 +33,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>"C:\Users\Public\Pictures\Sample Pictures\Hydrangeas.jpg" "C:\Users\Public\Pictures\Sample Pictures\Jellyfish.jpg"</StartArguments>
+    <StartArguments>"C:\Users\perivar.nerseth\Pictures\Alyson_Hannigan_200512.jpg" "C:\Users\perivar.nerseth\Pictures\Alyson_Hannigan_200512-100x100.jpg"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -61,6 +61,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\BitCounter.cs">
+      <Link>BitCounter.cs</Link>
+    </Compile>
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\ColorUtils.cs">
       <Link>ColorUtils.cs</Link>
     </Compile>
@@ -70,10 +73,13 @@
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\MathUtils.cs">
       <Link>MathUtils.cs</Link>
     </Compile>
+    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\StringUtils.cs">
+      <Link>StringUtils.cs</Link>
+    </Compile>
     <Compile Include="DCT2.cs" />
     <Compile Include="DCT.cs" />
     <Compile Include="ImagePHash.cs" />
-    <Compile Include="ImageHash.cs" />
+    <Compile Include="ImageAverageHash.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

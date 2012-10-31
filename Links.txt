@@ -1,0 +1,9 @@
+IMAGE RETRIEVAL WITH BINARY HAMMING DISTANCE
+http://jerome.landre.pagesperso-orange.fr/docs/landre07c.pdf
+
+String Distances
+http://davefancher.com/2012/04/22/string-distances-9/
+
+http://saikatd.wordpress.com/2009/10/25/hamming-distance/
+
+http://soundfingerprinting.googlecode.com/svn-history/r314/trunk/Sources/SoundFingerprinting/SoundFingerprintingLib/FingerprintLib/QueryFingerprintManager.cs
