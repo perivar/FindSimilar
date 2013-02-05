@@ -10,6 +10,7 @@ namespace Imghash
 		// http://stackoverflow.com/questions/7395836/converting-from-bitstring-to-integer
 		// http://stackoverflow.com/questions/4777070/hamming-distance-on-binary-strings-in-sql
 		// http://www.fftw.org/doc/Real_002dto_002dReal-Transform-Kinds.html
+		/*
 		public static void Main(string[] args)
 		{
 			//DCTTester();
@@ -18,6 +19,7 @@ namespace Imghash
 			// TODO: remove this
 			Console.ReadKey();
 		}
+		*/
 		
 		public static void DCTTester() {
 			int N = 2;

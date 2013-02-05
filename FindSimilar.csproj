@@ -17,6 +17,7 @@
     <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <RunCodeAnalysis>False</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -29,7 +30,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>Full</DebugType>
-    <Optimize>False</Optimize>
+    <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
@@ -53,6 +54,12 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.SQLite">
+      <HintPath>..\..\..\..\..\..\Program Files %28x86%29\SQLite.NET\bin\System.Data.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data.SQLite.Linq">
+      <HintPath>..\..\..\..\..\..\Program Files %28x86%29\SQLite.NET\bin\System.Data.SQLite.Linq.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
@@ -80,8 +87,76 @@
     <Compile Include="DCT.cs" />
     <Compile Include="ImagePHash.cs" />
     <Compile Include="ImageAverageHash.cs" />
+    <Compile Include="Mirage\AudioFileReader.cs" />
+    <Compile Include="Mirage\CovarianceMatrix.cs" />
+    <Compile Include="Mirage\Db.cs" />
+    <Compile Include="Mirage\Dbg.cs" />
+    <Compile Include="Mirage\Fft.cs" />
+    <Compile Include="Mirage\Matrix.cs" />
+    <Compile Include="Mirage\Mfcc.cs" />
+    <Compile Include="Mirage\Mir.cs" />
+    <Compile Include="Mirage\Scms.cs" />
+    <Compile Include="Mirage\Stft.cs" />
+    <Compile Include="Mirage\Timer.cs" />
+    <Compile Include="Mirage\Vector.cs" />
+    <Compile Include="Mirage\WindowFunctions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Mirage" />
+    <Folder Include="NativeLibraries" />
+    <Folder Include="NativeLibraries\faad" />
+    <Folder Include="NativeLibraries\ffmpeg" />
+    <Folder Include="NativeLibraries\lame" />
+    <Folder Include="NativeLibraries\libfftw" />
+    <Folder Include="NativeLibraries\sox" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="NativeLibraries\faad\faad.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="NativeLibraries\ffmpeg\ffmpeg.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="libfftw3f-3.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="app.config" />
+    <None Include="NativeLibraries\ffmpeg\ffplay.exe" />
+    <None Include="NativeLibraries\ffmpeg\pthreadGC2.dll" />
+    <Content Include="NativeLibraries\lame\lame.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\lame\lame_enc.dll" />
+    <None Include="NativeLibraries\libfftw\bench.exe" />
+    <None Include="NativeLibraries\libfftw\benchf.exe" />
+    <None Include="NativeLibraries\libfftw\benchl.exe" />
+    <None Include="NativeLibraries\libfftw\COPYING" />
+    <None Include="NativeLibraries\libfftw\COPYRIGHT" />
+    <None Include="NativeLibraries\libfftw\fftw-wisdom.exe" />
+    <None Include="NativeLibraries\libfftw\fftw3.f" />
+    <None Include="NativeLibraries\libfftw\fftw3.h" />
+    <None Include="NativeLibraries\libfftw\fftwf-wisdom.exe" />
+    <None Include="NativeLibraries\libfftw\fftwl-wisdom.exe" />
+    <None Include="NativeLibraries\libfftw\libfftw3-3.def" />
+    <None Include="NativeLibraries\libfftw\libfftw3-3.dll" />
+    <None Include="NativeLibraries\libfftw\libfftw3f-3.def" />
+    <None Include="NativeLibraries\libfftw\libfftw3f-3.dll" />
+    <None Include="NativeLibraries\libfftw\libfftw3l-3.def" />
+    <None Include="NativeLibraries\libfftw\libfftw3l-3.dll" />
+    <None Include="NativeLibraries\libfftw\NEWS" />
+    <None Include="NativeLibraries\libfftw\README" />
+    <None Include="NativeLibraries\libfftw\README-bench" />
+    <None Include="NativeLibraries\libfftw\README-WINDOWS" />
+    <None Include="NativeLibraries\sox\LICENSE.GPL" />
+    <None Include="NativeLibraries\sox\README" />
+    <Content Include="NativeLibraries\sox\sox.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\sox\sox.txt" />
+    <None Include="NativeLibraries\sox\soxexam.txt" />
+    <None Include="NativeLibraries\sox\soxmix.exe" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>
