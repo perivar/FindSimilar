@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Mirage - High Performance Music Similarity and Automatic Playlist Generator
  * http://hop.at/mirage
  * 
@@ -38,8 +38,6 @@ namespace Mirage
 			{
 				using (Process toraw = new Process())
 				{
-					//if (!fileIn.EndsWith("mp3") && !fileIn.EndsWith("m4a") )
-					//    return null;
 					fileIn = Regex.Replace(fileIn, "%20", " ");
 					Timer t = new Timer();
 					t.Start();
@@ -49,9 +47,7 @@ namespace Mirage
 					wav = wav + ".wav";
 					String raw = System.IO.Path.GetTempFileName();
 					Dbg.WriteLine("Temporary raw file: " + raw);
-					//Process decoder = Process.Start("mirage-decoder",
-					//        "\"" + fileIn + "\" \"" + raw + "\" " + srate);
-					//Process towav = new Process();
+
 					if (fileIn.EndsWith("mp3") || fileIn.EndsWith("mp2"))
 					{
 						towav.StartInfo.FileName = "./NativeLibraries\\lame\\lame.exe";
@@ -80,15 +76,24 @@ namespace Mirage
 						return null;
 					}
 					
-					//Process toraw = new Process();
 					toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
-					toraw.StartInfo.Arguments = " -t wav \"" + wav + "\" -c 1 -r "+srate+" -l -f -t raw \"" + raw + "\"";
+					//toraw.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
+					
+					// -t 			filetype
+					// -c 			channels
+					// -r 			samplerate
+					// -b/-w/-l/-d	The sample data size is in bytes, 16-bit words,  32-bit long words, or 64-bit double long (long long) words.
+					// -f 			The sample data encoding is Floating-point
+					//toraw.StartInfo.Arguments = " -t wav \"" + wav + "\" -c 1 -r "+srate+" -l -f -t raw \"" + raw + "\"";
+					
+					// sox -t wav "C:\Users\perivar.nerseth\AppData\Local\Temp\tmp2B06.tmp.wav" -c 1 -r 11025 -e float -b 32 -t raw "C:\Users\perivar.nerseth\AppData\Local\Temp\tmp2B06.tmp"
+					toraw.StartInfo.Arguments = " -t wav \"" + wav + "\" -c 1 -r "+srate+" -e float -b 32 -t raw \"" + raw + "\"";
 					toraw.StartInfo.UseShellExecute = false;
 					toraw.StartInfo.RedirectStandardOutput = true;
+					//toraw.StartInfo.RedirectStandardError = true;
+					//toraw.StartInfo.RedirectStandardInput = true;
 					toraw.Start();
 					toraw.WaitForExit();
-					//if (towav.ExitCode != 0 || toraw.ExitCode != 0 )
-					//    return null;
 					
 					float[] floatBuffer;
 					FileStream fs = null;

@@ -51,7 +51,7 @@ namespace Mirage
 			if (columns == -1)
 				this.columns = 0;
 			
-			Console.WriteLine(rows + " " + columns);
+			//Console.WriteLine(rows + " " + columns);
 			d = new float[rows, columns];
 		}
 		
