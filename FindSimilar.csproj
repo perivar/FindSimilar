@@ -68,6 +68,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\Audio\RiffRead.cs">
+      <Link>RiffRead.cs</Link>
+    </Compile>
+    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\BinaryFile.cs">
+      <Link>BinaryFile.cs</Link>
+    </Compile>
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\BitCounter.cs">
       <Link>BitCounter.cs</Link>
     </Compile>
@@ -76,6 +82,9 @@
     </Compile>
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\ImageUtils.cs">
       <Link>ImageUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\IOUtils.cs">
+      <Link>IOUtils.cs</Link>
     </Compile>
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\MathUtils.cs">
       <Link>MathUtils.cs</Link>

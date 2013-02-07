@@ -50,7 +50,7 @@ namespace Mirage
 			
 			IDbCommand dbcmd = dbcon.CreateCommand();
 			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
-				+ " (trackid INTEGER PRIMARY KEY, scms BLOB)";
+				+ " (trackid INTEGER PRIMARY KEY, scms BLOB, name TEXT)";
 			dbcmd.ExecuteNonQuery();
 			dbcmd.Dispose();
 		}
@@ -60,17 +60,22 @@ namespace Mirage
 			dbcon.Close();
 		}
 		
-		public int AddTrack(int trackid, Scms scms)
+		public int AddTrack(int trackid, Scms scms, string name)
 		{
 			IDbDataParameter dbparam = new SQLiteParameter("@scms", DbType.Binary);
+			IDbDataParameter dbparamName = new SQLiteParameter("@name", DbType.String);
+			
 			dbparam.Value = scms.ToBytes();
+			dbparamName.Value = name;
+			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "INSERT INTO mirage (trackid, scms) " +
-				"VALUES (" + trackid + ", @scms)";
+			dbcmd.CommandText = "INSERT INTO mirage (trackid, scms, name) " +
+				"VALUES (" + trackid + ", @scms, @name)";
 			dbcmd.Parameters.Add(dbparam);
+			dbcmd.Parameters.Add(dbparamName);
 			
 			try {
 				dbcmd.ExecuteNonQuery();

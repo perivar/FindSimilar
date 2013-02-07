@@ -21,10 +21,19 @@
  */
 
 using System;
+using System.Diagnostics;
+
+using System.IO;
+using System.Linq;
+
 using System.Data;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
+
+using System.Text.RegularExpressions;
+
+using CommonUtils;
 
 namespace Mirage
 {
@@ -42,7 +51,7 @@ namespace Mirage
 			t.Start();
 			
 			float[] audiodata = AudioFileReader.Decode(file, samplingrate);
-			if (audiodata == null)  {
+			if (audiodata == null && audiodata.Length > 0)  {
 				return null;
 			}
 			
@@ -115,7 +124,82 @@ namespace Mirage
 			return keys;
 		}
 		
+		public static bool CheckFile(string wav) {
+			using (Process toraw = new Process())
+			{
+				//toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
+				toraw.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
+				toraw.StartInfo.Arguments = " --i \"" + wav + "\"";
+				toraw.StartInfo.UseShellExecute = false;
+				toraw.StartInfo.RedirectStandardOutput = true;
+				toraw.StartInfo.RedirectStandardError = true;
+				toraw.Start();
+				toraw.WaitForExit();
+				
+				// Read in all the text from the process with the StreamReader.
+				using (StreamReader reader = toraw.StandardError)
+				{
+					string result = reader.ReadToEnd();
+					if (result != null && !result.Equals("")) {
+						// 0x674f	= Ogg Vorbis (mode 1)
+						// 0x6750	= Ogg Vorbis (mode 2)
+						// 0x6751	= Ogg Vorbis (mode 3)
+						// 0x676f	= Ogg Vorbis (mode 1+)
+						// 0x6770	= Ogg Vorbis (mode 2+)
+						// 0x6771	= Ogg Vorbis (mode 3+)
+						Match match = Regex.Match(result, @"Unknown WAV file encoding \(type 67.*?\)",
+						                          RegexOptions.IgnoreCase);
+						if (match.Success) {
+							// this is a ogg wrapped in WAV
+							// http://music.columbia.edu/pipermail/linux-audio-user/2003-October/007279.html
+							// Strip off the first 68 bytes. You will then have a standard Ogg Vorbis file.
+							
+							Console.WriteLine(match.Groups[0]);
+							//Console.ReadKey();
+						} else {
+							Console.WriteLine(result);
+						}
+					}
+				}
+
+				// Read in all the text from the process with the StreamReader.
+				using (StreamReader reader = toraw.StandardOutput)
+				{
+					string result = reader.ReadToEnd();
+					if (result != null && !result.Equals("")) {
+						// Channels       : 2
+						// Sample Rate    : 44100
+						// Precision      : 24-bit
+						// Duration       : 00:00:02.78 = 122760 samples = 208.776 CDDA sectors
+						// File Size      : 737k
+						// Bit Rate       : 2.12M
+						// Sample Encoding: 24-bit Signed Integer PCM
+						
+						Match match = Regex.Match(result, @"Sample Encoding: ([A-Za-z0-9\s\-]+)\n",
+						                          RegexOptions.IgnoreCase);
+						if (match.Success) {
+							Console.WriteLine(match.Groups[1]);
+							Console.ReadKey();
+						} else {
+							Console.WriteLine(result);
+						}
+					}
+				}
+				
+				int exitCode = toraw.ExitCode;
+				// 0 = succesfull
+				// 1 = partially succesful
+				if (exitCode == 0 || exitCode == 1) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+		}
+		
+		
 		public static void Main(string[] args) {
+			
 			/*
 			Scms m1 = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Kalimba.mp3");
 			Scms m2 = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Maid with the Flaxen Hair.mp3");
@@ -126,7 +210,41 @@ namespace Mirage
 			System.Console.ReadLine();
 			return;
 			 */
-			
+
+			// scan directory for audio files
+			try
+			{
+				string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
+				//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
+				string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
+				var files = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
+				Db db = new Db();
+
+				int fileCounter = 1;
+				foreach (var f in files)
+				{
+					FileInfo fileInfo = new FileInfo(f);
+					Console.WriteLine("Processing {0}", fileInfo.Name);
+					
+					Scms scms = Mir.Analyze(fileInfo.FullName);
+					if (scms != null) {
+						db.AddTrack(fileCounter, scms, fileInfo.Name);
+						fileCounter++;
+						//Console.ReadKey();
+					}
+				}
+				Console.WriteLine("{0} files found.", files.Count().ToString());
+			}
+			catch (UnauthorizedAccessException UAEx)
+			{
+				Console.WriteLine(UAEx.Message);
+			}
+			catch (PathTooLongException PathEx)
+			{
+				Console.WriteLine(PathEx.Message);
+			}
+
+			/*
 			Scms scms = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Kalimba.mp3");
 			Console.WriteLine(scms);
 			foreach (byte b in scms.ToBytes())
@@ -144,7 +262,8 @@ namespace Mirage
 			{
 				Console.Write(b);
 			}
-			Console.ReadKey();
+			 */
+			//Console.ReadKey();
 			
 			// HASH creation
 			// https://github.com/viat/YapHash/blob/master/sources/YapHash/src/YapHash.cpp
