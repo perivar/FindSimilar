@@ -99,7 +99,7 @@ namespace Mirage
 							d += dcur;
 							count++;
 						} else {
-							Console.WriteLine("Faulty SCMS id=" + mapping[i] + "d=" + d);
+							Console.WriteLine("Faulty SCMS id=" + mapping[i] + " dcur=" + dcur);
 							d = 0;
 							break;
 						}
@@ -197,20 +197,38 @@ namespace Mirage
 			}
 		}
 		
-		
-		public static void Main(string[] args) {
+		public static void TestReadWriteDB(string wav, Db db) {
 			
-			/*
-			Scms m1 = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Kalimba.mp3");
-			Scms m2 = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Maid with the Flaxen Hair.mp3");
+			Scms scms = Mir.Analyze(wav);
+			Console.WriteLine(scms);
+			foreach (byte b in scms.ToBytes())
+			{
+				Console.Write(b);
+			}
+			Console.ReadKey();
+			
+			db.AddTrack(1, scms, new FileInfo(wav).Name);
+
+			Scms scms2 = db.GetTrack(1);
+			Console.WriteLine(scms2);
+			foreach (byte b in scms2.ToBytes())
+			{
+				Console.Write(b);
+			}
+			Console.ReadKey();
+		}
+
+		public static void TestCompare() {
+			Scms m1 = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3");
+			Scms m2 = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav");
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
 			                             + m1.Distance(m2));
 			
 			System.Console.ReadLine();
-			return;
-			 */
-
+		}
+		
+		public static void ScanDirectory(string dir, Db db) {
 			// scan directory for audio files
 			try
 			{
@@ -218,7 +236,6 @@ namespace Mirage
 				//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
 				string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
 				var files = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
-				Db db = new Db();
 
 				int fileCounter = 1;
 				foreach (var f in files)
@@ -243,27 +260,22 @@ namespace Mirage
 			{
 				Console.WriteLine(PathEx.Message);
 			}
-
-			/*
-			Scms scms = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Kalimba.mp3");
-			Console.WriteLine(scms);
-			foreach (byte b in scms.ToBytes())
-			{
-				Console.Write(b);
-			}
-			Console.ReadKey();
-			
+		}
+		
+		public static void Main(string[] args) {
 			Db db = new Db();
-			db.AddTrack(1, scms);
-
-			Scms scms2 = db.GetTrack(1);
-			Console.WriteLine(scms2);
-			foreach (byte b in scms2.ToBytes())
-			{
-				Console.Write(b);
-			}
+			
+			TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
+			
+			/*
+			int seedId = 2;
+			int[] i = SimilarTracks(new int[] { seedId }, new int[] { seedId }, db);
+			System.Console.ReadLine();
+			return;
 			 */
-			//Console.ReadKey();
+			
+			return;
+
 			
 			// HASH creation
 			// https://github.com/viat/YapHash/blob/master/sources/YapHash/src/YapHash.cpp
