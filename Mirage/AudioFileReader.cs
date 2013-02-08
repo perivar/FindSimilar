@@ -15,18 +15,18 @@ namespace Mirage
 			float[] floatBuffer = null;
 			
 			// check if sox can read it
-			using (Process checkSox = new Process())
+			using (Process checkSoxReadable = new Process())
 			{
-				//checkSox.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
-				checkSox.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
-				checkSox.StartInfo.Arguments = " --i \"" + fileIn + "\"";
-				checkSox.StartInfo.UseShellExecute = false;
-				checkSox.StartInfo.RedirectStandardOutput = true;
-				checkSox.StartInfo.RedirectStandardError = true;
-				checkSox.Start();
-				checkSox.WaitForExit();
+				checkSoxReadable.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
+				//checkSox.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
+				checkSoxReadable.StartInfo.Arguments = " --i \"" + fileIn + "\"";
+				checkSoxReadable.StartInfo.UseShellExecute = false;
+				checkSoxReadable.StartInfo.RedirectStandardOutput = true;
+				checkSoxReadable.StartInfo.RedirectStandardError = true;
+				checkSoxReadable.Start();
+				checkSoxReadable.WaitForExit();
 				
-				int exitCode = checkSox.ExitCode;
+				int exitCode = checkSoxReadable.ExitCode;
 				// 0 = succesfull
 				// 1 = partially succesful
 				// 2 = failed
@@ -35,9 +35,9 @@ namespace Mirage
 					Console.Out.WriteLine("Using SOX to decode the file ...");
 					floatBuffer = DecodeUsingSox(fileIn, srate);
 				} else {
-					// use mplayer to read it
-					Console.Out.WriteLine("Using MPlayer to decode the file ...");
-					floatBuffer = DecodeUsingMplayer(fileIn, srate);
+					// use mplayer to first convert it, then sox to read it
+					Console.Out.WriteLine("Using MPlayer and SOX to decode the file ...");
+					floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate);
 				}
 			}
 			return floatBuffer;
@@ -56,9 +56,9 @@ namespace Mirage
 				String raw = tempFile + ".wav";
 				Dbg.WriteLine("Temporary raw file: " + raw);
 				
-				//toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
-				toraw.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
-				toraw.StartInfo.Arguments = " \"" + fileIn + "\" -c 1 -r "+srate+" -e float -b 32 -G -t raw \"" + raw + "\"";
+				toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
+				//toraw.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
+				toraw.StartInfo.Arguments = " \"" + fileIn + "\" -r "+srate+" -e float -b 32 -G -t raw \"" + raw + "\" channels 1";
 				toraw.StartInfo.UseShellExecute = false;
 				toraw.StartInfo.RedirectStandardOutput = true;
 				toraw.StartInfo.RedirectStandardError = true;
@@ -99,7 +99,7 @@ namespace Mirage
 					floatBuffer = new float[items];
 					
 					for (int i = 0; i < items; i++) {
-						floatBuffer[i] = BitConverter.ToSingle(bytesBuffer, i * sizeof(float));
+						floatBuffer[i] = BitConverter.ToSingle(bytesBuffer, i * sizeof(float));// * 65536.0f;
 					}
 					
 				} catch (System.IO.FileNotFoundException) {
@@ -123,6 +123,60 @@ namespace Mirage
 			}
 		}
 
+		public static float[] DecodeUsingMplayerAndSox(string fileIn, int srate) {
+			
+			using (Process tosoxreadable = new Process())
+			{
+				fileIn = Regex.Replace(fileIn, "%20", " ");
+				Timer t = new Timer();
+				t.Start();
+				String curdir = System.Environment.CurrentDirectory;
+				Dbg.WriteLine("Decoding: " + fileIn);
+				String tempFile = System.IO.Path.GetTempFileName();
+				String soxreadablewav = tempFile + ".wav";
+				Dbg.WriteLine("Temporary wav file: " + soxreadablewav);
+				
+				tosoxreadable.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
+				//tosoxreadable.StartInfo.FileName = @"C:\Program Files (x86)\mplayer-svn-35908\mplayer.exe";
+
+				tosoxreadable.StartInfo.Arguments = " -quiet -benchmark -vc null -vo null -ao pcm:fast:waveheader \""+fileIn+"\" -ao pcm:file=\\\""+soxreadablewav+"\\\"";
+				tosoxreadable.StartInfo.UseShellExecute = false;
+				tosoxreadable.StartInfo.RedirectStandardOutput = true;
+				tosoxreadable.StartInfo.RedirectStandardError = true;
+				tosoxreadable.Start();
+				tosoxreadable.WaitForExit();
+				
+				int exitCode = tosoxreadable.ExitCode;
+				// 0 = succesfull
+				// 1 = partially succesful
+				// 2 = failed
+				if (exitCode != 0) {
+					string standardError = tosoxreadable.StandardError.ReadToEnd();
+					Console.Out.WriteLine(standardError);
+					return null;
+				}
+				
+				#if DEBUG
+				string standardOutput = tosoxreadable.StandardOutput.ReadToEnd();
+				Console.Out.WriteLine(standardOutput);
+				#endif
+
+				float[] floatBuffer = DecodeUsingSox(soxreadablewav, srate);
+				try
+				{
+					File.Delete(tempFile);
+					File.Delete(soxreadablewav);
+				}
+				catch (IOException io)
+				{
+					Console.WriteLine(io);
+				}
+				
+				Dbg.WriteLine("Decoding Execution Time: " + t.Stop() + "ms");
+				return floatBuffer;
+			}
+		}
+		
 		public static float[] DecodeUsingMplayer(string fileIn, int srate) {
 			
 			using (Process towav = new Process())
@@ -136,9 +190,9 @@ namespace Mirage
 				String wav = tempFile + ".wav";
 				Dbg.WriteLine("Temporary wav file: " + wav);
 				
-				//toraw.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
-				towav.StartInfo.FileName = @"C:\Program Files (x86)\mplayer-svn-35908\mplayer.exe";
-				towav.StartInfo.Arguments = " -quiet -ao pcm:fast:waveheader \""+fileIn+"\" -format floatle -af resample="+srate+":0:2,pan=1:0.5:0.5 -channels 1 -vo null -vc null -ao pcm:file=\\\""+wav+"\\\"";
+				towav.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
+				//towav.StartInfo.FileName = @"C:\Program Files (x86)\mplayer-svn-35908\mplayer.exe";
+				towav.StartInfo.Arguments = " -quiet -benchmark -ao pcm:fast:waveheader \""+fileIn+"\" -format floatle -af resample="+srate+":0:2,pan=1:0.5:0.5 -channels 1 -vo null -vc null -ao pcm:file=\\\""+wav+"\\\"";
 				towav.StartInfo.UseShellExecute = false;
 				towav.StartInfo.RedirectStandardOutput = true;
 				towav.StartInfo.RedirectStandardError = true;
@@ -166,7 +220,7 @@ namespace Mirage
 				try
 				{
 					File.Delete(tempFile);
-					File.Delete(wav);
+					//File.Delete(wav);
 				}
 				catch (IOException io)
 				{

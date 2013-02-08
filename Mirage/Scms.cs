@@ -47,6 +47,9 @@ namespace Mirage
 			
 			s.mean = mfcc.Mean();
 			Matrix fullCov = mfcc.Covariance(s.mean);
+			if (fullCov.IsAllZeros()) {
+				//return null;
+			}
 			
 			Matrix fullIcov = fullCov.Inverse();
 			if (fullIcov == null)

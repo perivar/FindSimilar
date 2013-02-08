@@ -94,7 +94,19 @@ namespace Mirage
 			return m3;
 		}
 		
-
+		public bool IsAllZeros() {
+			bool foundNonZero = false;
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < columns; j++) {
+					if (d[i, j] != 0) {
+						foundNonZero = true;
+						break;
+					}
+				}
+			}
+			return !foundNonZero;
+		}
+		
 		public Vector Mean()
 		{
 			Vector mean = new Vector(rows);
@@ -174,7 +186,7 @@ namespace Mirage
 					for (int k = 0; k < columns; k++) {
 						sum += cache.d[i, k] * cache.d[j, k];
 					}
-					sum *= factor;
+					if (!float.IsInfinity(factor)) sum *= factor;
 					cov.d[i, j] = sum;
 					if (i == j) {
 						continue;

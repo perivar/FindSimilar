@@ -124,6 +124,7 @@
     <Folder Include="NativeLibraries\lame" />
     <Folder Include="NativeLibraries\libfftw" />
     <Folder Include="NativeLibraries\libfftw" />
+    <Folder Include="NativeLibraries\mplayer" />
     <Folder Include="NativeLibraries\sox" />
     <Folder Include="NativeLibraries\sox" />
   </ItemGroup>
@@ -192,6 +193,13 @@
     <None Include="NativeLibraries\libfftw\README-bench" />
     <None Include="NativeLibraries\libfftw\README-WINDOWS" />
     <None Include="NativeLibraries\libfftw\README-WINDOWS" />
+    <None Include="NativeLibraries\mplayer\LICENSE.txt" />
+    <None Include="NativeLibraries\mplayer\mencoder.exe" />
+    <Content Include="NativeLibraries\mplayer\mplayer.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\mplayer\mplayer.html" />
+    <None Include="NativeLibraries\mplayer\README.txt" />
     <None Include="NativeLibraries\sox\batch-example.bat" />
     <None Include="NativeLibraries\sox\ChangeLog.txt" />
     <None Include="NativeLibraries\sox\LICENSE.GPL" />

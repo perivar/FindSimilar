@@ -51,13 +51,19 @@ namespace Mirage
 			t.Start();
 			
 			float[] audiodata = AudioFileReader.Decode(file, samplingrate);
-			if (audiodata == null && audiodata.Length > 0)  {
+			if (audiodata == null || audiodata.Length == 0)  {
 				return null;
 			}
 			
 			Matrix stft1 = stft.Apply(audiodata);
 			Matrix mfcc1 = mfcc.Apply(stft1);
-			Scms scms = Scms.GetScms(mfcc1);
+			
+			Scms scms = null;
+			if (mfcc1.IsAllZeros()) {
+				Dbg.WriteLine("!!!!FAILED Analyzing file!!!!!\n\n");
+			} else {
+				scms = Scms.GetScms(mfcc1);
+			}
 			
 			Dbg.WriteLine("Total Execution Time: " + t.Stop() + "ms");
 			
@@ -99,7 +105,7 @@ namespace Mirage
 							d += dcur;
 							count++;
 						} else {
-							Console.WriteLine("Faulty SCMS id=" + mapping[i] + " dcur=" + dcur);
+							Console.WriteLine("Faulty SCMS id={0}, dcur={1}, d={2}", mapping[i], dcur, d);
 							d = 0;
 							break;
 						}
@@ -218,9 +224,9 @@ namespace Mirage
 			Console.ReadKey();
 		}
 
-		public static void TestCompare() {
-			Scms m1 = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3");
-			Scms m2 = Mir.Analyze(@"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav");
+		public static void Compare(string path1, string path2) {
+			Scms m1 = Mir.Analyze(path1);
+			Scms m2 = Mir.Analyze(path2);
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
 			                             + m1.Distance(m2));
@@ -228,12 +234,21 @@ namespace Mirage
 			System.Console.ReadLine();
 		}
 		
-		public static void ScanDirectory(string dir, Db db) {
+		public static void Compare(int trackId1, int trackId2, Db db) {
+			
+			Scms m1 = db.GetTrack(trackId1);
+			Scms m2 = db.GetTrack(trackId2);
+			
+			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
+			                             + m1.Distance(m2));
+			
+			System.Console.ReadLine();
+		}
+		
+		public static void ScanDirectory(string path, Db db) {
 			// scan directory for audio files
 			try
 			{
-				string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
-				//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
 				string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
 				var files = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
 
@@ -262,18 +277,35 @@ namespace Mirage
 			}
 		}
 		
+		public static void FindSimilar(int seedTrackId, Db db) {
+			int[] i = SimilarTracks(new int[] { seedTrackId }, new int[] { seedTrackId }, db);
+			
+			foreach (int d in i) {
+				Console.Out.WriteLine(d);
+			}
+		}
+		
 		public static void Main(string[] args) {
 			Db db = new Db();
 			
-			TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
+			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
+			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
+			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
+			//ScanDirectory(path, db);
 			
-			/*
-			int seedId = 2;
-			int[] i = SimilarTracks(new int[] { seedId }, new int[] { seedId }, db);
+			//Compare(2, 10, db);
+			
+			//TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
+
+			//string p1 = @"C:\Users\perivar.nerseth\Music\Sleep Away.mp3";
+			//string p2 = @"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav";
+			string p1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Uplifting Tutorial by Phil Doon\Uplifting Tutorial by Phil Doon.mp3";
+			string p2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
+			//Compare(p1, p2);
+			
+			FindSimilar(2, db);
+			
 			System.Console.ReadLine();
-			return;
-			 */
-			
 			return;
 
 			
