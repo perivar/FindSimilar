@@ -1,19 +1,19 @@
 /*
  * Mirage - High Performance Music Similarity and Automatic Playlist Generator
  * http://hop.at/mirage
- * 
- * Copyright (C) 2007 Dominik Schnitzer <dominik@schnitzer.at>
- * 
+ *
+ * Copyright (C) 2007-2008 Dominik Schnitzer <dominik@schnitzer.at>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -21,37 +21,44 @@
  */
 
 using System;
+using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Mirage
 {
-	[Serializable]
-	public class CovarianceMatrix
+	/** Utility class storing a cache and Configuration variables for the Scms
+	 *  distance computation.
+	 */
+	public class ScmsConfiguration
 	{
-		public float[] d;
-		public int dim;
-		
-		/// create a symmetric square matrix
-		public CovarianceMatrix(int dim)
+		private int dim;
+		private int covlen;
+		private float[] mdiff;
+		private float[] aicov;
+
+		public ScmsConfiguration(int dimension)
 		{
-			this.dim = dim;
-			int length = (dim * dim + dim) / 2;
-			d = new float[length];
+			dim = dimension;
+			covlen = (dim*dim + dim)/2;
+			mdiff = new float[dim];
+			aicov = new float[covlen];
 		}
 
-		/// create a symmetric square matrix using an existing Matrix
-		public CovarianceMatrix(Matrix m)
-		{
-			this.dim = m.rows;
-			int length = (dim * dim + dim) / 2;
-			d = new float[length];
-			
-			int l = 0;
-			for (int i = 0; i < m.rows; i++) {
-				for (int j = i; j < m.columns; j++) {
-					d[l] = m.d[i, j];
-					l++;
-				}
-			}
+		public int Dimension {
+			get { return dim; }
+		}
+
+		public int CovarianceLength {
+			get { return covlen; }
+		}
+
+		public float [] AddInverseCovariance {
+			get { return aicov;  }
+		}
+
+		public float[] MeanDiff {
+			get {  return mdiff; }
 		}
 	}
 }

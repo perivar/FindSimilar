@@ -1,19 +1,19 @@
 /*
  * Mirage - High Performance Music Similarity and Automatic Playlist Generator
  * http://hop.at/mirage
- * 
- * Copyright (C) 2007 Dominik Schnitzer <dominik@schnitzer.at>
- * 
+ *
+ * Copyright (C) 2007-2008 Dominik Schnitzer <dominik@schnitzer.at>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -27,72 +27,115 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Mirage
 {
-	[Serializable]
+	public class ScmsImpossibleException : Exception
+	{
+	}
+
+	/** Statistical Cluster Model Similarity class. A Gaussian representation
+	 *  of a song. The distance between two models is computed with the
+	 *  symmetrized Kullback Leibler Divergence.
+	 */
 	public class Scms
 	{
-		public Vector mean = null;
-		public CovarianceMatrix cov = null;
-		public CovarianceMatrix icov = null;
-		
-		public Scms()
+		private float [] mean;
+		private float [] cov;
+		private float [] icov;
+		private int dim;
+
+		public Scms(int dimension)
 		{
+			dim = dimension;
+			int symDim = (dim * dim + dim) / 2;
+
+			mean = new float [dim];
+			cov  = new float [symDim];
+			icov = new float [symDim];
 		}
-		
+
+		// Computes a Scms model from the MFCC representation of a song.
 		public static Scms GetScms(Matrix mfcc)
 		{
-			Timer t = new Timer();
+			DbgTimer t = new DbgTimer();
 			t.Start();
-			
-			Scms s = new Scms();
-			
-			s.mean = mfcc.Mean();
-			Matrix fullCov = mfcc.Covariance(s.mean);
-			if (fullCov.IsAllZeros()) {
-				//return null;
-			}
-			
-			Matrix fullIcov = fullCov.Inverse();
-			if (fullIcov == null)
+
+			// Mean
+			Vector m = mfcc.Mean();
+
+			// Covariance
+			Matrix c = mfcc.Covariance(m);
+
+			// Inverse Covariance
+			Matrix ic;
+			try {
+				ic = c.Inverse();
+			} catch (MatrixSingularException) {
+				//throw new ScmsImpossibleException();
+				Dbg.WriteLine("ScmsImpossibleException!");
 				return null;
-			
-			s.cov = new CovarianceMatrix(fullCov);
-			
-			for (int i = 0; i < s.cov.dim; i++) {
-				for (int j = i+1; j < s.cov.dim; j++) {
-					s.cov.d[i*s.cov.dim+j-(i*i+i)/2] *= 2;
+			}
+
+			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
+			int dim = m.rows;
+			Scms s = new Scms(dim);
+			int l = 0;
+			for (int i = 0; i < dim; i++) {
+				s.mean[i] = m.d[i, 0];
+				for (int j = i; j < dim; j++) {
+					s.cov[l] = c.d[i, j];
+					s.icov[l] = ic.d[i, j];
+					l++;
 				}
 			}
 
-			s.icov = new CovarianceMatrix(fullIcov);
-			
-			Dbg.WriteLine("scms created in: " + t.Stop() + "ms");
-			
+			long stop = 0;
+			t.Stop(ref stop);
+			Dbg.WriteLine("Mirage - scms created in: {0}ms", stop);
+
 			return s;
 		}
-		
-		public float Distance(Scms scms2)
+
+		public static float Distance(byte [] a, byte [] b)
+		{
+			return Distance (
+				FromBytes (a),
+				FromBytes (b),
+				new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS)
+			);
+		}
+
+		/** Function to compute the spectral distance between two song models.
+		 *  This is a fast implementation of the symmetrized Kullback Leibler
+		 *  Divergence.
+		 */
+		public static float Distance(Scms s1, Scms s2, ScmsConfiguration c)
 		{
 			float val = 0;
+			int i;
+			int k;
+			int idx = 0;
+			int dim = c.Dimension;
+			int covlen = c.CovarianceLength;
+			float tmp1;
 
 			unsafe {
-				int i;
-				int k;
-				int idx = 0;
-				int dim = cov.dim;
-				int covlen = (dim*dim+dim)/2;
-				float tmp1;
-
-				fixed (float* s1cov = cov.d, s2icov = scms2.icov.d,
-				       s1icov = icov.d, s2cov = scms2.cov.d,
-				       s1mean = mean.d, s2mean = scms2.mean.d)
+				fixed (float* s1cov = s1.cov, s2icov = s2.icov,
+				       s1icov = s1.icov, s2cov = s2.cov,
+				       s1mean = s1.mean, s2mean = s2.mean,
+				       mdiff = c.MeanDiff, aicov = c.AddInverseCovariance)
 				{
-					float* mdiff = stackalloc float[dim];
-					float* aicov = stackalloc float[covlen];
-
-
 					for (i = 0; i < covlen; i++) {
-						val += s1cov[i] * s2icov[i] + s2cov[i] * s1icov[i];
 						aicov[i] = s1icov[i] + s2icov[i];
+					}
+
+					for (i = 0; i < dim; i++) {
+						idx = i*dim - (i*i+i)/2;
+						val += s1cov[idx+i] * s2icov[idx+i] +
+							s2cov[idx+i] * s1icov[idx+i];
+
+						for (k = i+1; k < dim; k++) {
+							val += 2*s1cov[idx+k] * s2icov[idx+k] +
+								2*s2cov[idx+k] * s1icov[idx+k];
+						}
 					}
 
 					for (i = 0; i < dim; i++) {
@@ -116,28 +159,105 @@ namespace Mirage
 				}
 			}
 
+			// FIXME: fix the negative return values
+			//val = Math.Max(0.0f, (val/2 - s1.cov.dim));
+			val = val / 4 - c.Dimension / 2;
+
 			return val;
 		}
 
-		public byte[] ToBytes()
+		// Manual serialization of a Scms object to a byte array
+		public byte [] ToBytes()
 		{
-			MemoryStream stream = new MemoryStream();
-			BinaryFormatter bformatter = new BinaryFormatter();
-			bformatter.Serialize(stream, this);
-			stream.Close();
-			
-			return stream.ToArray();
+			using (var stream = new MemoryStream ()) {
+				using (var bw = new BinaryWriter(stream)) {
+					bw.Write ((Int32)dim);
+
+					for (int i = 0; i < mean.Length; i++) {
+						bw.Write (mean[i]);
+					}
+
+					for (int i = 0; i < cov.Length; i++) {
+						bw.Write (cov[i]);
+					}
+
+					for (int i = 0; i < icov.Length; i++) {
+						bw.Write (icov[i]);
+					}
+
+					return stream.ToArray ();
+				}
+			}
+		}
+
+		public static Scms FromBytes(byte [] buf)
+		{
+			var scms = new Scms (Analyzer.MFCC_COEFFICIENTS);
+			FromBytes (buf, scms);
+			return scms;
+		}
+
+		// Manual deserialization of an Scms from a LittleEndian byte array
+		public static void FromBytes(byte[] buf, Scms s)
+		{
+			byte [] buf4 = new byte[4];
+			int buf_i = 0;
+
+			s.dim = GetInt32 (buf, buf_i, buf4);
+			buf_i += 4;
+
+			for (int i = 0; i < s.mean.Length; i++) {
+				s.mean[i] = GetFloat (buf, buf_i, buf4);
+				buf_i += 4;
+			}
+
+			for (int i = 0; i < s.cov.Length; i++) {
+				s.cov[i] = GetFloat (buf, buf_i, buf4);
+				buf_i += 4;
+			}
+
+			for (int i = 0; i < s.icov.Length; i++) {
+				s.icov[i] = GetFloat (buf, buf_i, buf4);
+				buf_i += 4;
+			}
+		}
+
+		private static bool isLE = BitConverter.IsLittleEndian;
+		private static int GetInt32(byte [] buf, int i, byte [] buf4)
+		{
+			if (isLE) {
+				return BitConverter.ToInt32 (buf, i);
+			} else {
+				return BitConverter.ToInt32 (Reverse (buf, i, 4, buf4), 0);
+			}
+		}
+
+		private static float GetFloat(byte [] buf, int i, byte [] buf4)
+		{
+			if (isLE) {
+				return BitConverter.ToSingle (buf, i);
+			} else {
+				return BitConverter.ToSingle (Reverse (buf, i, 4, buf4), 0);
+			}
+		}
+
+		private static byte [] Reverse(byte [] buf, int start, int length, byte [] out_buf)
+		{
+			var ret = out_buf;
+			int end = start + length -1;
+			for (int i = 0; i < length; i++) {
+				ret[i] = buf[end - i];
+			}
+			return ret;
 		}
 		
-		public static Scms FromBytes(byte[] buf)
-		{
-			MemoryStream stream = new MemoryStream(buf);
-			BinaryFormatter bformatter = new BinaryFormatter();
-			
-			Scms scms = (Scms)bformatter.UnsafeDeserialize(stream, null);
-			stream.Close();
-			
-			return scms;
+		public override string ToString() {
+			string s = "";
+			foreach (byte b in ToBytes())
+			{
+				s += b;
+			}
+			return s;
 		}
 	}
 }

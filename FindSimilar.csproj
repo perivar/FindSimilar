@@ -96,24 +96,29 @@
     <Compile Include="DCT.cs" />
     <Compile Include="ImagePHash.cs" />
     <Compile Include="ImageAverageHash.cs" />
+    <Compile Include="Mirage\Analyzer.cs" />
     <Compile Include="Mirage\AudioFileReader.cs" />
-    <Compile Include="Mirage\CovarianceMatrix.cs" />
     <Compile Include="Mirage\Db.cs" />
     <Compile Include="Mirage\Dbg.cs" />
     <Compile Include="Mirage\Fft.cs" />
     <Compile Include="Mirage\Matrix.cs" />
     <Compile Include="Mirage\Mfcc.cs" />
+    <Compile Include="Mirage\MfccLessOptimized.cs" />
     <Compile Include="Mirage\Mir.cs" />
     <Compile Include="Mirage\Scms.cs" />
+    <Compile Include="Mirage\ScmsConfiguration.cs" />
     <Compile Include="Mirage\Stft.cs" />
     <Compile Include="Mirage\Timer.cs" />
     <Compile Include="Mirage\Vector.cs" />
     <Compile Include="Mirage\WindowFunctions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="sound_io.cs" />
+    <Compile Include="util.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Mirage" />
+    <Folder Include="Mirage\Resources" />
     <Folder Include="NativeLibraries" />
     <Folder Include="NativeLibraries" />
     <Folder Include="NativeLibraries\faad" />
@@ -139,6 +144,13 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="app.config" />
+    <Content Include="Mirage\Resources\dct.filter">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Mirage\Resources\filterweights.filter">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Mirage\Resources\writefilters.m" />
     <None Include="NativeLibraries\faad\faad.exe" />
     <None Include="NativeLibraries\ffmpeg\ffmpeg.exe" />
     <None Include="NativeLibraries\ffmpeg\ffplay.exe" />

@@ -9,7 +9,7 @@ namespace Mirage
 {
 	public class AudioFileReader
 	{
-		public static float[] Decode(string fileIn, int srate)
+		public static float[] Decode(string fileIn, int srate, int secondsToAnalyze)
 		{
 			fileIn = Regex.Replace(fileIn, "%20", " ");
 			float[] floatBuffer = null;
@@ -33,17 +33,17 @@ namespace Mirage
 				if (exitCode == 0) {
 					// sox can read the file
 					Console.Out.WriteLine("Using SOX to decode the file ...");
-					floatBuffer = DecodeUsingSox(fileIn, srate);
+					floatBuffer = DecodeUsingSox(fileIn, srate, secondsToAnalyze);
 				} else {
 					// use mplayer to first convert it, then sox to read it
 					Console.Out.WriteLine("Using MPlayer and SOX to decode the file ...");
-					floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate);
+					floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate, secondsToAnalyze);
 				}
 			}
 			return floatBuffer;
 		}
 
-		public static float[] DecodeUsingSox(string fileIn, int srate) {
+		public static float[] DecodeUsingSox(string fileIn, int srate, int secondsToAnalyze) {
 			
 			using (Process toraw = new Process())
 			{
@@ -53,7 +53,7 @@ namespace Mirage
 				String curdir = System.Environment.CurrentDirectory;
 				Dbg.WriteLine("Decoding: " + fileIn);
 				String tempFile = System.IO.Path.GetTempFileName();
-				String raw = tempFile + ".wav";
+				String raw = tempFile + "_raw.wav";
 				Dbg.WriteLine("Temporary raw file: " + raw);
 				
 				toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
@@ -90,6 +90,14 @@ namespace Mirage
 					if ((samples*sizeof(float)) != bytes)
 						return null;
 
+					// If very long files, just use a part
+					if (bytes > (secondsToAnalyze+1)*srate*sizeof(float)) {
+						int seekto = (bytes/2) - ((secondsToAnalyze/2)*sizeof(float)*srate);
+						Dbg.WriteLine("seekto="+seekto);
+						bytes = (secondsToAnalyze)*srate*sizeof(float);
+						fs.Seek((samples/2-(secondsToAnalyze/2)*srate)*sizeof(float), SeekOrigin.Begin);
+					}
+					
 					BinaryReader br = new BinaryReader(fs);
 					
 					byte[] bytesBuffer = new byte[bytes];
@@ -111,7 +119,7 @@ namespace Mirage
 					try
 					{
 						File.Delete(tempFile);
-						File.Delete(raw);
+						//File.Delete(raw);
 					}
 					catch (IOException io)
 					{
@@ -123,7 +131,7 @@ namespace Mirage
 			}
 		}
 
-		public static float[] DecodeUsingMplayerAndSox(string fileIn, int srate) {
+		public static float[] DecodeUsingMplayerAndSox(string fileIn, int srate, int secondsToAnalyze) {
 			
 			using (Process tosoxreadable = new Process())
 			{
@@ -139,7 +147,7 @@ namespace Mirage
 				tosoxreadable.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
 				//tosoxreadable.StartInfo.FileName = @"C:\Program Files (x86)\mplayer-svn-35908\mplayer.exe";
 
-				tosoxreadable.StartInfo.Arguments = " -quiet -benchmark -vc null -vo null -ao pcm:fast:waveheader \""+fileIn+"\" -ao pcm:file=\\\""+soxreadablewav+"\\\"";
+				tosoxreadable.StartInfo.Arguments = " -quiet -vc null -vo null -ao pcm:fast:waveheader \""+fileIn+"\" -ao pcm:file=\\\""+soxreadablewav+"\\\"";
 				tosoxreadable.StartInfo.UseShellExecute = false;
 				tosoxreadable.StartInfo.RedirectStandardOutput = true;
 				tosoxreadable.StartInfo.RedirectStandardError = true;
@@ -161,11 +169,11 @@ namespace Mirage
 				Console.Out.WriteLine(standardOutput);
 				#endif
 
-				float[] floatBuffer = DecodeUsingSox(soxreadablewav, srate);
+				float[] floatBuffer = DecodeUsingSox(soxreadablewav, srate, secondsToAnalyze);
 				try
 				{
 					File.Delete(tempFile);
-					File.Delete(soxreadablewav);
+					//File.Delete(soxreadablewav);
 				}
 				catch (IOException io)
 				{
@@ -192,7 +200,7 @@ namespace Mirage
 				
 				towav.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
 				//towav.StartInfo.FileName = @"C:\Program Files (x86)\mplayer-svn-35908\mplayer.exe";
-				towav.StartInfo.Arguments = " -quiet -benchmark -ao pcm:fast:waveheader \""+fileIn+"\" -format floatle -af resample="+srate+":0:2,pan=1:0.5:0.5 -channels 1 -vo null -vc null -ao pcm:file=\\\""+wav+"\\\"";
+				towav.StartInfo.Arguments = " -quiet -ao pcm:fast:waveheader \""+fileIn+"\" -format floatle -af resample="+srate+":0:2,pan=1:0.5:0.5 -channels 1 -vo null -vc null -ao pcm:file=\\\""+wav+"\\\"";
 				towav.StartInfo.UseShellExecute = false;
 				towav.StartInfo.RedirectStandardOutput = true;
 				towav.StartInfo.RedirectStandardError = true;

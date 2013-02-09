@@ -39,37 +39,6 @@ namespace Mirage
 {
 	public class Mir
 	{
-		private static int samplingrate = 11025;
-		private static int windowsize = 512;
-		
-		public static Mfcc mfcc = new Mfcc(windowsize, samplingrate, 36, 20);
-		public static Stft stft = new Stft(windowsize, windowsize, new HannWindow());
-		
-		public static Scms Analyze(string file)
-		{
-			Timer t = new Timer();
-			t.Start();
-			
-			float[] audiodata = AudioFileReader.Decode(file, samplingrate);
-			if (audiodata == null || audiodata.Length == 0)  {
-				return null;
-			}
-			
-			Matrix stft1 = stft.Apply(audiodata);
-			Matrix mfcc1 = mfcc.Apply(stft1);
-			
-			Scms scms = null;
-			if (mfcc1.IsAllZeros()) {
-				Dbg.WriteLine("!!!!FAILED Analyzing file!!!!!\n\n");
-			} else {
-				scms = Scms.GetScms(mfcc1);
-			}
-			
-			Dbg.WriteLine("Total Execution Time: " + t.Stop() + "ms");
-			
-			return scms;
-		}
-
 		public static int[] SimilarTracks(int[] id, int[] exclude, Db db)
 		{
 			// Get Seed-Song SCMS
@@ -98,7 +67,7 @@ namespace Mirage
 					d = 0;
 					count = 0;
 					for (int j = 0; j < seedScms.Length; j++) {
-						dcur = seedScms[j].Distance(scmss[i]);
+						dcur = Scms.Distance(seedScms[j], scmss[i], new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS));
 						
 						// FIXME: Negative numbers indicate faulty scms models..
 						if (dcur > 0) {
@@ -130,6 +99,7 @@ namespace Mirage
 			return keys;
 		}
 		
+		#region hide
 		public static bool CheckFile(string wav) {
 			using (Process toraw = new Process())
 			{
@@ -205,7 +175,7 @@ namespace Mirage
 		
 		public static void TestReadWriteDB(string wav, Db db) {
 			
-			Scms scms = Mir.Analyze(wav);
+			Scms scms = Analyzer.Analyze(wav);
 			Console.WriteLine(scms);
 			foreach (byte b in scms.ToBytes())
 			{
@@ -223,13 +193,14 @@ namespace Mirage
 			}
 			Console.ReadKey();
 		}
+		#endregion
 
 		public static void Compare(string path1, string path2) {
-			Scms m1 = Mir.Analyze(path1);
-			Scms m2 = Mir.Analyze(path2);
+			Scms m1 = Analyzer.Analyze(path1);
+			Scms m2 = Analyzer.Analyze(path2);
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
-			                             + m1.Distance(m2));
+			                             + Scms.Distance(m1, m2, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS)));
 			
 			System.Console.ReadLine();
 		}
@@ -240,7 +211,7 @@ namespace Mirage
 			Scms m2 = db.GetTrack(trackId2);
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
-			                             + m1.Distance(m2));
+			                             + Scms.Distance(m1, m2, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS)));
 			
 			System.Console.ReadLine();
 		}
@@ -258,11 +229,13 @@ namespace Mirage
 					FileInfo fileInfo = new FileInfo(f);
 					Console.WriteLine("Processing {0}", fileInfo.Name);
 					
-					Scms scms = Mir.Analyze(fileInfo.FullName);
+					Scms scms = Analyzer.Analyze(fileInfo.FullName);
 					if (scms != null) {
 						db.AddTrack(fileCounter, scms, fileInfo.Name);
 						fileCounter++;
 						//Console.ReadKey();
+					} else {
+						Console.Out.WriteLine("Error! Could not generate audio fingerprint!");
 					}
 				}
 				Console.WriteLine("{0} files found.", files.Count().ToString());
@@ -278,32 +251,52 @@ namespace Mirage
 		}
 		
 		public static void FindSimilar(int seedTrackId, Db db) {
+			
 			int[] i = SimilarTracks(new int[] { seedTrackId }, new int[] { seedTrackId }, db);
 			
 			foreach (int d in i) {
 				Console.Out.WriteLine(d);
 			}
+			
 		}
 		
 		public static void Main(string[] args) {
 			Db db = new Db();
 			
-			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
-			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
+			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
+			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
-			//ScanDirectory(path, db);
+			ScanDirectory(path, db);
 			
-			//Compare(2, 10, db);
+			//Compare(1, 3, db);
 			
 			//TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
 
 			//string p1 = @"C:\Users\perivar.nerseth\Music\Sleep Away.mp3";
 			//string p2 = @"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav";
-			string p1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Uplifting Tutorial by Phil Doon\Uplifting Tutorial by Phil Doon.mp3";
-			string p2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
+			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Uplifting Tutorial by Phil Doon\Uplifting Tutorial by Phil Doon.mp3";
+			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
 			//Compare(p1, p2);
 			
-			FindSimilar(2, db);
+			/*
+			Scms m1 = Analyzer.Analyze(path1);
+			Console.Out.WriteLine(m1);
+			db.AddTrack(1000, m1, new FileInfo(path1).Name);
+			Scms m2 = Analyzer.Analyze(path2);
+			db.AddTrack(1001, m2, new FileInfo(path2).Name);
+			
+			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
+			                             + Scms.Distance(m1, m2, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS)));
+			
+			System.Console.ReadLine();
+			
+			Compare(1000, 1001, db);
+			
+			 */
+			Scms m11 = db.GetTrack(1);
+			Console.Out.WriteLine(m11);
+			
+			//FindSimilar(9, db);
 			
 			System.Console.ReadLine();
 			return;
