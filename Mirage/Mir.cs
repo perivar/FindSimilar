@@ -234,8 +234,8 @@ namespace Mirage
 					AudioFeature feature = Analyzer.AnalyzeAudioFeature(fileInfo.FullName);
 					if (feature != null) {
 						db.AddTrack(fileCounter, feature, fileInfo.Name);
-						Console.Out.WriteLine("Succesfully analyzed {0} and added to database.", fileInfo.Name);
 						fileCounter++;
+						Console.Out.WriteLine("Succesfully analyzed audio and added to database {0}! [{1}/{2}].", fileInfo.Name, fileCounter, files.Count());
 					} else {
 						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 					}
@@ -250,7 +250,7 @@ namespace Mirage
 					}
 					 */
 				}
-				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, files.Count().ToString());
+				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, files.Count());
 			}
 			catch (UnauthorizedAccessException UAEx)
 			{
@@ -278,6 +278,7 @@ namespace Mirage
 			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
+			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked";
 			ScanDirectory(path, db);
 			
 			//TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);

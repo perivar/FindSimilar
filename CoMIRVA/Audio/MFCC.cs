@@ -394,7 +394,8 @@ namespace Comirva.Audio
 			//check for correct array length
 			if ((input.Length % hopSize) != 0)
 			{
-				int lenNew = input.Length / hopSize * hopSize;
+				//int lenNew = input.Length / hopSize * hopSize;
+				int lenNew = hopSize * 4;
 				Array.Resize<double>(ref input, lenNew);
 				//throw new Exception("Input data must be multiple of hop size (windowSize/2).");
 			}
