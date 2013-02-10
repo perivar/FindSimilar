@@ -43,8 +43,8 @@ namespace Mirage
 	{
 		public static int[] SimilarTracks(int[] id, int[] exclude, Db db)
 		{
-			// Get Seed-Song SCMS
-			AudioFeature[] seedAudioFeatures = new Scms[id.Length];
+			// Get Seed-Song AudioFeature models
+			AudioFeature[] seedAudioFeatures = new MandelEllis[id.Length];
 			for (int i = 0; i < seedAudioFeatures.Length; i++) {
 				seedAudioFeatures[i] = db.GetTrack(id[i]);
 			}
@@ -52,7 +52,7 @@ namespace Mirage
 			// Get all tracks from the DB except the seedSongs
 			IDataReader r = db.GetTracks(exclude);
 			Hashtable ht = new Hashtable();
-			AudioFeature[] audioFeatures = new Scms[100];
+			AudioFeature[] audioFeatures = new MandelEllis[100];
 			int[] mapping = new int[100];
 			int read = 1;
 			double d;
@@ -229,14 +229,15 @@ namespace Mirage
 				foreach (var f in files)
 				{
 					FileInfo fileInfo = new FileInfo(f);
-					Console.WriteLine("Processing {0}", fileInfo.Name);
+					Console.WriteLine("Processing {0} ...", fileInfo.Name);
 					
 					AudioFeature feature = Analyzer.AnalyzeAudioFeature(fileInfo.FullName);
 					if (feature != null) {
 						db.AddTrack(fileCounter, feature, fileInfo.Name);
+						Console.Out.WriteLine("Succesfully analyzed {0} and added to database.", fileInfo.Name);
 						fileCounter++;
 					} else {
-						Console.Out.WriteLine("Error! Could not generate audio fingerprint!");
+						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 					}
 					
 					/*
@@ -309,7 +310,7 @@ namespace Mirage
 			//Scms m11 = db.GetTrack(1);
 			//Console.Out.WriteLine(m11);
 			
-			//FindSimilar(9, db);
+			//FindSimilar(127, db);
 			
 			System.Console.ReadLine();
 			return;

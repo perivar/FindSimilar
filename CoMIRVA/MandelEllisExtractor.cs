@@ -50,39 +50,40 @@ namespace Comirva.Audio.Extraction
 			//pack the mfccs into a pointlist
 			double[][] mfccCoefficients = mfcc.Process(input);
 
-			//check if element 0 exists
-			if(mfccCoefficients.Length == 0)
-				throw new ArgumentException("the input stream ist to short to process;");
+			try {
+				
+				//check if element 0 exists
+				if(mfccCoefficients.Length == 0)
+					throw new ArgumentException("The input stream is to short to process;");
 
-			//compute number of samples to skip at the end
-			//int skip = (int)((skipFinalSeconds * sampleRate)/(mfcc.GetWindowSize()/2));
+				//compute number of samples to skip at the end
+				//int skip = (int)((skipFinalSeconds * sampleRate)/(mfcc.GetWindowSize()/2));
 
-			//check if the resulting point list has the required minimum length and skip the last few samples
-			//if(mfccCoefficients.Length - skip > ((minimumStreamLength * sampleRate)/(mfcc.GetWindowSize()/2))) {
-			//mfccCoefficients = new List<double[]>(mfccCoefficients.subList(0, mfccCoefficients.Length - skip - 1));
-			//} else {
-			//	throw new ArgumentException("the input stream ist to short to process;");
-			//}
+				//check if the resulting point list has the required minimum length and skip the last few samples
+				//if(mfccCoefficients.Length - skip > ((minimumStreamLength * sampleRate)/(mfcc.GetWindowSize()/2))) {
+				//mfccCoefficients = new List<double[]>(mfccCoefficients.subList(0, mfccCoefficients.Length - skip - 1));
+				//} else {
+				//	throw new ArgumentException("the input stream ist to short to process;");
+				//}
 
-			//create mfcc matrix
-			Matrix mfccs = new Matrix(mfccCoefficients);
+				//create mfcc matrix
+				Matrix mfccs = new Matrix(mfccCoefficients);
 
-			//create covariance matrix
-			Matrix covarMatrix = mfccs.Cov();
+				//create covariance matrix
+				Matrix covarMatrix = mfccs.Cov();
 
-			//compute mean
-			Matrix mean = mfccs.Mean(1).Transpose();
+				//compute mean
+				Matrix mean = mfccs.Mean(1).Transpose();
 
-			//mfccs.WriteAscii("mfccs.ascii");
-			//mfccs.Write(File.CreateText("mfccs.xml"));
-			//mfccs.Read(new StreamReader("mfccs.xml"));
+				//mfccs.WriteAscii("mfccs.ascii");
+				//mfccs.Write(File.CreateText("mfccs.xml"));
 
-			MandelEllis.GmmMe gmmMe = new MandelEllis.GmmMe(mean, covarMatrix);
-			MandelEllis mandelEllis = new MandelEllis(gmmMe);
-			//mandelEllis.WriteXML(new XmlTextWriter("mandelellis.xml", null));
-			//mandelEllis.ReadXML(new XmlTextReader("mandelellis.xml"));
-			
-			return mandelEllis;
+				MandelEllis.GmmMe gmmMe = new MandelEllis.GmmMe(mean, covarMatrix);
+				MandelEllis mandelEllis = new MandelEllis(gmmMe);
+				return mandelEllis;
+			} catch (Exception) {
+				return null;
+			}
 		}
 
 		public virtual int GetAttributeType()

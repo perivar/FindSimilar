@@ -51,6 +51,8 @@ namespace Comirva.Audio.Feature
 			{
 				this.mean = mean;
 				this.covarMatrix = covarMatrix;
+
+				// this might throw an exception
 				this.covarMatrixInv = covarMatrix.Inverse();
 				
 				/*
@@ -145,6 +147,9 @@ namespace Comirva.Audio.Feature
 		/// results in one xml element in the output stream.
 		/// </summary>
 		/// <param name="writer">XMLStreamWriter the xml output stream</param>
+		/// <example>
+		/// mandelEllis.WriteXML(new XmlTextWriter("mandelellis.xml", null));
+		/// </example>
 		public void WriteXML(XmlWriter xmlWriter)
 		{
 			xmlWriter.WriteStartElement("feature");
@@ -160,6 +165,9 @@ namespace Comirva.Audio.Feature
 		/// Reads the xml representation of an object form the xml input stream.<br>
 		/// </summary>
 		/// <param name="parser">XMLStreamReader the xml input stream</param>
+		/// <example>
+		/// mandelEllis.ReadXML(new XmlTextReader("mandelellis.xml"));
+		/// </example>
 		public void ReadXML(XmlTextReader xmlTextReader)
 		{
 			XDocument xdoc = XDocument.Load(xmlTextReader);

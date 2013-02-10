@@ -189,8 +189,9 @@ namespace Mirage
 			int i = 0;
 
 			while ((i < len) && tracksIterator.Read()) {
+				//tracks[i] = Scms.FromBytes((byte[]) tracksIterator.GetValue(0));
+				tracks[i] = MandelEllis.FromBytes((byte[]) tracksIterator.GetValue(0));
 				
-				tracks[i] = Scms.FromBytes((byte[]) tracksIterator.GetValue(0));
 				mapping[i] = tracksIterator.GetInt32(1);
 				i++;
 			}

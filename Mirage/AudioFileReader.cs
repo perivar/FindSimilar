@@ -32,11 +32,11 @@ namespace Mirage
 				// 2 = failed
 				if (exitCode == 0) {
 					// sox can read the file
-					Console.Out.WriteLine("Using SOX to decode the file ...");
+					Dbg.WriteLine("Using SOX to decode the file ...");
 					floatBuffer = DecodeUsingSox(fileIn, srate, secondsToAnalyze);
 				} else {
 					// use mplayer to first convert it, then sox to read it
-					Console.Out.WriteLine("Using MPlayer and SOX to decode the file ...");
+					Dbg.WriteLine("Using MPlayer and SOX to decode the file ...");
 					floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate, secondsToAnalyze);
 				}
 			}
