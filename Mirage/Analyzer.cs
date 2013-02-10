@@ -38,9 +38,9 @@ namespace Mirage
 	{
 		private const int SAMPLING_RATE = 22050; //22050;
 		private const int WINDOW_SIZE = 1024; //1024;
-		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
+		private const int MEL_COEFFICIENTS = 40; // 36 filters (SPHINX-III uses 40)
 		public const int MFCC_COEFFICIENTS = 20; //20
-		private const int SECONDS_TO_ANALYZE = 120;
+		private const int SECONDS_TO_ANALYZE = 60;
 
 		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		//private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
@@ -55,6 +55,50 @@ namespace Mirage
 		
 		public static void Init () {}
 
+		public static AudioFeature AnalyzeAudioFeature(string file_path)
+		{
+			DbgTimer t = new DbgTimer ();
+			t.Start ();
+
+			float[] audiodata = AudioFileReader.Decode(file_path, SAMPLING_RATE, SECONDS_TO_ANALYZE);
+			if (audiodata == null || audiodata.Length == 0)  {
+				Dbg.WriteLine("Error! - No Audio Found");
+				return null;
+			}
+			
+			/*
+			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
+			                      new float[1][] { audiodata },
+			                      1,
+			                      audiodata.Length,
+			                      SAMPLING_RATE,
+			                      32);
+			 */
+			
+			// 1. The goal of pre-emphasis is to compensate the high-frequency part
+			// that was suppressed during the sound production mechanism of humans.
+			// Moreover, it can also amplify the importance of high-frequency formants.
+			audiodata = preEmphase(audiodata);
+			
+			/*
+			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
+			                      new float[1][] { audiodata },
+			                      1,
+			                      audiodata.Length,
+			                      SAMPLING_RATE,
+			                      32);
+			 */
+			
+			MandelEllisExtractor extractor = new MandelEllisExtractor(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, MEL_COEFFICIENTS);
+			AudioFeature feature = extractor.Calculate(MathUtils.FloatToDouble(audiodata));
+
+			long stop = 0;
+			t.Stop (ref stop);
+			Dbg.WriteLine ("MandelEllisExtractor - Total Execution Time: {0}ms", stop);
+
+			return feature;
+		}
+		
 		public static Scms Analyze(string file_path)
 		{
 			DbgTimer t = new DbgTimer ();
@@ -92,9 +136,6 @@ namespace Mirage
 			                      SAMPLING_RATE,
 			                      32);
 			 */
-			
-			MandelEllisExtractor extractor = new MandelEllisExtractor();
-			AudioFeature feature = extractor.Calculate(MathUtils.FloatToDouble(audiodata),SAMPLING_RATE);
 			
 			// 2. Windowing
 			// 3. FFT

@@ -119,7 +119,7 @@ namespace Mirage
 					try
 					{
 						File.Delete(tempFile);
-						//File.Delete(raw);
+						File.Delete(raw);
 					}
 					catch (IOException io)
 					{
@@ -173,7 +173,7 @@ namespace Mirage
 				try
 				{
 					File.Delete(tempFile);
-					//File.Delete(soxreadablewav);
+					File.Delete(soxreadablewav);
 				}
 				catch (IOException io)
 				{

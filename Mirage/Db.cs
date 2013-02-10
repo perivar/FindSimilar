@@ -19,11 +19,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA  02110-1301, USA.
  */
+
+using System;
 using System.Data.SQLite;
 using System.Data;
 using System.IO;
-using System;
 using System.Collections;
+using System.Xml;
+
+using Comirva.Audio.Feature;
 
 namespace Mirage
 {
@@ -39,7 +43,7 @@ namespace Mirage
 			string dbdir = Path.Combine(homedir,".mirage");
 			string dbfile = Path.Combine(dbdir, "mirage.db");
 			string sqlite = string.Format("Data Source={0};Version=3", dbfile);
-			Console.WriteLine(sqlite);
+			//Console.WriteLine(sqlite);
 			
 			if (!Directory.Exists(dbdir)) {
 				Directory.CreateDirectory(dbdir);
@@ -50,7 +54,7 @@ namespace Mirage
 			
 			IDbCommand dbcmd = dbcon.CreateCommand();
 			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
-				+ " (trackid INTEGER PRIMARY KEY, scms BLOB, name TEXT)";
+				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT)";
 			dbcmd.ExecuteNonQuery();
 			dbcmd.Dispose();
 		}
@@ -59,23 +63,23 @@ namespace Mirage
 		{
 			dbcon.Close();
 		}
-		
-		public int AddTrack(int trackid, Scms scms, string name)
+
+		public int AddTrack(int trackid, AudioFeature audioFeature, string name)
 		{
-			IDbDataParameter dbparam = new SQLiteParameter("@scms", DbType.Binary);
-			IDbDataParameter dbparamName = new SQLiteParameter("@name", DbType.String);
+			IDbDataParameter dbAudioFeatureParam = new SQLiteParameter("@audioFeature", DbType.Binary);
+			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
 			
-			dbparam.Value = scms.ToBytes();
-			dbparamName.Value = name;
+			dbAudioFeatureParam.Value = audioFeature.ToBytes();
+			dbNameParam.Value = name;
 			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "INSERT INTO mirage (trackid, scms, name) " +
-				"VALUES (" + trackid + ", @scms, @name)";
-			dbcmd.Parameters.Add(dbparam);
-			dbcmd.Parameters.Add(dbparamName);
+			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name) " +
+				"VALUES (" + trackid + ", @audioFeature, @name)";
+			dbcmd.Parameters.Add(dbAudioFeatureParam);
+			dbcmd.Parameters.Add(dbNameParam);
 			
 			try {
 				dbcmd.ExecuteNonQuery();
@@ -83,6 +87,8 @@ namespace Mirage
 				return -1;
 			}
 			
+			//((MandelEllis) audioFeature).WriteXML(new XmlTextWriter(name+".xml", null));
+
 			return trackid;
 		}
 		
@@ -103,13 +109,13 @@ namespace Mirage
 			return trackid;
 		}
 
-		public Scms GetTrack(int trackid)
+		public AudioFeature GetTrack(int trackid)
 		{
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "SELECT scms FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, name FROM mirage " +
 				"WHERE trackid = " + trackid;
 			IDataReader reader = dbcmd.ExecuteReader();
 			if (!reader.Read()) {
@@ -117,9 +123,14 @@ namespace Mirage
 			}
 			
 			byte[] buf = (byte[]) reader.GetValue(0);
+			string name = reader.GetString(1);
 			reader.Close();
 			
-			return Scms.FromBytes(buf);
+			AudioFeature mandelEllis = MandelEllis.FromBytes(buf);
+			//((MandelEllis) mandelEllis).WriteXML(new XmlTextWriter(name+"-db.xml", null));
+			
+			//return Scms.FromBytes(buf);
+			return mandelEllis;
 		}
 		
 		public IDataReader GetTracks(int[] trackId)
@@ -138,9 +149,9 @@ namespace Mirage
 				}
 			}
 			
-			dbcmd.CommandText = "SELECT scms, trackid FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, trackid FROM mirage " +
 				"WHERE trackid NOT in (" + trackSql + ")";
-			Console.WriteLine(dbcmd.CommandText);
+			//Console.WriteLine(dbcmd.CommandText);
 
 			return dbcmd.ExecuteReader();
 		}
@@ -170,15 +181,15 @@ namespace Mirage
 				i++;
 			}
 			return tracksInt;
-			
 		}
 		
-		public int GetNextTracks(ref IDataReader tracksIterator, ref Scms[] tracks,
+		public int GetNextTracks(ref IDataReader tracksIterator, ref AudioFeature[] tracks,
 		                         ref int[] mapping, int len)
 		{
 			int i = 0;
 
 			while ((i < len) && tracksIterator.Read()) {
+				
 				tracks[i] = Scms.FromBytes((byte[]) tracksIterator.GetValue(0));
 				mapping[i] = tracksIterator.GetInt32(1);
 				i++;

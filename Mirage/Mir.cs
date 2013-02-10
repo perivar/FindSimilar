@@ -33,6 +33,8 @@ using System.Collections.Generic;
 
 using System.Text.RegularExpressions;
 
+using Comirva.Audio.Feature;
+
 using CommonUtils;
 
 namespace Mirage
@@ -42,32 +44,32 @@ namespace Mirage
 		public static int[] SimilarTracks(int[] id, int[] exclude, Db db)
 		{
 			// Get Seed-Song SCMS
-			Scms[] seedScms = new Scms[id.Length];
-			for (int i = 0; i < seedScms.Length; i++) {
-				seedScms[i] = db.GetTrack(id[i]);
+			AudioFeature[] seedAudioFeatures = new Scms[id.Length];
+			for (int i = 0; i < seedAudioFeatures.Length; i++) {
+				seedAudioFeatures[i] = db.GetTrack(id[i]);
 			}
 			
 			// Get all tracks from the DB except the seedSongs
 			IDataReader r = db.GetTracks(exclude);
 			Hashtable ht = new Hashtable();
-			Scms[] scmss = new Scms[100];
+			AudioFeature[] audioFeatures = new Scms[100];
 			int[] mapping = new int[100];
 			int read = 1;
-			float d;
-			float dcur;
+			double d;
+			double dcur;
 			float count;
 			
 			Timer t = new Timer();
 			t.Start();
 			
 			while (read > 0) {
-				read = db.GetNextTracks(ref r, ref scmss, ref mapping, 100);
+				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100);
 				for (int i = 0; i < read; i++) {
 					
 					d = 0;
 					count = 0;
-					for (int j = 0; j < seedScms.Length; j++) {
-						dcur = Scms.Distance(seedScms[j], scmss[i], new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS));
+					for (int j = 0; j < seedAudioFeatures.Length; j++) {
+						dcur = seedAudioFeatures[j].GetDistance(audioFeatures[i]);
 						
 						// FIXME: Negative numbers indicate faulty scms models..
 						if (dcur > 0) {
@@ -103,8 +105,8 @@ namespace Mirage
 		public static bool CheckFile(string wav) {
 			using (Process toraw = new Process())
 			{
-				//toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
-				toraw.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
+				toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
+				//toraw.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
 				toraw.StartInfo.Arguments = " --i \"" + wav + "\"";
 				toraw.StartInfo.UseShellExecute = false;
 				toraw.StartInfo.RedirectStandardOutput = true;
@@ -185,7 +187,7 @@ namespace Mirage
 			
 			db.AddTrack(1, scms, new FileInfo(wav).Name);
 
-			Scms scms2 = db.GetTrack(1);
+			AudioFeature scms2 = db.GetTrack(1);
 			Console.WriteLine(scms2);
 			foreach (byte b in scms2.ToBytes())
 			{
@@ -196,22 +198,22 @@ namespace Mirage
 		#endregion
 
 		public static void Compare(string path1, string path2) {
-			Scms m1 = Analyzer.Analyze(path1);
-			Scms m2 = Analyzer.Analyze(path2);
+			AudioFeature m1 = Analyzer.AnalyzeAudioFeature(path1);
+			AudioFeature m2 = Analyzer.AnalyzeAudioFeature(path2);
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
-			                             + Scms.Distance(m1, m2, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS)));
+			                             + m1.GetDistance(m2));
 			
 			System.Console.ReadLine();
 		}
 		
 		public static void Compare(int trackId1, int trackId2, Db db) {
 			
-			Scms m1 = db.GetTrack(trackId1);
-			Scms m2 = db.GetTrack(trackId2);
+			AudioFeature m1 = db.GetTrack(trackId1);
+			AudioFeature m2 = db.GetTrack(trackId2);
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
-			                             + Scms.Distance(m1, m2, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS)));
+			                             + m1.GetDistance(m2));
 			
 			System.Console.ReadLine();
 		}
@@ -229,6 +231,15 @@ namespace Mirage
 					FileInfo fileInfo = new FileInfo(f);
 					Console.WriteLine("Processing {0}", fileInfo.Name);
 					
+					AudioFeature feature = Analyzer.AnalyzeAudioFeature(fileInfo.FullName);
+					if (feature != null) {
+						db.AddTrack(fileCounter, feature, fileInfo.Name);
+						fileCounter++;
+					} else {
+						Console.Out.WriteLine("Error! Could not generate audio fingerprint!");
+					}
+					
+					/*
 					Scms scms = Analyzer.Analyze(fileInfo.FullName);
 					if (scms != null) {
 						db.AddTrack(fileCounter, scms, fileInfo.Name);
@@ -236,6 +247,7 @@ namespace Mirage
 					} else {
 						Console.Out.WriteLine("Error! Could not generate audio fingerprint!");
 					}
+					 */
 				}
 				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, files.Count().ToString());
 			}
@@ -262,21 +274,23 @@ namespace Mirage
 		public static void Main(string[] args) {
 			Db db = new Db();
 			
-			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
-			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
+			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
+			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
 			ScanDirectory(path, db);
 			
-			//Compare(1, 3, db);
-			
 			//TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
 
-			//string p1 = @"C:\Users\perivar.nerseth\Music\Sleep Away.mp3";
-			//string p2 = @"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav";
-			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Uplifting Tutorial by Phil Doon\Uplifting Tutorial by Phil Doon.mp3";
-			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
-			//Compare(p1, p2);
+			//string path1 = @"C:\Users\perivar.nerseth\Music\Sleep Away.mp3";
+			//string path2 = @"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav";
+			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Uplifting Tutorial by Phil Doon\Uplifting Tutorial by Phil Doon.mp3";
+			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
+			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+			//Compare(path1, path2);
 			
+			//Compare(0, 1, db);
+
 			/*
 			Scms m1 = Analyzer.Analyze(path1);
 			Console.Out.WriteLine(m1);

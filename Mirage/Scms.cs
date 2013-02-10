@@ -24,6 +24,8 @@ using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+
+using Comirva.Audio.Feature;
 using Comirva.Audio.Util.Maths;
 
 namespace Mirage
@@ -36,7 +38,7 @@ namespace Mirage
 	 *  of a song. The distance between two models is computed with the
 	 *  symmetrized Kullback Leibler Divergence.
 	 */
-	public class Scms
+	public class Scms : AudioFeature
 	{
 		private float [] mean;
 		private float [] cov;
@@ -96,6 +98,17 @@ namespace Mirage
 			return s;
 		}
 
+		public override double GetDistance(AudioFeature f)
+		{
+			if(!(f is Scms))
+			{
+				new Exception("Can only handle AudioFeatures of type Scms, not of: "+f);
+				return -1;
+			}
+			Scms other = (Scms)f;
+			return Distance(this, other, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS));
+		}
+		
 		public static float Distance(byte [] a, byte [] b)
 		{
 			return Distance (
@@ -169,7 +182,7 @@ namespace Mirage
 		}
 
 		// Manual serialization of a Scms object to a byte array
-		public byte [] ToBytes()
+		public override byte [] ToBytes()
 		{
 			using (var stream = new MemoryStream ()) {
 				using (var bw = new BinaryWriter(stream)) {
@@ -222,44 +235,6 @@ namespace Mirage
 				s.icov[i] = GetFloat (buf, buf_i, buf4);
 				buf_i += 4;
 			}
-		}
-
-		private static bool isLE = BitConverter.IsLittleEndian;
-		private static int GetInt32(byte [] buf, int i, byte [] buf4)
-		{
-			if (isLE) {
-				return BitConverter.ToInt32 (buf, i);
-			} else {
-				return BitConverter.ToInt32 (Reverse (buf, i, 4, buf4), 0);
-			}
-		}
-
-		private static float GetFloat(byte [] buf, int i, byte [] buf4)
-		{
-			if (isLE) {
-				return BitConverter.ToSingle (buf, i);
-			} else {
-				return BitConverter.ToSingle (Reverse (buf, i, 4, buf4), 0);
-			}
-		}
-
-		private static byte [] Reverse(byte [] buf, int start, int length, byte [] out_buf)
-		{
-			var ret = out_buf;
-			int end = start + length -1;
-			for (int i = 0; i < length; i++) {
-				ret[i] = buf[end - i];
-			}
-			return ret;
-		}
-		
-		public override string ToString() {
-			string s = "";
-			foreach (byte b in ToBytes())
-			{
-				s += b;
-			}
-			return s;
 		}
 	}
 }

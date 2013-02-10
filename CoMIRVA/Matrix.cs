@@ -1084,6 +1084,8 @@ namespace Comirva.Audio.Util.Maths
 		public void Write(TextWriter textWriter)
 		{
 			XmlTextWriter xmlTextWriter = new XmlTextWriter(textWriter);
+			xmlTextWriter.Formatting = Formatting.Indented;
+			xmlTextWriter.Indentation = 4;
 			WriteXML(xmlTextWriter, null);
 			xmlTextWriter.Close();
 		}
@@ -1128,30 +1130,27 @@ namespace Comirva.Audio.Util.Maths
 		/// <example>
 		/// mfccs.WriteXML(new XmlTextWriter("mfccs.xml", null));
 		/// </example>
-		public void WriteXML(XmlTextWriter xmlTextWriter, string matrixName)
+		public void WriteXML(XmlWriter xmlWriter, string matrixName)
 		{
-			xmlTextWriter.Formatting = Formatting.Indented;
-			xmlTextWriter.Indentation = 4;
-			
-			xmlTextWriter.WriteStartElement("matrix");
-			xmlTextWriter.WriteAttributeString("rows", m.ToString());
-			xmlTextWriter.WriteAttributeString("cols", n.ToString());
-			xmlTextWriter.WriteAttributeString("name", matrixName);
+			xmlWriter.WriteStartElement("matrix");
+			xmlWriter.WriteAttributeString("rows", m.ToString());
+			xmlWriter.WriteAttributeString("cols", n.ToString());
+			xmlWriter.WriteAttributeString("name", matrixName);
 
 			for(int i = 0; i < m; i++)
 			{
-				xmlTextWriter.WriteStartElement("matrixrow");
+				xmlWriter.WriteStartElement("matrixrow");
 				for(int j = 0; j < n; j++)
 				{
-					xmlTextWriter.WriteStartElement("cn");
-					xmlTextWriter.WriteAttributeString("type","IEEE-754");
-					xmlTextWriter.WriteString(A[i][j].ToString());
-					xmlTextWriter.WriteEndElement();
+					xmlWriter.WriteStartElement("cn");
+					//xmlWriter.WriteAttributeString("type","IEEE-754");
+					xmlWriter.WriteString(A[i][j].ToString());
+					xmlWriter.WriteEndElement();
 				}
-				xmlTextWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 
-			xmlTextWriter.WriteEndElement();
+			xmlWriter.WriteEndElement();
 		}
 
 		/// <summary>
@@ -1163,8 +1162,6 @@ namespace Comirva.Audio.Util.Maths
 		/// </example>
 		public void ReadXML(XDocument xdoc, string matrixName)
 		{
-			//XDocument xdoc = XDocument.Load(xmlTextReader);
-			
 			XElement dimensions = null;
 			if (matrixName != null) {
 				// look up by attribute name
@@ -1193,15 +1190,15 @@ namespace Comirva.Audio.Util.Maths
 				this.n = n;
 			}
 			
-			A = new double[m][];
+			this.A = new double[m][];
 
 			int i = 0, j = 0;
 			foreach (var matrixrow in matrixrows) {
-				A[i] = new double[n];
+				this.A[i] = new double[n];
 				j = 0;
 				foreach(var cn in matrixrow.Children) {
 					string val = cn.Value;
-					A[i][j] = double.Parse(val);
+					this.A[i][j] = double.Parse(val);
 					j++;
 				}
 				i++;
