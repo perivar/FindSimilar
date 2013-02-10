@@ -24,6 +24,7 @@ using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using Comirva.Audio.Util.Maths;
 
 namespace Mirage
 {
@@ -55,6 +56,7 @@ namespace Mirage
 		// Computes a Scms model from the MFCC representation of a song.
 		public static Scms GetScms(Matrix mfcc)
 		{
+			//mfcc.Print();
 			DbgTimer t = new DbgTimer();
 			t.Start();
 
@@ -192,7 +194,7 @@ namespace Mirage
 
 		public static Scms FromBytes(byte [] buf)
 		{
-			var scms = new Scms (Analyzer.MFCC_COEFFICIENTS);
+			var scms = new Scms(Analyzer.MFCC_COEFFICIENTS);
 			FromBytes (buf, scms);
 			return scms;
 		}

@@ -109,14 +109,15 @@ namespace Mirage
 			Matrix mel = new Matrix(filterWeights.rows, m.columns);
 			
 			// Performance optimization of ...
-			// 	mel = filterWeights.Multiply(m);
-			//	for (int i = 0; i < mel.rows; i++) {
-			// 		for (int j = 0; j < mel.columns; j++) {
-			// 			mel.d[i, j] = (mel.d[i, j] < 1.0f ?
-			// 			               0 : (float)(10.0 * Math.Log10(mel.d[i, j])));
-			// 		}
-			// 	}
+			mel = filterWeights.Multiply(m);
+			for (int i = 0; i < mel.rows; i++) {
+				for (int j = 0; j < mel.columns; j++) {
+					mel.d[i, j] = (mel.d[i, j] < 1.0f ? 0 : (float)(10.0 * Math.Log10(mel.d[i, j])));
+					//mel.d[i, j] = (float)(10.0 * Math.Log10(mel.d[i, j]));
+				}
+			}
 			
+			/*
 			int mc = m.columns;
 			int mr = m.rows;
 			int melcolumns = mel.columns;
@@ -141,6 +142,7 @@ namespace Mirage
 					}
 				}
 			}
+			 */
 			
 			Matrix mfcc = dct.Multiply(mel);
 			

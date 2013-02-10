@@ -107,7 +107,7 @@ namespace Mirage
 					floatBuffer = new float[items];
 					
 					for (int i = 0; i < items; i++) {
-						floatBuffer[i] = BitConverter.ToSingle(bytesBuffer, i * sizeof(float));// * 65536.0f;
+						floatBuffer[i] = BitConverter.ToSingle(bytesBuffer, i * sizeof(float)) * 65536.0f;
 					}
 					
 				} catch (System.IO.FileNotFoundException) {

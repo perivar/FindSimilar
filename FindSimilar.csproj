@@ -92,6 +92,17 @@
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\StringUtils.cs">
       <Link>StringUtils.cs</Link>
     </Compile>
+    <Compile Include="CoMIRVA\AudioFeature.cs" />
+    <Compile Include="CoMIRVA\Audio\FFT.cs" />
+    <Compile Include="CoMIRVA\Audio\MFCC.cs" />
+    <Compile Include="CoMIRVA\CholeskyDecomposition.cs" />
+    <Compile Include="CoMIRVA\EigenvalueDecomposition.cs" />
+    <Compile Include="CoMIRVA\LUDecomposition.cs" />
+    <Compile Include="CoMIRVA\MandelEllis.cs" />
+    <Compile Include="CoMIRVA\MandelEllisExtractor.cs" />
+    <Compile Include="CoMIRVA\Matrix.cs" />
+    <Compile Include="CoMIRVA\QRDecomposition.cs" />
+    <Compile Include="CoMIRVA\SingularValueDecomposition.cs" />
     <Compile Include="DCT2.cs" />
     <Compile Include="DCT.cs" />
     <Compile Include="ImagePHash.cs" />
@@ -117,6 +128,8 @@
     <Compile Include="util.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="CoMIRVA" />
+    <Folder Include="CoMIRVA\Audio" />
     <Folder Include="Mirage" />
     <Folder Include="Mirage\Resources" />
     <Folder Include="NativeLibraries" />

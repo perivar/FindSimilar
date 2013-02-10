@@ -223,7 +223,7 @@ namespace Mirage
 				string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
 				var files = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
 
-				int fileCounter = 1;
+				int fileCounter = 0;
 				foreach (var f in files)
 				{
 					FileInfo fileInfo = new FileInfo(f);
@@ -233,12 +233,11 @@ namespace Mirage
 					if (scms != null) {
 						db.AddTrack(fileCounter, scms, fileInfo.Name);
 						fileCounter++;
-						//Console.ReadKey();
 					} else {
 						Console.Out.WriteLine("Error! Could not generate audio fingerprint!");
 					}
 				}
-				Console.WriteLine("{0} files found.", files.Count().ToString());
+				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, files.Count().ToString());
 			}
 			catch (UnauthorizedAccessException UAEx)
 			{
@@ -293,8 +292,8 @@ namespace Mirage
 			Compare(1000, 1001, db);
 			
 			 */
-			Scms m11 = db.GetTrack(1);
-			Console.Out.WriteLine(m11);
+			//Scms m11 = db.GetTrack(1);
+			//Console.Out.WriteLine(m11);
 			
 			//FindSimilar(9, db);
 			

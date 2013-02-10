@@ -49,6 +49,25 @@ namespace Mirage
 			d = new float[rows, columns];
 		}
 
+		/// <summary>
+		/// Construct a matrix from a 2-D array.
+		/// </summary>
+		/// <param name="A">Two-dimensional array of doubles.</param>
+		public Matrix (double[][] jaggedArray) {
+			this.rows = jaggedArray.Length;
+			this.columns = jaggedArray[0].Length;
+			d = new float[rows, columns];
+			
+			for (int i = 0; i < this.rows; i++) {
+				if (jaggedArray[i].Length != this.columns) {
+					throw new Exception("All rows must have the same length.");
+				}
+				for (int j = 0; j < this.columns; j++) {
+					d[i,j] = (float) jaggedArray[i][j];
+				}
+			}
+		}
+		
 		public Matrix Multiply (Matrix m2)
 		{
 			if (columns != m2.rows) {
@@ -266,7 +285,7 @@ namespace Mirage
 				indxc[i] = icol;
 				if (a[icol,icol] == 0) {
 					Dbg.WriteLine ("Mirage - Gauss/Jordan Singular Matrix (2)");
-					throw new MatrixSingularException ();
+					throw new MatrixSingularException();
 				}
 
 				pivinv = 1 / a[icol,icol];

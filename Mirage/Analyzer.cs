@@ -26,18 +26,26 @@ using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 
+using Comirva.Audio;
+using Comirva.Audio.Extraction;
+using Comirva.Audio.Feature;
+
+using CommonUtils;
+
 namespace Mirage
 {
 	public class Analyzer
 	{
 		private const int SAMPLING_RATE = 22050; //22050;
-		private const int WINDOW_SIZE = 2048; //1024;
-		private const int MEL_COEFFICIENTS = 36;
+		private const int WINDOW_SIZE = 1024; //1024;
+		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
 		public const int MFCC_COEFFICIENTS = 20; //20
 		private const int SECONDS_TO_ANALYZE = 120;
 
 		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		//private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		//private static MFCC mfcc = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, 20000.0, MEL_COEFFICIENTS);
+		
 		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
 		
 		/**
@@ -72,6 +80,10 @@ namespace Mirage
 			// Moreover, it can also amplify the importance of high-frequency formants.
 			audiodata = preEmphase(audiodata);
 			
+			//double[][] mfccs = mfcc.Process(MathUtils.FloatToDouble(audiodata));
+			//CoMIRVA.Maths.Matrix mfccdata = new CoMIRVA.Maths.Matrix(mfccs);
+			//Matrix mfccdata = new Matrix(mfccs);
+			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
 			                      new float[1][] { audiodata },
@@ -80,6 +92,9 @@ namespace Mirage
 			                      SAMPLING_RATE,
 			                      32);
 			 */
+			
+			MandelEllisExtractor extractor = new MandelEllisExtractor();
+			AudioFeature feature = extractor.Calculate(MathUtils.FloatToDouble(audiodata),SAMPLING_RATE);
 			
 			// 2. Windowing
 			// 3. FFT
