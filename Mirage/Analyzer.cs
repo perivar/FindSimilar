@@ -130,7 +130,7 @@ namespace Mirage
 			// 1. The goal of pre-emphasis is to compensate the high-frequency part
 			// that was suppressed during the sound production mechanism of humans.
 			// Moreover, it can also amplify the importance of high-frequency formants.
-			//audiodata = preEmphase(audiodata);
+			// audiodata = preEmphase(audiodata);
 			
 			// Normalize
 			//MathUtils.NormalizeInPlace(audiodata);
@@ -147,8 +147,8 @@ namespace Mirage
 			// 2. Windowing
 			// 3. FFT
 			
-			// check for correct array length
-			if ((audiodata.Length % WINDOW_SIZE) != 0)
+			// zero pad if the audio file is too short to perform a mfcc
+			if (audiodata.Length < WINDOW_SIZE * 8)
 			{
 				int lenNew = WINDOW_SIZE * 8;
 				Array.Resize<float>(ref audiodata, lenNew);

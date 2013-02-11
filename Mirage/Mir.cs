@@ -352,14 +352,14 @@ namespace Mirage
 		
 		public static void Main(string[] args) {
 			Db db = new Db();
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
 			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked";
-			ScanDirectory(path, db, analysisMethod);
+			//ScanDirectory(path, db, analysisMethod);
 			
 			//TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
 
@@ -369,6 +369,8 @@ namespace Mirage
 			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
 			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
 			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+			
+			//AudioFeature feature = Analyzer.AnalyzeScms(@"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\SHM - Greyhound\MISC2_2.wav");
 			
 			//Compare(path1, path2);
 			//Compare(0, 1, db);
@@ -392,7 +394,7 @@ namespace Mirage
 			//Console.Out.WriteLine(m11);
 			
 			//FindSimilar(new int[] { 97, 0, 234 }, db, analysisMethod);
-			//FindSimilar(path1, db, analysisMethod);
+			FindSimilar(path2, db, analysisMethod);
 			
 			System.Console.ReadLine();
 			return;
