@@ -36,6 +36,11 @@ namespace Mirage
 {
 	public class Analyzer
 	{
+		public enum AnalysisMethod {
+			SCMS = 1,
+			MandelEllis = 2
+		}
+		
 		private const int SAMPLING_RATE = 22050; //22050;
 		private const int WINDOW_SIZE = 1024; //1024;
 		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
@@ -55,7 +60,7 @@ namespace Mirage
 		
 		public static void Init () {}
 
-		public static AudioFeature AnalyzeAudioFeature(string file_path)
+		public static AudioFeature AnalyzeMandelEllis(string file_path)
 		{
 			DbgTimer t = new DbgTimer ();
 			t.Start ();
@@ -79,6 +84,9 @@ namespace Mirage
 			// that was suppressed during the sound production mechanism of humans.
 			// Moreover, it can also amplify the importance of high-frequency formants.
 			audiodata = preEmphase(audiodata);
+			
+			// Normalize
+			MathUtils.NormalizeInPlace(audiodata);
 			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
@@ -99,7 +107,7 @@ namespace Mirage
 			return feature;
 		}
 		
-		public static Scms Analyze(string file_path)
+		public static Scms AnalyzeScms(string file_path)
 		{
 			DbgTimer t = new DbgTimer ();
 			t.Start ();
@@ -123,6 +131,9 @@ namespace Mirage
 			// that was suppressed during the sound production mechanism of humans.
 			// Moreover, it can also amplify the importance of high-frequency formants.
 			audiodata = preEmphase(audiodata);
+			
+			// Normalize
+			MathUtils.NormalizeInPlace(audiodata);
 			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),

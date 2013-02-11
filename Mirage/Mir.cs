@@ -41,18 +41,37 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static int[] SimilarTracks(int[] id, int[] exclude, Db db)
+		public static int[] SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod)
 		{
 			// Get Seed-Song AudioFeature models
-			AudioFeature[] seedAudioFeatures = new MandelEllis[id.Length];
+			AudioFeature[] seedAudioFeatures = null;
+			switch (analysisMethod) {
+				case Analyzer.AnalysisMethod.MandelEllis:
+					seedAudioFeatures = new MandelEllis[id.Length];
+					break;
+				case Analyzer.AnalysisMethod.SCMS:
+					seedAudioFeatures = new Scms[id.Length];
+					break;
+			}
+			
 			for (int i = 0; i < seedAudioFeatures.Length; i++) {
-				seedAudioFeatures[i] = db.GetTrack(id[i]);
+				seedAudioFeatures[i] = db.GetTrack(id[i], analysisMethod);
 			}
 			
 			// Get all tracks from the DB except the seedSongs
 			IDataReader r = db.GetTracks(exclude);
 			Hashtable ht = new Hashtable();
-			AudioFeature[] audioFeatures = new MandelEllis[100];
+			
+			AudioFeature[] audioFeatures = null;
+			switch (analysisMethod) {
+				case Analyzer.AnalysisMethod.MandelEllis:
+					audioFeatures = new MandelEllis[100];
+					break;
+				case Analyzer.AnalysisMethod.SCMS:
+					audioFeatures = new Scms[100];
+					break;
+			}
+			
 			int[] mapping = new int[100];
 			int read = 1;
 			double d;
@@ -63,7 +82,7 @@ namespace Mirage
 			t.Start();
 			
 			while (read > 0) {
-				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100);
+				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100, analysisMethod);
 				for (int i = 0; i < read; i++) {
 					
 					d = 0;
@@ -76,7 +95,7 @@ namespace Mirage
 							d += dcur;
 							count++;
 						} else {
-							//Console.WriteLine("Faulty SCMS id={0}, dcur={1}, d={2}", mapping[i], dcur, d);
+							Console.WriteLine("Faulty SCMS id={0}, dcur={1}, d={2}", mapping[i], dcur, d);
 							d = 0;
 							break;
 						}
@@ -174,10 +193,10 @@ namespace Mirage
 				}
 			}
 		}
-		
-		public static void TestReadWriteDB(string wav, Db db) {
+
+		public static void TestReadWriteDB(string wav, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
-			Scms scms = Analyzer.Analyze(wav);
+			Scms scms = Analyzer.AnalyzeScms(wav);
 			Console.WriteLine(scms);
 			foreach (byte b in scms.ToBytes())
 			{
@@ -187,7 +206,7 @@ namespace Mirage
 			
 			db.AddTrack(1, scms, new FileInfo(wav).Name);
 
-			AudioFeature scms2 = db.GetTrack(1);
+			AudioFeature scms2 = db.GetTrack(1, analysisMethod);
 			Console.WriteLine(scms2);
 			foreach (byte b in scms2.ToBytes())
 			{
@@ -197,9 +216,21 @@ namespace Mirage
 		}
 		#endregion
 
-		public static void Compare(string path1, string path2) {
-			AudioFeature m1 = Analyzer.AnalyzeAudioFeature(path1);
-			AudioFeature m2 = Analyzer.AnalyzeAudioFeature(path2);
+		public static void Compare(string path1, string path2, Analyzer.AnalysisMethod analysisMethod) {
+			
+			AudioFeature m1 = null;
+			AudioFeature m2 = null;
+			
+			switch (analysisMethod) {
+				case Analyzer.AnalysisMethod.MandelEllis:
+					m1 = Analyzer.AnalyzeMandelEllis(path1);
+					m2 = Analyzer.AnalyzeMandelEllis(path2);
+					break;
+				case Analyzer.AnalysisMethod.SCMS:
+					m1 = Analyzer.AnalyzeScms(path1);
+					m2 = Analyzer.AnalyzeScms(path2);
+					break;
+			}
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
 			                             + m1.GetDistance(m2));
@@ -207,10 +238,10 @@ namespace Mirage
 			System.Console.ReadLine();
 		}
 		
-		public static void Compare(int trackId1, int trackId2, Db db) {
+		public static void Compare(int trackId1, int trackId2, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
-			AudioFeature m1 = db.GetTrack(trackId1);
-			AudioFeature m2 = db.GetTrack(trackId2);
+			AudioFeature m1 = db.GetTrack(trackId1, analysisMethod);
+			AudioFeature m2 = db.GetTrack(trackId2, analysisMethod);
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
 			                             + m1.GetDistance(m2));
@@ -218,7 +249,7 @@ namespace Mirage
 			System.Console.ReadLine();
 		}
 		
-		public static void ScanDirectory(string path, Db db) {
+		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
 			FileInfo failedFilesLog = new FileInfo("failed_files_log.txt");
 			
@@ -232,10 +263,17 @@ namespace Mirage
 				foreach (var f in files)
 				{
 					FileInfo fileInfo = new FileInfo(f);
-					//Console.WriteLine("Processing {0} ...", fileInfo.Name);
 					
-					//AudioFeature feature = Analyzer.AnalyzeAudioFeature(fileInfo.FullName);
-					AudioFeature feature = Analyzer.Analyze(fileInfo.FullName);
+					AudioFeature feature = null;
+					switch (analysisMethod) {
+						case Analyzer.AnalysisMethod.MandelEllis:
+							feature = Analyzer.AnalyzeMandelEllis(fileInfo.FullName);
+							break;
+						case Analyzer.AnalysisMethod.SCMS:
+							feature = Analyzer.AnalyzeScms(fileInfo.FullName);
+							break;
+					}
+					
 					if (feature != null) {
 						db.AddTrack(fileCounter, feature, fileInfo.Name);
 						fileCounter++;
@@ -257,9 +295,9 @@ namespace Mirage
 			}
 		}
 		
-		public static void FindSimilar(int seedTrackId, Db db) {
+		public static void FindSimilar(int seedTrackId, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
-			int[] i = SimilarTracks(new int[] { seedTrackId }, new int[] { seedTrackId }, db);
+			int[] i = SimilarTracks(new int[] { seedTrackId }, new int[] { seedTrackId }, db, analysisMethod);
 			
 			foreach (int d in i) {
 				Console.Out.WriteLine(d);
@@ -274,7 +312,7 @@ namespace Mirage
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked";
-			ScanDirectory(path, db);
+			ScanDirectory(path, db, Analyzer.AnalysisMethod.SCMS);
 			
 			//TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
 

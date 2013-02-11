@@ -83,7 +83,8 @@ namespace Mirage
 			try {
 				ic = c.Inverse();
 			} catch (MatrixSingularException) {
-				throw new ScmsImpossibleException();
+				//throw new ScmsImpossibleException();
+				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;
 			}
 

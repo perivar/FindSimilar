@@ -87,8 +87,6 @@ namespace Mirage
 				return -1;
 			}
 			
-			//((MandelEllis) audioFeature).WriteXML(new XmlTextWriter(name+".xml", null));
-
 			return trackid;
 		}
 		
@@ -109,7 +107,7 @@ namespace Mirage
 			return trackid;
 		}
 
-		public AudioFeature GetTrack(int trackid)
+		public AudioFeature GetTrack(int trackid, Analyzer.AnalysisMethod analysisMethod)
 		{
 			IDbCommand dbcmd;
 			lock (dbcon) {
@@ -126,12 +124,18 @@ namespace Mirage
 			string name = reader.GetString(1);
 			reader.Close();
 			
-			AudioFeature mandelEllis = MandelEllis.FromBytes(buf);
-			mandelEllis.Name = name;
-			//((MandelEllis) mandelEllis).WriteXML(new XmlTextWriter(name+"-db.xml", null));
+			AudioFeature audioFeature = null;
+			switch (analysisMethod) {
+				case Analyzer.AnalysisMethod.MandelEllis:
+					audioFeature = MandelEllis.FromBytes(buf);
+					break;
+				case Analyzer.AnalysisMethod.SCMS:
+					audioFeature = Scms.FromBytes(buf);
+					break;
+			}
+			audioFeature.Name = name;
 			
-			//return Scms.FromBytes(buf);
-			return mandelEllis;
+			return audioFeature;
 		}
 		
 		public IDataReader GetTracks(int[] trackId)
@@ -152,7 +156,6 @@ namespace Mirage
 			
 			dbcmd.CommandText = "SELECT audioFeature, trackid, name FROM mirage " +
 				"WHERE trackid NOT in (" + trackSql + ")";
-			//Console.WriteLine(dbcmd.CommandText);
 
 			return dbcmd.ExecuteReader();
 		}
@@ -185,16 +188,24 @@ namespace Mirage
 		}
 		
 		public int GetNextTracks(ref IDataReader tracksIterator, ref AudioFeature[] tracks,
-		                         ref int[] mapping, int len)
+		                         ref int[] mapping, int len, Analyzer.AnalysisMethod analysisMethod)
 		{
 			int i = 0;
 
 			while ((i < len) && tracksIterator.Read()) {
-				//tracks[i] = Scms.FromBytes((byte[]) tracksIterator.GetValue(0));
-				tracks[i] = MandelEllis.FromBytes((byte[]) tracksIterator.GetValue(0));
+				
+				AudioFeature audioFeature = null;
+				switch (analysisMethod) {
+					case Analyzer.AnalysisMethod.MandelEllis:
+						audioFeature = MandelEllis.FromBytes((byte[]) tracksIterator.GetValue(0));
+						break;
+					case Analyzer.AnalysisMethod.SCMS:
+						audioFeature = Scms.FromBytes((byte[]) tracksIterator.GetValue(0));
+						break;
+				}
 				mapping[i] = tracksIterator.GetInt32(1);
-
-				tracks[i].Name = tracksIterator.GetString(2);
+				audioFeature.Name = tracksIterator.GetString(2);
+				tracks[i] = audioFeature;
 				i++;
 			}
 
