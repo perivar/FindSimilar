@@ -185,7 +185,7 @@ namespace Mirage
 			}
 
 			// FIXME: fix the negative return values
-			//val = Math.Max(0.0f, (val/2 - s1.cov.dim));
+			//val = Math.Max(0.0f, (val/2 - s1.dim));
 			val = val / 4 - c.Dimension / 2;
 
 			return val;

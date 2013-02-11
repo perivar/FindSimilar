@@ -41,16 +41,89 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static int[] SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod)
+		#region Similarity Search
+		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod) {
+			
+			var similarTracks = SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod);
+			foreach (var entry in similarTracks)
+			{
+				Console.WriteLine("{0}, {1}", entry.Key, entry.Value);
+			}
+		}
+		
+		public static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
+			
+			var similarTracks = SimilarTracks(path, db, analysisMethod);
+			foreach (var entry in similarTracks)
+			{
+				Console.WriteLine("{0}, {1}", entry.Key, entry.Value);
+			}
+		}
+		
+		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod)
 		{
-			// Get Seed-Song AudioFeature models
+			FileInfo fi = new FileInfo(searchForPath);
+			AudioFeature seedAudioFeature = null;
+			AudioFeature[] audioFeatures = null;
+			switch (analysisMethod) {
+				case Analyzer.AnalysisMethod.MandelEllis:
+					seedAudioFeature = Analyzer.AnalyzeMandelEllis(searchForPath);
+					seedAudioFeature.Name = fi.Name;
+					audioFeatures = new MandelEllis[100];
+					break;
+				case Analyzer.AnalysisMethod.SCMS:
+					seedAudioFeature = Analyzer.AnalyzeScms(searchForPath);
+					seedAudioFeature.Name = fi.Name;
+					audioFeatures = new Scms[100];
+					break;
+			}
+			
+			// Get all tracks from the DB except the seedSongs
+			IDataReader r = db.GetTracks(null);
+			
+			// store results in a dictionary
+			var NameDictionary = new Dictionary<KeyValuePair<int, string>, double>();
+			
+			int[] mapping = new int[100];
+			int read = 1;
+			double dcur;
+			
+			Timer t = new Timer();
+			t.Start();
+			
+			while (read > 0) {
+				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100, analysisMethod);
+				for (int i = 0; i < read; i++) {
+					dcur = seedAudioFeature.GetDistance(audioFeatures[i]);
+					
+					// convert to positive values
+					dcur = Math.Abs(dcur);
+					
+					NameDictionary.Add(new KeyValuePair<int,string>(mapping[i], audioFeatures[i].Name), dcur);
+				}
+			}
+			
+			// sort by non unique values
+			var sortedDict = (from entry in NameDictionary orderby entry.Value ascending select entry)
+				.Take(25)
+				.ToDictionary(pair => pair.Key, pair => pair.Value);
+			
+			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", seedAudioFeature.Name, t.Stop()));
+			return sortedDict;
+		}
+
+		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod)
+		{
 			AudioFeature[] seedAudioFeatures = null;
+			AudioFeature[] audioFeatures = null;
 			switch (analysisMethod) {
 				case Analyzer.AnalysisMethod.MandelEllis:
 					seedAudioFeatures = new MandelEllis[id.Length];
+					audioFeatures = new MandelEllis[100];
 					break;
 				case Analyzer.AnalysisMethod.SCMS:
 					seedAudioFeatures = new Scms[id.Length];
+					audioFeatures = new Scms[100];
 					break;
 			}
 			
@@ -60,17 +133,9 @@ namespace Mirage
 			
 			// Get all tracks from the DB except the seedSongs
 			IDataReader r = db.GetTracks(exclude);
-			Hashtable ht = new Hashtable();
 			
-			AudioFeature[] audioFeatures = null;
-			switch (analysisMethod) {
-				case Analyzer.AnalysisMethod.MandelEllis:
-					audioFeatures = new MandelEllis[100];
-					break;
-				case Analyzer.AnalysisMethod.SCMS:
-					audioFeatures = new Scms[100];
-					break;
-			}
+			// store results in a dictionary
+			var NameDictionary = new Dictionary<KeyValuePair<int, string>, double>();
 			
 			int[] mapping = new int[100];
 			int read = 1;
@@ -90,37 +155,29 @@ namespace Mirage
 					for (int j = 0; j < seedAudioFeatures.Length; j++) {
 						dcur = seedAudioFeatures[j].GetDistance(audioFeatures[i]);
 						
-						// FIXME: Negative numbers indicate faulty scms models..
-						if (dcur > 0) {
-							d += dcur;
-							count++;
-						} else {
-							Console.WriteLine("Faulty SCMS id={0}, dcur={1}, d={2}", mapping[i], dcur, d);
-							d = 0;
-							break;
-						}
+						// convert to positive values
+						dcur = Math.Abs(dcur);
+
+						d += dcur;
+						count++;
 					}
-					
 					if (d > 0) {
-						ht.Add(mapping[i], d/count);
+						NameDictionary.Add(new KeyValuePair<int,string>(mapping[i], audioFeatures[i].Name), d/count);
 					}
 				}
 			}
 			
-			float[] items = new float[ht.Count];
-			int[] keys = new int[ht.Keys.Count];
+			// sort by non unique values
+			var sortedDict = (from entry in NameDictionary orderby entry.Value ascending select entry)
+				.Take(25)
+				.ToDictionary(pair => pair.Key, pair => pair.Value);
 			
-			ht.Keys.CopyTo(keys, 0);
-			ht.Values.CopyTo(items, 0);
-			
-			Array.Sort(items, keys);
-			
-			Dbg.WriteLine("playlist in: " + t.Stop() + "ms");
-			
-			return keys;
+			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", String.Join(",", seedAudioFeatures.Select(p=>p.Name)), t.Stop()));
+			return sortedDict;
 		}
+		#endregion
 		
-		#region hide
+		#region Hide these methods
 		public static bool CheckFile(string wav) {
 			using (Process toraw = new Process())
 			{
@@ -216,6 +273,7 @@ namespace Mirage
 		}
 		#endregion
 
+		#region Compare Methods
 		public static void Compare(string path1, string path2, Analyzer.AnalysisMethod analysisMethod) {
 			
 			AudioFeature m1 = null;
@@ -234,8 +292,6 @@ namespace Mirage
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
 			                             + m1.GetDistance(m2));
-			
-			System.Console.ReadLine();
 		}
 		
 		public static void Compare(int trackId1, int trackId2, Db db, Analyzer.AnalysisMethod analysisMethod) {
@@ -245,9 +301,8 @@ namespace Mirage
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
 			                             + m1.GetDistance(m2));
-			
-			System.Console.ReadLine();
 		}
+		#endregion
 		
 		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
@@ -295,24 +350,16 @@ namespace Mirage
 			}
 		}
 		
-		public static void FindSimilar(int seedTrackId, Db db, Analyzer.AnalysisMethod analysisMethod) {
-			
-			int[] i = SimilarTracks(new int[] { seedTrackId }, new int[] { seedTrackId }, db, analysisMethod);
-			
-			foreach (int d in i) {
-				Console.Out.WriteLine(d);
-			}
-			
-		}
-		
 		public static void Main(string[] args) {
 			Db db = new Db();
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
 			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked";
-			ScanDirectory(path, db, Analyzer.AnalysisMethod.SCMS);
+			ScanDirectory(path, db, analysisMethod);
 			
 			//TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
 
@@ -320,10 +367,10 @@ namespace Mirage
 			//string path2 = @"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav";
 			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Uplifting Tutorial by Phil Doon\Uplifting Tutorial by Phil Doon.mp3";
 			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
-			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
-			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
-			//Compare(path1, path2);
+			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
 			
+			//Compare(path1, path2);
 			//Compare(0, 1, db);
 
 			/*
@@ -338,13 +385,14 @@ namespace Mirage
 			
 			System.Console.ReadLine();
 			
-			Compare(1000, 1001, db);
-			
 			 */
+			//Compare(89, 109, db, Analyzer.AnalysisMethod.SCMS);
+			
 			//Scms m11 = db.GetTrack(1);
 			//Console.Out.WriteLine(m11);
 			
-			//FindSimilar(127, db);
+			//FindSimilar(new int[] { 97, 0, 234 }, db, analysisMethod);
+			//FindSimilar(path1, db, analysisMethod);
 			
 			System.Console.ReadLine();
 			return;

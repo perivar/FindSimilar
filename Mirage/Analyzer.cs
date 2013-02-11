@@ -83,10 +83,10 @@ namespace Mirage
 			// 1. The goal of pre-emphasis is to compensate the high-frequency part
 			// that was suppressed during the sound production mechanism of humans.
 			// Moreover, it can also amplify the importance of high-frequency formants.
-			audiodata = preEmphase(audiodata);
+			//audiodata = preEmphase(audiodata);
 			
 			// Normalize
-			MathUtils.NormalizeInPlace(audiodata);
+			//MathUtils.NormalizeInPlace(audiodata);
 			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
@@ -130,10 +130,10 @@ namespace Mirage
 			// 1. The goal of pre-emphasis is to compensate the high-frequency part
 			// that was suppressed during the sound production mechanism of humans.
 			// Moreover, it can also amplify the importance of high-frequency formants.
-			audiodata = preEmphase(audiodata);
+			//audiodata = preEmphase(audiodata);
 			
 			// Normalize
-			MathUtils.NormalizeInPlace(audiodata);
+			//MathUtils.NormalizeInPlace(audiodata);
 			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
