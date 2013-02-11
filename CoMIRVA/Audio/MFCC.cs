@@ -20,13 +20,14 @@ using System;
  * They are widely used as features for speech recognition, and have also proved
  * useful in music instrument recognition [1].<br>
  *<br>
- * [1] Aucouturier, Pachet "Improving Trimbre Similarity: How high's the sky?",
+ * [1] Aucouturier, Pachet "Improving Timbre Similarity: How high's the sky?",
  *     in Journal of Negative Results in Speech and Audio Sciences, 1(1), 2004.
- *
  *
  * @author Klaus Seyerlehner
  * @version 1.0
+ * 
  * Ported to C# by royalgarter-lifetime-projects
+ * Improved by perivar@nerseth.com
  */
 namespace Comirva.Audio
 {
@@ -395,7 +396,7 @@ namespace Comirva.Audio
 			if ((input.Length % hopSize) != 0)
 			{
 				//int lenNew = input.Length / hopSize * hopSize;
-				int lenNew = hopSize * 4;
+				int lenNew = hopSize * 16;
 				Array.Resize<double>(ref input, lenNew);
 				//throw new Exception("Input data must be multiple of hop size (windowSize/2).");
 			}
@@ -439,7 +440,6 @@ namespace Comirva.Audio
 		 *                        one window
 		 * @param start int start index of the window data
 		 * @return double[] the window representation in Sone
-		 * @throws Exception raised if mehtod contract is violated
 		 */
 		public double[] ProcessWindow(double[] window, int start)
 		{

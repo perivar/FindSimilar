@@ -38,9 +38,9 @@ namespace Mirage
 	{
 		private const int SAMPLING_RATE = 22050; //22050;
 		private const int WINDOW_SIZE = 1024; //1024;
-		private const int MEL_COEFFICIENTS = 40; // 36 filters (SPHINX-III uses 40)
+		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
 		public const int MFCC_COEFFICIENTS = 20; //20
-		private const int SECONDS_TO_ANALYZE = 60;
+		private const int SECONDS_TO_ANALYZE = 120;
 
 		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		//private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
@@ -124,10 +124,6 @@ namespace Mirage
 			// Moreover, it can also amplify the importance of high-frequency formants.
 			audiodata = preEmphase(audiodata);
 			
-			//double[][] mfccs = mfcc.Process(MathUtils.FloatToDouble(audiodata));
-			//CoMIRVA.Maths.Matrix mfccdata = new CoMIRVA.Maths.Matrix(mfccs);
-			//Matrix mfccdata = new Matrix(mfccs);
-			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
 			                      new float[1][] { audiodata },
@@ -139,6 +135,14 @@ namespace Mirage
 			
 			// 2. Windowing
 			// 3. FFT
+			
+			// check for correct array length
+			if ((audiodata.Length % WINDOW_SIZE) != 0)
+			{
+				int lenNew = WINDOW_SIZE * 8;
+				Array.Resize<float>(ref audiodata, lenNew);
+			}
+			
 			Matrix stftdata = stft.Apply(audiodata);
 			
 			// 4. Mel Scale Filterbank

@@ -127,6 +127,7 @@ namespace Mirage
 			reader.Close();
 			
 			AudioFeature mandelEllis = MandelEllis.FromBytes(buf);
+			mandelEllis.Name = name;
 			//((MandelEllis) mandelEllis).WriteXML(new XmlTextWriter(name+"-db.xml", null));
 			
 			//return Scms.FromBytes(buf);
@@ -149,7 +150,7 @@ namespace Mirage
 				}
 			}
 			
-			dbcmd.CommandText = "SELECT audioFeature, trackid FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, trackid, name FROM mirage " +
 				"WHERE trackid NOT in (" + trackSql + ")";
 			//Console.WriteLine(dbcmd.CommandText);
 
@@ -191,8 +192,9 @@ namespace Mirage
 			while ((i < len) && tracksIterator.Read()) {
 				//tracks[i] = Scms.FromBytes((byte[]) tracksIterator.GetValue(0));
 				tracks[i] = MandelEllis.FromBytes((byte[]) tracksIterator.GetValue(0));
-				
 				mapping[i] = tracksIterator.GetInt32(1);
+
+				tracks[i].Name = tracksIterator.GetString(2);
 				i++;
 			}
 

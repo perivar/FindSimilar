@@ -76,7 +76,7 @@ namespace Mirage
 							d += dcur;
 							count++;
 						} else {
-							Console.WriteLine("Faulty SCMS id={0}, dcur={1}, d={2}", mapping[i], dcur, d);
+							//Console.WriteLine("Faulty SCMS id={0}, dcur={1}, d={2}", mapping[i], dcur, d);
 							d = 0;
 							break;
 						}
@@ -219,36 +219,31 @@ namespace Mirage
 		}
 		
 		public static void ScanDirectory(string path, Db db) {
+			
+			FileInfo failedFilesLog = new FileInfo("failed_files_log.txt");
+			
 			// scan directory for audio files
 			try
 			{
 				string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
 				var files = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
-
+				
 				int fileCounter = 0;
 				foreach (var f in files)
 				{
 					FileInfo fileInfo = new FileInfo(f);
-					Console.WriteLine("Processing {0} ...", fileInfo.Name);
+					//Console.WriteLine("Processing {0} ...", fileInfo.Name);
 					
-					AudioFeature feature = Analyzer.AnalyzeAudioFeature(fileInfo.FullName);
+					//AudioFeature feature = Analyzer.AnalyzeAudioFeature(fileInfo.FullName);
+					AudioFeature feature = Analyzer.Analyze(fileInfo.FullName);
 					if (feature != null) {
 						db.AddTrack(fileCounter, feature, fileInfo.Name);
 						fileCounter++;
-						Console.Out.WriteLine("Succesfully analyzed audio and added to database {0}! [{1}/{2}].", fileInfo.Name, fileCounter, files.Count());
+						Console.Out.WriteLine("[{1}/{2}] Succesfully added fingerprint to database {0}!", fileInfo.Name, fileCounter, files.Count());
 					} else {
 						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
+						IOUtils.LogMessageToFile(failedFilesLog, fileInfo.FullName);
 					}
-					
-					/*
-					Scms scms = Analyzer.Analyze(fileInfo.FullName);
-					if (scms != null) {
-						db.AddTrack(fileCounter, scms, fileInfo.Name);
-						fileCounter++;
-					} else {
-						Console.Out.WriteLine("Error! Could not generate audio fingerprint!");
-					}
-					 */
 				}
 				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, files.Count());
 			}

@@ -3,6 +3,11 @@ using CommonUtils;
 
 namespace Comirva.Audio.Util.Maths
 {
+	/// <summary>
+	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
+	/// Ported from Java to C# by perivar@nerseth.com
+	/// </summary>	
+
 	/// QR Decomposition.
 	///<P>
 	///   For an m-by-n matrix A with m >= n, the QR decomposition is an m-by-n

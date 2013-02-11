@@ -2,7 +2,11 @@
 
 namespace Comirva.Audio.Feature
 {
-	///
+	/// <summary>
+	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
+	/// Ported from Java to C# by perivar@nerseth.com
+	/// </summary>
+
 	/// An audio feature is a special attribute designed to describe characteristics
 	/// of audiostreams. A audio feature is the result of a audio feature extraction
 	/// process.<br>
@@ -15,6 +19,11 @@ namespace Comirva.Audio.Feature
 	/// @see comirva.audio.extraction.AudioFeatureExtractor
 	public abstract class AudioFeature
 	{
+		/// <summary>
+		/// Name of the Audio Feature
+		/// </summary>
+		public abstract string Name { get; set; }
+		
 		/// <summary>
 		/// Measures the similarity/dissimilarity of two audio streams characterized
 		/// by two audio features.
@@ -60,12 +69,15 @@ namespace Comirva.Audio.Feature
 		}
 		
 		public override string ToString() {
+			/*
 			string s = "";
 			foreach (byte b in ToBytes())
 			{
 				s += b;
 			}
 			return s;
+			*/
+			return Name;
 		}
 	}
 }

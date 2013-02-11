@@ -3,6 +3,11 @@ using CommonUtils;
 
 namespace Comirva.Audio.Util.Maths
 {
+	/// <summary>
+	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
+	/// Ported from Java to C# by perivar@nerseth.com
+	/// </summary>	
+
 	/// Eigenvalues and eigenvectors of a real matrix.
 	///<P>
 	///    If A is symmetric, then A = V*D*V' where the eigenvalue matrix D is

@@ -12,6 +12,10 @@ using CommonUtils;
 
 namespace Comirva.Audio.Feature
 {
+	/// <summary>
+	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
+	/// Ported from Java to C# by perivar@nerseth.com
+	/// </summary>
 	public class MandelEllis : AudioFeature
 	{
 		/// <summary>
@@ -85,7 +89,17 @@ namespace Comirva.Audio.Feature
 		}
 
 		private GmmMe gmmMe; /// the feature
-
+		
+		private string name; // the name
+		public override string Name {
+			get {
+				return name;
+			}
+			set {
+				this.name = value;
+			}
+		}
+		
 		public MandelEllis(GmmMe gmmMe) : this()
 		{
 			this.gmmMe = gmmMe;

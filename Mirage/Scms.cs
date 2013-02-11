@@ -45,6 +45,16 @@ namespace Mirage
 		private float [] icov;
 		private int dim;
 
+		private string name; // the name
+		public override string Name {
+			get {
+				return name;
+			}
+			set {
+				this.name = value;
+			}
+		}
+		
 		public Scms(int dimension)
 		{
 			dim = dimension;
@@ -73,8 +83,7 @@ namespace Mirage
 			try {
 				ic = c.Inverse();
 			} catch (MatrixSingularException) {
-				//throw new ScmsImpossibleException();
-				Dbg.WriteLine("ScmsImpossibleException!");
+				throw new ScmsImpossibleException();
 				return null;
 			}
 

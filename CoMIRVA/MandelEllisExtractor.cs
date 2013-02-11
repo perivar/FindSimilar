@@ -9,6 +9,10 @@ using Comirva.Audio.Feature;
 
 namespace Comirva.Audio.Extraction
 {
+	/// <summary>
+	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
+	/// Ported from Java to C# by perivar@nerseth.com
+	/// </summary>
 	public class MandelEllisExtractor
 	{
 		public int skipIntroSeconds = 30; //number of seconds to skip at the beginning of the song

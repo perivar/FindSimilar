@@ -2,6 +2,10 @@
 
 namespace Comirva.Audio.Util.Maths
 {
+	/// <summary>
+	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
+	/// Ported from Java to C# by perivar@nerseth.com
+	/// </summary>	
 
 	/// Cholesky Decomposition.
 	/// <P>
