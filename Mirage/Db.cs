@@ -37,9 +37,8 @@ namespace Mirage
 
 		public Db()
 		{
-			Console.WriteLine("Start");
-			string homedir = Environment.GetFolderPath(
-				Environment.SpecialFolder.Personal);
+			//Console.WriteLine("Start");
+			string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 			string dbdir = Path.Combine(homedir,".mirage");
 			string dbfile = Path.Combine(dbdir, "mirage.db");
 			string sqlite = string.Format("Data Source={0};Version=3", dbfile);

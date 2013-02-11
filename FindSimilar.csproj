@@ -68,6 +68,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\Arguments.cs">
+      <Link>Arguments.cs</Link>
+    </Compile>
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\Audio\RiffRead.cs">
       <Link>RiffRead.cs</Link>
     </Compile>

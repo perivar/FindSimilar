@@ -41,26 +41,28 @@ namespace Mirage
 {
 	public class Mir
 	{
+		static string _version = "1.0.0";
+		
 		#region Similarity Search
-		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod) {
+		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25) {
 			
-			var similarTracks = SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod);
+			var similarTracks = SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake);
 			foreach (var entry in similarTracks)
 			{
 				Console.WriteLine("{0}, {1}", entry.Key, entry.Value);
 			}
 		}
 		
-		public static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
+		public static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25) {
 			
-			var similarTracks = SimilarTracks(path, db, analysisMethod);
+			var similarTracks = SimilarTracks(path, db, analysisMethod, numToTake);
 			foreach (var entry in similarTracks)
 			{
 				Console.WriteLine("{0}, {1}", entry.Key, entry.Value);
 			}
 		}
 		
-		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod)
+		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25)
 		{
 			FileInfo fi = new FileInfo(searchForPath);
 			AudioFeature seedAudioFeature = null;
@@ -105,14 +107,14 @@ namespace Mirage
 			
 			// sort by non unique values
 			var sortedDict = (from entry in NameDictionary orderby entry.Value ascending select entry)
-				.Take(25)
+				.Take(numToTake)
 				.ToDictionary(pair => pair.Key, pair => pair.Value);
 			
 			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", seedAudioFeature.Name, t.Stop()));
 			return sortedDict;
 		}
 
-		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod)
+		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25)
 		{
 			AudioFeature[] seedAudioFeatures = null;
 			AudioFeature[] audioFeatures = null;
@@ -169,7 +171,7 @@ namespace Mirage
 			
 			// sort by non unique values
 			var sortedDict = (from entry in NameDictionary orderby entry.Value ascending select entry)
-				.Take(25)
+				.Take(numToTake)
 				.ToDictionary(pair => pair.Key, pair => pair.Value);
 			
 			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", String.Join(",", seedAudioFeatures.Select(p=>p.Name)), t.Stop()));
@@ -351,11 +353,68 @@ namespace Mirage
 		}
 		
 		public static void Main(string[] args) {
+
+			string scanPath = "";
+			string queryPath = "";
+			int queryId = -1;
+			int numToTake = 25;
+			
+			// Command line parsing
+			Arguments CommandLine = new Arguments(args);
+			if(CommandLine["match"] != null) {
+				queryPath = CommandLine["match"];
+			}
+			if(CommandLine["matchid"] != null) {
+				string matchId = CommandLine["matchid"];
+				queryId = int.Parse(matchId);
+			}
+			if(CommandLine["scandir"] != null) {
+				scanPath = CommandLine["scandir"];
+			}
+			if(CommandLine["num"] != null) {
+				string num = CommandLine["num"];
+				numToTake = int.Parse(num);
+			}
+			if(CommandLine["?"] != null) {
+				PrintUsage();
+				return;
+			}
+			if(CommandLine["help"] != null) {
+				PrintUsage();
+				return;
+			}
+			
+			if (queryPath == "" && queryId == -1 && scanPath == "") {
+				PrintUsage();
+				return;
+			}
+			
 			Db db = new Db();
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+
+			if (scanPath != "") {
+				if (IOUtils.IsDirectory(scanPath)) {
+					ScanDirectory(scanPath, db, analysisMethod);
+				} else {
+					Console.Out.WriteLine("No directory found {0}!", scanPath);
+				}
+			}
+
+			if (queryPath != "") {
+				FileInfo fi = new FileInfo(queryPath);
+				if (fi.Exists) {
+					FindSimilar(queryPath, db, analysisMethod, numToTake);
+				} else {
+					Console.Out.WriteLine("No file found {0}!", queryPath);
+				}
+			}
 			
-			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
+			if (queryId != -1) {
+				FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake);
+			}
+			
+			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked";
@@ -367,8 +426,8 @@ namespace Mirage
 			//string path2 = @"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav";
 			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Uplifting Tutorial by Phil Doon\Uplifting Tutorial by Phil Doon.mp3";
 			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
-			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
-			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
 			
 			//AudioFeature feature = Analyzer.AnalyzeScms(@"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\SHM - Greyhound\MISC2_2.wav");
 			
@@ -394,14 +453,26 @@ namespace Mirage
 			//Console.Out.WriteLine(m11);
 			
 			//FindSimilar(new int[] { 97, 0, 234 }, db, analysisMethod);
-			FindSimilar(path2, db, analysisMethod);
-			
-			System.Console.ReadLine();
-			return;
-
+			//FindSimilar(path2, db, analysisMethod);
 			
 			// HASH creation
 			// https://github.com/viat/YapHash/blob/master/sources/YapHash/src/YapHash.cpp
+		}
+		
+		public static void PrintUsage() {
+			Console.WriteLine("FindSimilar. Version {0}.", _version);
+			Console.WriteLine("Copyright (C) 2012-2013 Per Ivar Nerseth.");
+			Console.WriteLine();
+			Console.WriteLine("Usage: FindSimilar.exe <Arguments>");
+			Console.WriteLine();
+			Console.WriteLine("Arguments:");
+			Console.WriteLine("\t-scandir=<rescan directory path and create audio fingerprints>");
+			Console.WriteLine("\t-match=<path to the wave file to find matches for>");
+			Console.WriteLine("\t-matchid=<database id to the wave file to find matches for>");
+			Console.WriteLine();
+			Console.WriteLine("Optional Arguments:");
+			Console.WriteLine("\t-num=<number of matches to return when querying>");
+			Console.WriteLine("\t-? or -help=show this usage help>");
 		}
 	}
 }
