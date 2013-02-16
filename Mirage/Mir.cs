@@ -36,6 +36,8 @@ using System.Text.RegularExpressions;
 
 using Comirva.Audio.Feature;
 
+using NDtw;
+
 using CommonUtils;
 
 namespace Mirage
@@ -215,6 +217,7 @@ namespace Mirage
 		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
 			FileInfo failedFilesLog = new FileInfo("failed_files_log.txt");
+			failedFilesLog.Delete();
 			
 			// scan directory for audio files
 			try
@@ -259,6 +262,32 @@ namespace Mirage
 		
 		public static void Main(string[] args) {
 
+			/*
+			DbgTimer t = new DbgTimer();
+			t.Start();
+			
+			bool UseBoundaryConstraintStart = true;
+			bool UseBoundaryConstraintEnd = true;
+			Dtw dtw = new Dtw(
+				new[] { 4.0, 4.0, 4.5, 4.5, 5.0, 5.0, 5.0, 4.5, 4.5, 4.0, 4.0, 3.5 },
+				new[] { 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 3.0, 2.5, 2.0, 2.0, 2.0, 1.5 },
+				DistanceMeasure.Euclidean,
+				UseBoundaryConstraintStart,
+				UseBoundaryConstraintEnd,
+				null,
+				null,
+				null);
+			
+			double cost = dtw.GetCost();
+			Console.Out.WriteLine(String.Format("DTW: {0} in {1} ms", cost, t.Stop()));
+
+			System.Console.ReadLine();
+			return;
+			 */
+			
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+
 			string scanPath = "";
 			string queryPath = "";
 			int queryId = -1;
@@ -299,8 +328,6 @@ namespace Mirage
 			}
 			
 			Db db = new Db();
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 
 			if (scanPath != "") {
 				if (IOUtils.IsDirectory(scanPath)) {

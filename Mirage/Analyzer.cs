@@ -48,16 +48,11 @@ namespace Mirage
 		public const int MFCC_COEFFICIENTS = 20; //20
 		private const int SECONDS_TO_ANALYZE = 120;
 
-		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		//private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		//private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		//private static MFCC mfcc = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, 20000.0, MEL_COEFFICIENTS);
 		
 		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
-		
-		/**
-		 * Pre-Emphasis Alpha (Set to 0 if no pre-emphasis should be performed)
-		 */
-		private static float PREEMPHASISALPHA = (float) 0.95;
 		
 		public static void Init () {}
 
@@ -161,6 +156,18 @@ namespace Mirage
 				Array.Resize<float>(ref audiodata, lenNew);
 			}
 			
+			//check for correct array length
+			/*
+			if ((audiodata.Length % WINDOW_SIZE) != 0)
+			{
+				double l = (double) audiodata.Length / WINDOW_SIZE;
+				l = MathUtils.RoundUp(l);
+				int lenNew = (int) l * WINDOW_SIZE;
+				Array.Resize<float>(ref audiodata, lenNew);
+				//throw new Exception("Input data must be multiple of hop size (windowSize/2).");
+			}
+			 */
+			
 			Matrix stftdata = stft.Apply(audiodata);
 			
 			// 4. Mel Scale Filterbank
@@ -189,6 +196,11 @@ namespace Mirage
 
 			return audioFeature;
 		}
+		
+		/// <summary>
+		/// Pre-Emphasis Alpha (Set to 0 if no pre-emphasis should be performed)
+		/// </summary>
+		private static float PREEMPHASISALPHA = (float) 0.95;
 		
 		/// <summary>
 		/// The goal of pre-emphasis is to compensate the high-frequency part

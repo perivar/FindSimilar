@@ -28,6 +28,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 using Comirva.Audio.Feature;
 using Comirva.Audio.Util.Maths;
 
+using NDtw;
+
 namespace Mirage
 {
 	public class ScmsImpossibleException : Exception
@@ -116,7 +118,32 @@ namespace Mirage
 				return -1;
 			}
 			Scms other = (Scms)f;
-			return Distance(this, other, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS));
+			
+			Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), DistanceMeasure.Euclidean, true, true, null, null, null);
+			return dtw.GetCost();
+			//return Distance(this, other, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS));
+		}
+		
+		public double[] GetArray() {
+			
+			double[] d = new double[mean.Length + cov.Length + icov.Length];
+
+			int start = 0;
+			for (int i = 0; i < mean.Length; i++) {
+				d[start + i] = mean[i];
+			}
+
+			start += mean.Length;
+			for (int i = 0; i < cov.Length; i++) {
+				d[start + i] = cov[i];
+			}
+
+			start += cov.Length;
+			for (int i = 0; i < icov.Length; i++) {
+				d[start + i] = icov[i];
+			}
+			
+			return d;
 		}
 		
 		public static float Distance(byte [] a, byte [] b)

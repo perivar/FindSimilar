@@ -34,7 +34,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-matchid=71</StartArguments>
+    <StartArguments>-matchid=129</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -124,6 +124,15 @@
     <Compile Include="Mirage\Stft.cs" />
     <Compile Include="Mirage\Vector.cs" />
     <Compile Include="Mirage\WindowFunctions.cs" />
+    <Compile Include="NDtw\DistanceMeasure.cs" />
+    <Compile Include="NDtw\Dtw.cs" />
+    <Compile Include="NDtw\IDtw.cs" />
+    <Compile Include="NDtw\Preprocessing\CentralizationPreprocessor.cs" />
+    <Compile Include="NDtw\Preprocessing\IPreprocessor.cs" />
+    <Compile Include="NDtw\Preprocessing\NonePreprocessor.cs" />
+    <Compile Include="NDtw\Preprocessing\NormalizationPreprocessor.cs" />
+    <Compile Include="NDtw\Preprocessing\StandardizationPreprocessor.cs" />
+    <Compile Include="NDtw\SeriesVariable.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="sound_io.cs" />
@@ -147,6 +156,8 @@
     <Folder Include="NativeLibraries\mplayer" />
     <Folder Include="NativeLibraries\sox" />
     <Folder Include="NativeLibraries\sox" />
+    <Folder Include="NDtw" />
+    <Folder Include="NDtw\Preprocessing" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NativeLibraries\faad\faad.exe">

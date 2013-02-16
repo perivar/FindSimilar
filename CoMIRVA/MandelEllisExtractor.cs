@@ -37,7 +37,7 @@ namespace Comirva.Audio.Extraction
 			this.numberCoefficients = numberCoefficients;
 			this.numberFilters = numberFilters;
 			
-			this.mfcc = new MFCC(sampleRate, windowSize, numberCoefficients, true, 20.0, 16000.0, numberFilters);
+			this.mfcc = new MFCC(sampleRate, windowSize, numberCoefficients, true, 20.0, sampleRate/2, numberFilters);
 
 			if(skipIntro < 0 || skipEnd < 0 || minimumStreamLength < 1)
 				throw new ArgumentException("Illegal parametes;");
