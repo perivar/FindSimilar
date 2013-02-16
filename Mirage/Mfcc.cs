@@ -66,7 +66,7 @@ namespace Mirage
 
 		public Matrix Apply (ref Matrix m)
 		{
-			DbgTimer t = new DbgTimer ();
+			DbgTimer t = new DbgTimer();
 			t.Start ();
 
 			Matrix mel = new Matrix (filterWeights.rows, m.columns);

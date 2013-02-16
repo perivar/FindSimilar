@@ -56,7 +56,7 @@ namespace Mirage
 		/// <returns>A matrix with the result of the STFT</returns>
 		public Matrix Apply(float[] audiodata)
 		{
-			Timer t = new Timer();
+			DbgTimer t = new DbgTimer();
 			t.Start();
 			
 			int hops = (audiodata.Length - winsize)/hopsize;

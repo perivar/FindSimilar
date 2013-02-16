@@ -48,7 +48,7 @@ namespace Mirage
 			using (Process toraw = new Process())
 			{
 				fileIn = Regex.Replace(fileIn, "%20", " ");
-				Timer t = new Timer();
+				DbgTimer t = new DbgTimer();
 				t.Start();
 				String curdir = System.Environment.CurrentDirectory;
 				Dbg.WriteLine("Decoding: " + fileIn);
@@ -107,7 +107,7 @@ namespace Mirage
 					floatBuffer = new float[items];
 					
 					for (int i = 0; i < items; i++) {
-						floatBuffer[i] = BitConverter.ToSingle(bytesBuffer, i * sizeof(float)) * 65536.0f;
+						floatBuffer[i] = BitConverter.ToSingle(bytesBuffer, i * sizeof(float)); // * 65536.0f;
 					}
 					
 				} catch (System.IO.FileNotFoundException) {
@@ -136,7 +136,7 @@ namespace Mirage
 			using (Process tosoxreadable = new Process())
 			{
 				fileIn = Regex.Replace(fileIn, "%20", " ");
-				Timer t = new Timer();
+				DbgTimer t = new DbgTimer();
 				t.Start();
 				String curdir = System.Environment.CurrentDirectory;
 				Dbg.WriteLine("Decoding: " + fileIn);
@@ -190,7 +190,7 @@ namespace Mirage
 			using (Process towav = new Process())
 			{
 				fileIn = Regex.Replace(fileIn, "%20", " ");
-				Timer t = new Timer();
+				DbgTimer t = new DbgTimer();
 				t.Start();
 				String curdir = System.Environment.CurrentDirectory;
 				Dbg.WriteLine("Decoding: " + fileIn);

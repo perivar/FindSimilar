@@ -25,6 +25,7 @@ using System.Linq;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 using Comirva.Audio;
 using Comirva.Audio.Extraction;
@@ -60,17 +61,20 @@ namespace Mirage
 		
 		public static void Init () {}
 
-		public static AudioFeature AnalyzeMandelEllis(string file_path)
+		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath)
 		{
-			DbgTimer t = new DbgTimer ();
+			DbgTimer t = new DbgTimer();
 			t.Start ();
 
-			float[] audiodata = AudioFileReader.Decode(file_path, SAMPLING_RATE, SECONDS_TO_ANALYZE);
+			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
 			if (audiodata == null || audiodata.Length == 0)  {
 				Dbg.WriteLine("Error! - No Audio Found");
 				return null;
 			}
 			
+			// Calculate duration in ms
+			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
+
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
 			                      new float[1][] { audiodata },
@@ -80,16 +84,12 @@ namespace Mirage
 			                      32);
 			 */
 			
-			// 1. The goal of pre-emphasis is to compensate the high-frequency part
-			// that was suppressed during the sound production mechanism of humans.
-			// Moreover, it can also amplify the importance of high-frequency formants.
-			//audiodata = preEmphase(audiodata);
-			
 			// Normalize
 			//MathUtils.NormalizeInPlace(audiodata);
+			Multiply(ref audiodata, 65536);
 			
 			/*
-			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
+			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-normalized.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
 			                      new float[1][] { audiodata },
 			                      1,
 			                      audiodata.Length,
@@ -98,25 +98,36 @@ namespace Mirage
 			 */
 			
 			MandelEllisExtractor extractor = new MandelEllisExtractor(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, MEL_COEFFICIENTS);
-			AudioFeature feature = extractor.Calculate(MathUtils.FloatToDouble(audiodata));
-
+			AudioFeature audioFeature = extractor.Calculate(MathUtils.FloatToDouble(audiodata));
+			
+			if (audioFeature != null) {
+				// Store duration
+				audioFeature.Duration = (long) duration;
+				
+				// Store file name
+				audioFeature.Name = filePath.Name;
+			}
+			
 			long stop = 0;
 			t.Stop (ref stop);
 			Dbg.WriteLine ("MandelEllisExtractor - Total Execution Time: {0}ms", stop);
 
-			return feature;
+			return audioFeature;
 		}
 		
-		public static Scms AnalyzeScms(string file_path)
+		public static Scms AnalyzeScms(FileInfo filePath)
 		{
-			DbgTimer t = new DbgTimer ();
+			DbgTimer t = new DbgTimer();
 			t.Start ();
 
-			float[] audiodata = AudioFileReader.Decode(file_path, SAMPLING_RATE, SECONDS_TO_ANALYZE);
+			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
 			if (audiodata == null || audiodata.Length == 0)  {
 				Dbg.WriteLine("Error! - No Audio Found");
 				return null;
 			}
+			
+			// Calculate duration in ms
+			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
 			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
@@ -127,16 +138,12 @@ namespace Mirage
 			                      32);
 			 */
 			
-			// 1. The goal of pre-emphasis is to compensate the high-frequency part
-			// that was suppressed during the sound production mechanism of humans.
-			// Moreover, it can also amplify the importance of high-frequency formants.
-			// audiodata = preEmphase(audiodata);
-			
 			// Normalize
 			//MathUtils.NormalizeInPlace(audiodata);
+			Multiply(ref audiodata, 65536);
 			
 			/*
-			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-preemphase.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
+			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-normalized.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
 			                      new float[1][] { audiodata },
 			                      1,
 			                      audiodata.Length,
@@ -166,21 +173,47 @@ namespace Mirage
 			
 			// Store in a Statistical Cluster Model Similarity class.
 			// A Gaussian representation of a song
-			Scms scms = Scms.GetScms(mfccdata);
+			Scms audioFeature = Scms.GetScms(mfccdata);
 
+			if (audioFeature != null) {
+				// Store duration
+				audioFeature.Duration = (long) duration;
+				
+				// Store file name
+				audioFeature.Name = filePath.Name;
+			}
+			
 			long stop = 0;
 			t.Stop (ref stop);
 			Dbg.WriteLine ("Mirage - Total Execution Time: {0}ms", stop);
 
-			return scms;
+			return audioFeature;
 		}
 		
+		/// <summary>
+		/// The goal of pre-emphasis is to compensate the high-frequency part
+		/// that was suppressed during the sound production mechanism of humans.
+		/// Moreover, it can also amplify the importance of high-frequency formants.
+		/// It's not neccesary for only music, but important for speech
+		/// </summary>
+		/// <param name="samples">audio data to preemphase</param>
+		/// <returns>processed audio</returns>
 		private static float[] preEmphase(float[] samples){
 			float[] EmphasedSamples = new float[samples.Length];
 			for (int i = 1; i < samples.Length; i++){
 				EmphasedSamples[i] = (float) samples[i] - PREEMPHASISALPHA * samples[i - 1];
 			}
 			return EmphasedSamples;
+		}
+		
+		/// <summary>
+		/// Multiply signal with factor
+		/// </summary>
+		/// <param name="data">Signal to be processed</param>
+		public static void Multiply(ref float[] data, float factor)
+		{
+			// multiply by factor and return
+			data = data.Select(i => i * factor).ToArray();
 		}
 	}
 }

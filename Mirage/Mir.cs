@@ -24,6 +24,7 @@ using System;
 using System.Diagnostics;
 
 using System.IO;
+using System.Globalization;
 using System.Linq;
 
 using System.Data;
@@ -44,44 +45,42 @@ namespace Mirage
 		static string _version = "1.0.0";
 		
 		#region Similarity Search
-		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25) {
+		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2) {
 			
-			var similarTracks = SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake);
+			var similarTracks = SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake, percentage);
 			foreach (var entry in similarTracks)
 			{
 				Console.WriteLine("{0}, {1}", entry.Key, entry.Value);
 			}
 		}
 		
-		public static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25) {
+		public static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2) {
 			
-			var similarTracks = SimilarTracks(path, db, analysisMethod, numToTake);
+			var similarTracks = SimilarTracks(path, db, analysisMethod, numToTake, percentage);
 			foreach (var entry in similarTracks)
 			{
 				Console.WriteLine("{0}, {1}", entry.Key, entry.Value);
 			}
 		}
 		
-		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25)
+		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2)
 		{
 			FileInfo fi = new FileInfo(searchForPath);
 			AudioFeature seedAudioFeature = null;
 			AudioFeature[] audioFeatures = null;
 			switch (analysisMethod) {
 				case Analyzer.AnalysisMethod.MandelEllis:
-					seedAudioFeature = Analyzer.AnalyzeMandelEllis(searchForPath);
-					seedAudioFeature.Name = fi.Name;
+					seedAudioFeature = Analyzer.AnalyzeMandelEllis(fi);
 					audioFeatures = new MandelEllis[100];
 					break;
 				case Analyzer.AnalysisMethod.SCMS:
-					seedAudioFeature = Analyzer.AnalyzeScms(searchForPath);
-					seedAudioFeature.Name = fi.Name;
+					seedAudioFeature = Analyzer.AnalyzeScms(fi);
 					audioFeatures = new Scms[100];
 					break;
 			}
 			
 			// Get all tracks from the DB except the seedSongs
-			IDataReader r = db.GetTracks(null);
+			IDataReader r = db.GetTracks(null, 0, percentage);
 			
 			// store results in a dictionary
 			var NameDictionary = new Dictionary<KeyValuePair<int, string>, double>();
@@ -90,7 +89,7 @@ namespace Mirage
 			int read = 1;
 			double dcur;
 			
-			Timer t = new Timer();
+			DbgTimer t = new DbgTimer();
 			t.Start();
 			
 			while (read > 0) {
@@ -114,7 +113,7 @@ namespace Mirage
 			return sortedDict;
 		}
 
-		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25)
+		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2)
 		{
 			AudioFeature[] seedAudioFeatures = null;
 			AudioFeature[] audioFeatures = null;
@@ -134,7 +133,7 @@ namespace Mirage
 			}
 			
 			// Get all tracks from the DB except the seedSongs
-			IDataReader r = db.GetTracks(exclude);
+			IDataReader r = db.GetTracks(exclude, seedAudioFeatures[0].Duration, percentage);
 			
 			// store results in a dictionary
 			var NameDictionary = new Dictionary<KeyValuePair<int, string>, double>();
@@ -145,7 +144,7 @@ namespace Mirage
 			double dcur;
 			float count;
 			
-			Timer t = new Timer();
+			DbgTimer t = new DbgTimer();
 			t.Start();
 			
 			while (read > 0) {
@@ -164,7 +163,7 @@ namespace Mirage
 						count++;
 					}
 					if (d > 0) {
-						NameDictionary.Add(new KeyValuePair<int,string>(mapping[i], audioFeatures[i].Name), d/count);
+						NameDictionary.Add(new KeyValuePair<int,string>(mapping[i], String.Format("{0} ({1} ms)", audioFeatures[i].Name, audioFeatures[i].Duration)), d/count);
 					}
 				}
 			}
@@ -179,116 +178,23 @@ namespace Mirage
 		}
 		#endregion
 		
-		#region Hide these methods
-		public static bool CheckFile(string wav) {
-			using (Process toraw = new Process())
-			{
-				toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
-				//toraw.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
-				toraw.StartInfo.Arguments = " --i \"" + wav + "\"";
-				toraw.StartInfo.UseShellExecute = false;
-				toraw.StartInfo.RedirectStandardOutput = true;
-				toraw.StartInfo.RedirectStandardError = true;
-				toraw.Start();
-				toraw.WaitForExit();
-				
-				// Read in all the text from the process with the StreamReader.
-				using (StreamReader reader = toraw.StandardError)
-				{
-					string result = reader.ReadToEnd();
-					if (result != null && !result.Equals("")) {
-						// 0x674f	= Ogg Vorbis (mode 1)
-						// 0x6750	= Ogg Vorbis (mode 2)
-						// 0x6751	= Ogg Vorbis (mode 3)
-						// 0x676f	= Ogg Vorbis (mode 1+)
-						// 0x6770	= Ogg Vorbis (mode 2+)
-						// 0x6771	= Ogg Vorbis (mode 3+)
-						Match match = Regex.Match(result, @"Unknown WAV file encoding \(type 67.*?\)",
-						                          RegexOptions.IgnoreCase);
-						if (match.Success) {
-							// this is a ogg wrapped in WAV
-							// http://music.columbia.edu/pipermail/linux-audio-user/2003-October/007279.html
-							// Strip off the first 68 bytes. You will then have a standard Ogg Vorbis file.
-							
-							Console.WriteLine(match.Groups[0]);
-							//Console.ReadKey();
-						} else {
-							Console.WriteLine(result);
-						}
-					}
-				}
-
-				// Read in all the text from the process with the StreamReader.
-				using (StreamReader reader = toraw.StandardOutput)
-				{
-					string result = reader.ReadToEnd();
-					if (result != null && !result.Equals("")) {
-						// Channels       : 2
-						// Sample Rate    : 44100
-						// Precision      : 24-bit
-						// Duration       : 00:00:02.78 = 122760 samples = 208.776 CDDA sectors
-						// File Size      : 737k
-						// Bit Rate       : 2.12M
-						// Sample Encoding: 24-bit Signed Integer PCM
-						
-						Match match = Regex.Match(result, @"Sample Encoding: ([A-Za-z0-9\s\-]+)\n",
-						                          RegexOptions.IgnoreCase);
-						if (match.Success) {
-							Console.WriteLine(match.Groups[1]);
-							Console.ReadKey();
-						} else {
-							Console.WriteLine(result);
-						}
-					}
-				}
-				
-				int exitCode = toraw.ExitCode;
-				// 0 = succesfull
-				// 1 = partially succesful
-				if (exitCode == 0 || exitCode == 1) {
-					return true;
-				} else {
-					return false;
-				}
-			}
-		}
-
-		public static void TestReadWriteDB(string wav, Db db, Analyzer.AnalysisMethod analysisMethod) {
-			
-			Scms scms = Analyzer.AnalyzeScms(wav);
-			Console.WriteLine(scms);
-			foreach (byte b in scms.ToBytes())
-			{
-				Console.Write(b);
-			}
-			Console.ReadKey();
-			
-			db.AddTrack(1, scms, new FileInfo(wav).Name);
-
-			AudioFeature scms2 = db.GetTrack(1, analysisMethod);
-			Console.WriteLine(scms2);
-			foreach (byte b in scms2.ToBytes())
-			{
-				Console.Write(b);
-			}
-			Console.ReadKey();
-		}
-		#endregion
-
 		#region Compare Methods
 		public static void Compare(string path1, string path2, Analyzer.AnalysisMethod analysisMethod) {
 			
 			AudioFeature m1 = null;
 			AudioFeature m2 = null;
 			
+			FileInfo filePath1 = new FileInfo(path1);
+			FileInfo filePath2 = new FileInfo(path2);
+			
 			switch (analysisMethod) {
 				case Analyzer.AnalysisMethod.MandelEllis:
-					m1 = Analyzer.AnalyzeMandelEllis(path1);
-					m2 = Analyzer.AnalyzeMandelEllis(path2);
+					m1 = Analyzer.AnalyzeMandelEllis(filePath1);
+					m2 = Analyzer.AnalyzeMandelEllis(filePath2);
 					break;
 				case Analyzer.AnalysisMethod.SCMS:
-					m1 = Analyzer.AnalyzeScms(path1);
-					m2 = Analyzer.AnalyzeScms(path2);
+					m1 = Analyzer.AnalyzeScms(filePath1);
+					m2 = Analyzer.AnalyzeScms(filePath2);
 					break;
 			}
 			
@@ -320,21 +226,20 @@ namespace Mirage
 				foreach (var f in files)
 				{
 					FileInfo fileInfo = new FileInfo(f);
-					
 					AudioFeature feature = null;
 					switch (analysisMethod) {
 						case Analyzer.AnalysisMethod.MandelEllis:
-							feature = Analyzer.AnalyzeMandelEllis(fileInfo.FullName);
+							feature = Analyzer.AnalyzeMandelEllis(fileInfo);
 							break;
 						case Analyzer.AnalysisMethod.SCMS:
-							feature = Analyzer.AnalyzeScms(fileInfo.FullName);
+							feature = Analyzer.AnalyzeScms(fileInfo);
 							break;
 					}
 					
 					if (feature != null) {
-						db.AddTrack(fileCounter, feature, fileInfo.Name);
+						db.AddTrack(fileCounter, feature);
 						fileCounter++;
-						Console.Out.WriteLine("[{1}/{2}] Succesfully added fingerprint to database {0}!", fileInfo.Name, fileCounter, files.Count());
+						Console.Out.WriteLine("[{1}/{2}] Succesfully added fingerprint to database {0} ({3} ms)!", fileInfo.Name, fileCounter, files.Count(), feature.Duration);
 					} else {
 						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 						IOUtils.LogMessageToFile(failedFilesLog, fileInfo.FullName);
@@ -358,6 +263,7 @@ namespace Mirage
 			string queryPath = "";
 			int queryId = -1;
 			int numToTake = 25;
+			double percentage = 0.2;
 			
 			// Command line parsing
 			Arguments CommandLine = new Arguments(args);
@@ -374,6 +280,9 @@ namespace Mirage
 			if(CommandLine["num"] != null) {
 				string num = CommandLine["num"];
 				numToTake = int.Parse(num);
+			}
+			if(CommandLine["percentage"] != null) {
+				double.TryParse(CommandLine["percentage"], NumberStyles.Number,CultureInfo.InvariantCulture, out percentage);
 			}
 			if(CommandLine["?"] != null) {
 				PrintUsage();
@@ -395,6 +304,8 @@ namespace Mirage
 
 			if (scanPath != "") {
 				if (IOUtils.IsDirectory(scanPath)) {
+					db.RemoveTable();
+					db.AddTable();
 					ScanDirectory(scanPath, db, analysisMethod);
 				} else {
 					Console.Out.WriteLine("No directory found {0}!", scanPath);
@@ -404,14 +315,14 @@ namespace Mirage
 			if (queryPath != "") {
 				FileInfo fi = new FileInfo(queryPath);
 				if (fi.Exists) {
-					FindSimilar(queryPath, db, analysisMethod, numToTake);
+					FindSimilar(queryPath, db, analysisMethod, numToTake, percentage);
 				} else {
 					Console.Out.WriteLine("No file found {0}!", queryPath);
 				}
 			}
 			
 			if (queryId != -1) {
-				FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake);
+				FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake, percentage);
 			}
 			
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
@@ -443,9 +354,7 @@ namespace Mirage
 			
 			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
 			                             + Scms.Distance(m1, m2, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS)));
-			
-			System.Console.ReadLine();
-			
+						
 			 */
 			//Compare(89, 109, db, Analyzer.AnalysisMethod.SCMS);
 			
@@ -457,6 +366,8 @@ namespace Mirage
 			
 			// HASH creation
 			// https://github.com/viat/YapHash/blob/master/sources/YapHash/src/YapHash.cpp
+
+			System.Console.ReadLine();
 		}
 		
 		public static void PrintUsage() {
@@ -472,6 +383,7 @@ namespace Mirage
 			Console.WriteLine();
 			Console.WriteLine("Optional Arguments:");
 			Console.WriteLine("\t-num=<number of matches to return when querying>");
+			Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
 			Console.WriteLine("\t-? or -help=show this usage help>");
 		}
 	}

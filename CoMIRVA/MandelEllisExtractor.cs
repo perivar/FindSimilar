@@ -26,16 +26,17 @@ namespace Comirva.Audio.Extraction
 
 		protected internal MFCC mfcc;
 
-		public MandelEllisExtractor(float sampleRate, int windowSize, int numberCoefficients, int numberFilters) : this(30, 30, 30)
+		public MandelEllisExtractor(float sampleRate, int windowSize, int numberCoefficients, int numberFilters) : this(sampleRate, windowSize, numberCoefficients, numberFilters, 30, 30, 30)
+		{
+		}
+
+		public MandelEllisExtractor(float sampleRate, int windowSize, int numberCoefficients, int numberFilters, int skipIntro, int skipEnd, int minimumLength)
 		{
 			this.sampleRate = sampleRate;
 			this.windowSize = windowSize;
 			this.numberCoefficients = numberCoefficients;
 			this.numberFilters = numberFilters;
-		}
-
-		public MandelEllisExtractor(int skipIntro, int skipEnd, int minimumLength)
-		{
+			
 			this.mfcc = new MFCC(sampleRate, windowSize, numberCoefficients, true, 20.0, 16000.0, numberFilters);
 
 			if(skipIntro < 0 || skipEnd < 0 || minimumStreamLength < 1)
@@ -55,7 +56,6 @@ namespace Comirva.Audio.Extraction
 			double[][] mfccCoefficients = mfcc.Process(input);
 
 			try {
-				
 				//check if element 0 exists
 				if(mfccCoefficients.Length == 0)
 					throw new ArgumentException("The input stream is to short to process;");

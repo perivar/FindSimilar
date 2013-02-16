@@ -51,11 +51,15 @@ namespace Mirage
 			dbcon = (IDbConnection) new SQLiteConnection(sqlite);
 			dbcon.Open();
 			
+			//AddTable();
+			
+			/*
 			IDbCommand dbcmd = dbcon.CreateCommand();
 			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
-				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT)";
+				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER)";
 			dbcmd.ExecuteNonQuery();
 			dbcmd.Dispose();
+			 */
 		}
 		
 		~Db()
@@ -63,32 +67,72 @@ namespace Mirage
 			dbcon.Close();
 		}
 
-		public int AddTrack(int trackid, AudioFeature audioFeature, string name)
+		public int AddTrack(int trackid, AudioFeature audioFeature)
 		{
 			IDbDataParameter dbAudioFeatureParam = new SQLiteParameter("@audioFeature", DbType.Binary);
 			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
+			IDbDataParameter dbDurationParam = new SQLiteParameter("@duration", DbType.Int64);
 			
 			dbAudioFeatureParam.Value = audioFeature.ToBytes();
-			dbNameParam.Value = name;
+			dbNameParam.Value = audioFeature.Name;
+			dbDurationParam.Value = audioFeature.Duration;
 			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name) " +
-				"VALUES (" + trackid + ", @audioFeature, @name)";
+			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration) " +
+				"VALUES (" + trackid + ", @audioFeature, @name, @duration)";
 			dbcmd.Parameters.Add(dbAudioFeatureParam);
 			dbcmd.Parameters.Add(dbNameParam);
+			dbcmd.Parameters.Add(dbDurationParam);
 			
 			try {
 				dbcmd.ExecuteNonQuery();
+				//dbcmd.Dispose();
 			} catch (SQLiteException) {
 				return -1;
 			}
 			
 			return trackid;
 		}
+
+		public bool RemoveTable()
+		{
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "DROP TABLE IF EXISTS mirage";
+			
+			try {
+				dbcmd.ExecuteNonQuery();
+				//dbcmd.Dispose();
+			} catch (SQLiteException){
+				return false;
+			}
+			
+			return true;
+		}
 		
+		public bool AddTable() {
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
+				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER)";
+			
+			try {
+				dbcmd.ExecuteNonQuery();
+				//dbcmd.Dispose();
+			} catch (SQLiteException){
+				return false;
+			}
+			
+			return true;
+		}
+
 		public int RemoveTrack(int trackid)
 		{
 			IDbCommand dbcmd;
@@ -99,6 +143,7 @@ namespace Mirage
 			
 			try {
 				dbcmd.ExecuteNonQuery();
+				//dbcmd.Dispose();
 			} catch (SQLiteException){
 				return -1;
 			}
@@ -112,7 +157,7 @@ namespace Mirage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "SELECT audioFeature, name FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, name, duration FROM mirage " +
 				"WHERE trackid = " + trackid;
 			IDataReader reader = dbcmd.ExecuteReader();
 			if (!reader.Read()) {
@@ -121,6 +166,8 @@ namespace Mirage
 			
 			byte[] buf = (byte[]) reader.GetValue(0);
 			string name = reader.GetString(1);
+			long duration = (int) reader.GetInt64(2);
+			
 			reader.Close();
 			
 			AudioFeature audioFeature = null;
@@ -133,11 +180,12 @@ namespace Mirage
 					break;
 			}
 			audioFeature.Name = name;
+			audioFeature.Duration = duration;
 			
 			return audioFeature;
 		}
 		
-		public IDataReader GetTracks(int[] trackId)
+		public IDataReader GetTracks(int[] trackId, long duration, double percentage)
 		{
 			IDbCommand dbcmd;
 			lock (dbcon) {
@@ -153,9 +201,14 @@ namespace Mirage
 				}
 			}
 			
-			dbcmd.CommandText = "SELECT audioFeature, trackid, name FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, trackid, name, duration FROM mirage " +
 				"WHERE trackid NOT in (" + trackSql + ")";
 
+			if (duration > 0) {
+				dbcmd.CommandText += " AND duration > " + (int)(duration * (1.0 - percentage)) + " AND duration < " + (int)(duration * (1.0 + percentage));
+			}
+			//Console.Out.WriteLine(dbcmd.CommandText);
+			
 			return dbcmd.ExecuteReader();
 		}
 		
@@ -204,6 +257,7 @@ namespace Mirage
 				}
 				mapping[i] = tracksIterator.GetInt32(1);
 				audioFeature.Name = tracksIterator.GetString(2);
+				audioFeature.Duration = tracksIterator.GetInt64(3);
 				tracks[i] = audioFeature;
 				i++;
 			}

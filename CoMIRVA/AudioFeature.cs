@@ -25,6 +25,11 @@ namespace Comirva.Audio.Feature
 		public abstract string Name { get; set; }
 		
 		/// <summary>
+		/// Duration (milliseconds) of the Audio Feature
+		/// </summary>
+		public long Duration { get; set; }		
+		
+		/// <summary>
 		/// Measures the similarity/dissimilarity of two audio streams characterized
 		/// by two audio features.
 		/// </summary>
@@ -77,7 +82,7 @@ namespace Comirva.Audio.Feature
 			}
 			return s;
 			*/
-			return Name;
+			return String.Format("{0} ({1} ms)", Name, Duration);
 		}
 	}
 }

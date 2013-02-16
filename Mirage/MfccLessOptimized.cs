@@ -103,7 +103,7 @@ namespace Mirage
 		
 		public Matrix Apply(ref Matrix m)
 		{
-			Timer t = new Timer();
+			DbgTimer t = new DbgTimer();
 			t.Start();
 
 			Matrix mel = new Matrix(filterWeights.rows, m.columns);

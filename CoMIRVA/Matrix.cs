@@ -1,10 +1,12 @@
 ﻿using System;
-using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
 using System.IO;
 using System.Collections.Generic;
 using System.Globalization;
+
+using System.Linq;
+using System.Xml;
+using System.Xml.Linq;
+
 using CommonUtils;
 
 namespace Comirva.Audio.Util.Maths
@@ -12,7 +14,7 @@ namespace Comirva.Audio.Util.Maths
 	/// <summary>
 	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
 	/// Ported from Java to C# by perivar@nerseth.com
-	/// </summary>	
+	/// </summary>
 
 	///   Jama = Java Matrix class.
 	///<P>
@@ -52,7 +54,7 @@ namespace Comirva.Audio.Util.Maths
 	///</PRE></DD>
 	///</DL>
 	///@author The MathWorks, Inc. and the National Institute of Standards and Technology.
-	///@version 5 August 1998	
+	///@version 5 August 1998
 	public class Matrix
 	{
 		// ------------------------
@@ -62,10 +64,10 @@ namespace Comirva.Audio.Util.Maths
 		// Array for internal storage of elements.
 		private double[][] A;
 
-		//Number of rows. @serial number of rows.
+		//Number of rows.
 		private int m;
 
-		//Number of columns. @serial number of columns.
+		//Number of columns.
 		private int n;
 
 		// ------------------------
@@ -212,14 +214,10 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>Two-dimensional array copy of matrix elements.</returns>
 		public double[][] GetArrayCopy ()
 		{
-			///double[][] C = new double[m][n];
-			double[][] C  = Enumerable
-				.Range(0, m)
-				.Select(i => new double[n])
-				.ToArray();
-			
+			double[][] C = new double[m][];
 			for (int i = 0; i < m; i++)
 			{
+				C[i] = new double[n];
 				for (int j = 0; j < n; j++)
 				{
 					C[i][j] = A[i][j];
@@ -869,8 +867,11 @@ namespace Comirva.Audio.Util.Maths
 			return X;
 		}
 
+		/// <summary>
 		/// X.thrunkAtLowerBoundariy(). All values smaller than the given one are set
 		/// to this lower boundary.
+		/// </summary>
+		/// <param name="value">Lower boundary value</param>
 		public void ThrunkAtLowerBoundary(double @value)
 		{
 			for(int i = 0; i < A.Length; i++)

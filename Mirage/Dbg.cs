@@ -29,35 +29,42 @@ using System.Diagnostics;
 namespace Mirage
 {
 
-    public class Dbg
-    {
-        [Conditional("DEBUG")]
-        public static void WriteLine (String l, params object[] args)
-        {
-            Console.WriteLine (l, args);
-        }
+	public class Dbg
+	{
+		[Conditional("DEBUG")]
+		public static void WriteLine (String l, params object[] args)
+		{
+			Console.WriteLine (l, args);
+		}
 
-        [Conditional("DEBUG")]
-        public static void Write (String l)
-        {
-            Console.Write (l);
-        }
-    }
+		[Conditional("DEBUG")]
+		public static void Write (String l)
+		{
+			Console.Write (l);
+		}
+	}
 
-    public class DbgTimer
-    {
-        long start;
+	public class DbgTimer
+	{
+		long start;
 
-        [Conditional("DEBUG")]
-        public void Start ()
-        {
-            start = Environment.TickCount;
-        }
+		[Conditional("DEBUG")]
+		public void Start ()
+		{
+			start = Environment.TickCount;
+		}
 
-        [Conditional("DEBUG")]
-        public void Stop (ref long stop)
-        {
-            stop = Environment.TickCount - start;
-        }
-    }
+		[Conditional("DEBUG")]
+		public void Stop (ref long stop)
+		{
+			stop = Environment.TickCount - start;
+		}
+		
+		public long Stop()
+		{
+			long stop = 0;
+			Stop (ref stop);
+			return stop;
+		}
+	}
 }

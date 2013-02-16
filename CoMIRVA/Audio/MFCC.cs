@@ -1,6 +1,7 @@
 ﻿using Comirva.Audio.Util.Maths;
 
 using System;
+using CommonUtils;
 
 /**
  * <b>Mel Frequency Cepstrum Coefficients - MFCCs</b>
@@ -395,8 +396,9 @@ namespace Comirva.Audio
 			//check for correct array length
 			if ((input.Length % hopSize) != 0)
 			{
-				//int lenNew = input.Length / hopSize * hopSize;
-				int lenNew = hopSize * 16;
+				double l = (double) input.Length / hopSize;
+				l = MathUtils.RoundUp(l);
+				int lenNew = (int) l * hopSize;
 				Array.Resize<double>(ref input, lenNew);
 				//throw new Exception("Input data must be multiple of hop size (windowSize/2).");
 			}
