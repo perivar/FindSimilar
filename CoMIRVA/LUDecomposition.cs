@@ -5,7 +5,7 @@ namespace Comirva.Audio.Util.Maths
 	/// <summary>
 	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
 	/// Ported from Java to C# by perivar@nerseth.com
-	/// </summary>	
+	/// </summary>
 
 	/// LU Decomposition.
 	/// <P>
@@ -46,7 +46,6 @@ namespace Comirva.Audio.Util.Maths
 		// @param  A   Rectangular matrix
 		public LUDecomposition (Matrix A)
 		{
-
 			// Use a "left-looking", dot-product, Crout/Doolittle algorithm.
 			LU = A.GetArrayCopy();
 			m = A.GetRowDimension();
@@ -123,7 +122,7 @@ namespace Comirva.Audio.Util.Maths
 		// Temporary, experimental code.
 		// ------------------------
 		//
-		//   \** LU Decomposition, computed by Gaussian elimination.
+		//   LU Decomposition, computed by Gaussian elimination.
 		//   <P>
 		//   This constructor computes L and U with the "daxpy"-based elimination
 		//   algorithm used in LINPACK and MATLAB.  In Java, we suspect the dot-product,
@@ -133,7 +132,6 @@ namespace Comirva.Audio.Util.Maths
 		//   @param  A             Rectangular matrix
 		//   @param  linpackflag   Use Gaussian elimination.  Actual value ignored.
 		//   @return               Structure to access L, U and piv.
-		//   *\
 		//
 		//   public LUDecomposition (Matrix A, int linpackflag) {
 		//      // Initialize.
@@ -174,9 +172,9 @@ namespace Comirva.Audio.Util.Maths
 		//      }
 		//   }
 		//
-		//\* ------------------------
-		//   End of temporary code.
-		// * ------------------------
+		// ------------------------
+		// End of temporary code.
+		// ------------------------
 
 		// ------------------------
 		// Public Methods

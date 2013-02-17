@@ -1,57 +1,57 @@
 ﻿using System;
 
-/**
- * Class for computing a windowed fast Fourier transform.
- *  Implements some of the window functions for the STFT from
- *  Harris (1978), Proc. IEEE, 66, 1, 51-83.
- */
+/// <summary>
+/// Class for computing a windowed fast Fourier transform.
+///  Implements some of the window functions for the STFT from
+///  Harris (1978), Proc. IEEE, 66, 1, 51-83.
+/// </summary>
 namespace Comirva.Audio
 {
 	/// <summary>
 	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
 	/// Ported from Java to C# by perivar@nerseth.com
-	/// </summary>		
+	/// </summary>
 	public class FFT
 	{
 		#region Define
-		/** used in {@link FFT#fft(double[], double[], int)} to specify
-		 *  a forward Fourier transform */
+		/// <summary>used in {@link FFT#fft(double[], double[], int)} to specify
+		///  a forward Fourier transform /// </summary>
 		public const int FFT_FORWARD = -1;
-		/** used in {@link FFT#fft(double[], double[], int)} to specify
-		 * an inverse Fourier transform */
+		/// <summary>used in {@link FFT#fft(double[], double[], int)} to specify
+		/// an inverse Fourier transform /// </summary>
 		public const int FFT_REVERSE = 1;
-		/** used to specify a magnitude Fourier transform */
+		/// <summary>used to specify a magnitude Fourier transform /// </summary>
 		public const int FFT_MAGNITUDE = 2;
-		/** used to specify a magnitude phase Fourier transform */
+		/// <summary>used to specify a magnitude phase Fourier transform /// </summary>
 		public const int FFT_MAGNITUDE_PHASE = 3;
-		/** used to specify a normalized power Fourier transform */
+		/// <summary>used to specify a normalized power Fourier transform /// </summary>
 		public const int FFT_NORMALIZED_POWER = 4;
-		/** used to specify a power Fourier transform */
+		/// <summary>used to specify a power Fourier transform /// </summary>
 		public const int FFT_POWER = 5;
-		/** used to specify a power phase Fourier transform */
+		/// <summary>used to specify a power phase Fourier transform /// </summary>
 		public const int FFT_POWER_PHASE = 6;
-		/** used to specify a inline power phase Fourier transform */
+		/// <summary>used to specify a inline power phase Fourier transform /// </summary>
 		public const int FFT_INLINE_POWER_PHASE = 7;
 
-		/** used to specify a rectangular window function */
+		/// <summary>used to specify a rectangular window function /// </summary>
 		public const int WND_NONE = -1;
-		/** used to specify a rectangular window function */
+		/// <summary>used to specify a rectangular window function /// </summary>
 		public const int WND_RECT = 0;
-		/** used to specify a Hamming window function */
+		/// <summary>used to specify a Hamming window function /// </summary>
 		public const int WND_HAMMING = 1;
-		/** used to specify a 61-dB 3-sample Blackman-Harris window function */
+		/// <summary>used to specify a 61-dB 3-sample Blackman-Harris window function /// </summary>
 		public const int WND_BH3 = 2;
-		/** used to specify a 74-dB 4-sample Blackman-Harris window function */
+		/// <summary>used to specify a 74-dB 4-sample Blackman-Harris window function /// </summary>
 		public const int WND_BH4 = 3;
-		/** used to specify a minimum 3-sample Blackman-Harris window function */
+		/// <summary>used to specify a minimum 3-sample Blackman-Harris window function /// </summary>
 		public const int WND_BH3MIN = 4;
-		/** used to specify a minimum 4-sample Blackman-Harris window function */
+		/// <summary>used to specify a minimum 4-sample Blackman-Harris window function /// </summary>
 		public const int WND_BH4MIN = 5;
-		/** used to specify a Gaussian window function */
+		/// <summary>used to specify a Gaussian window function /// </summary>
 		public const int WND_GAUSS = 6;
-		/** used to specify a Hanning window function */
+		/// <summary>used to specify a Hanning window function /// </summary>
 		public const int WND_HANNING = 7;
-		/** used to specify a Hanning window function */
+		/// <summary>used to specify a Hanning window function /// </summary>
 		public const int WND_USER_DEFINED = 8;
 		#endregion
 
@@ -169,15 +169,14 @@ namespace Comirva.Audio
 			}
 		}
 
-		/** The FFT method. Calculation is inline, for complex data stored
-		 *  in 2 separate arrays. Length of input data must be a power of two.
-		 *  @param re        the real part of the complex input and output data
-		 *  @param im        the imaginary part of the complex input and output data
-		 *  @param direction the direction of the Fourier transform (FORWARD or
-		 *  REVERSE)
-		 *  @throws Exception if the length of the input data is
-		 *  not a power of 2
-		 */
+		/// <summary>
+		/// The FFT method. Calculation is inline, for complex data stored
+		/// in 2 separate arrays. Length of input data must be a power of two.
+		/// </summary>
+		/// <param name="re">the real part of the complex input and output data</param>
+		/// <param name="im">the imaginary part of the complex input and output data</param>
+		/// <param name="direction">the direction of the Fourier transform (FORWARD or REVERSE)</param>
+		/// @throws Exception if the length of the input data is not a power of 2
 		private void CalFFT(double[] re, double[] im, int direction)
 		{
 			int n = re.Length;
@@ -239,9 +238,10 @@ namespace Comirva.Audio
 			}
 		}
 
-		/** Computes the power spectrum of a real sequence (in place).
-		 *  @param re the real input and output data; length must be a power of 2
-		 */
+		/// <summary>
+		/// Computes the power spectrum of a real sequence (in place).
+		/// </summary>
+		/// <param name="re">the real input and output data; length must be a power of 2</param>
 		private void PowerFFT(double[] re)
 		{
 			double[] im = new double[re.Length];
@@ -252,9 +252,10 @@ namespace Comirva.Audio
 				re[i] = re[i] * re[i] + im[i] * im[i];
 		}
 
-		/** Computes the magnitude spectrum of a real sequence (in place).
-		 *  @param re the real input and output data; length must be a power of 2
-		 */
+		/// <summary>
+		/// Computes the magnitude spectrum of a real sequence (in place).
+		/// </summary>
+		/// <param name="re">the real input and output data; length must be a power of 2</param>
 		private void MagnitudeFFT(double[] re)
 		{
 			double[] im = new double[re.Length];
@@ -265,9 +266,10 @@ namespace Comirva.Audio
 				re[i] = Math.Sqrt(re[i] * re[i] + im[i] * im[i]);
 		}
 
-		/** Computes the power spectrum of a real sequence (in place).
-		 *  @param re the real input and output data; length must be a power of 2
-		 */
+		/// <summary>
+		/// Computes the power spectrum of a real sequence (in place).
+		/// </summary>
+		/// <param name="re">the real input and output data; length must be a power of 2</param>
 		private void NormalizedPowerFFT(double[] re)
 		{
 			double[] im = new double[re.Length];
@@ -283,25 +285,24 @@ namespace Comirva.Audio
 			}
 		}
 
-		/** Converts a real power sequence from to magnitude representation,
-		 *  by computing the square root of each value.
-		 *  @param re the real input (power) and output (magnitude) data; length
-		 *  must be a power of 2
-		 */
+		/// <summary>
+		/// Converts a real power sequence from to magnitude representation,
+		/// by computing the square root of each value.
+		/// </summary>
+		/// <param name="re">the real input (power) and output (magnitude) data; length must be a power of 2</param>
 		private void ToMagnitude(double[] re)
 		{
 			for (int i = 0; i < re.Length; i++)
 				re[i] = Math.Sqrt(re[i]);
 		}
 
-		/** Computes a complex (or real if im[] == {0,...}) FFT and converts
-		 *  the results to polar coordinates (power and phase). Both arrays
-		 *  must be the same length, which is a power of 2.
-		 *  @param re the real part of the input data and the power of the output
-		 *  data
-		 *  @param im the imaginary part of the input data and the phase of the
-		 *  output data
-		 */
+		/// <summary>
+		/// Computes a complex (or real if im[] == {0,...}) FFT and converts
+		/// the results to polar coordinates (power and phase). Both arrays
+		/// must be the same length, which is a power of 2.
+		/// </summary>
+		/// <param name="re">the real part of the input data and the power of the output data</param>
+		/// <param name="im">the imaginary part of the input data and the phase of the output data</param>
 		private void PowerPhaseFFT(double[] re, double[] im)
 		{
 			CalFFT(re, im, FFT_FORWARD);
@@ -314,14 +315,13 @@ namespace Comirva.Audio
 			}
 		}
 
-		/** Inline computation of the inverse FFT given spectral input data
-		 *  in polar coordinates (power and phase).
-		 *  Both arrays must be the same length, which is a power of 2.
-		 *  @param pow the power of the spectral input data (and real part of the
-		 *  output data)
-		 *  @param ph the phase of the spectral input data (and the imaginary part
-		 *  of the output data)
-		 */
+		/// <summary>
+		/// Inline computation of the inverse FFT given spectral input data
+		/// in polar coordinates (power and phase).
+		/// Both arrays must be the same length, which is a power of 2.
+		/// </summary>
+		/// <param name="pow">the power of the spectral input data (and real part of the output data)</param>
+		/// <param name="ph">the phase of the spectral input data (and the imaginary part of the output data)</param>
 		private void PowerPhaseIFFT(double[] pow, double[] ph)
 		{
 			ToMagnitude(pow);
@@ -336,25 +336,25 @@ namespace Comirva.Audio
 			CalFFT(pow, ph, FFT_REVERSE);
 		}
 
-		/** Computes a complex (or real if im[] == {0,...}) FFT and converts
-		 *  the results to polar coordinates (magnitude and phase). Both arrays
-		 *  must be the same length, which is a power of 2.
-		 *  @param re the real part of the input data and the magnitude of the
-		 *  output data
-		 *  @param im the imaginary part of the input data and the phase of the
-		 *  output data
-		 */
+		/// <summary>
+		/// Computes a complex (or real if im[] == {0,...}) FFT and converts
+		/// the results to polar coordinates (magnitude and phase). Both arrays
+		/// must be the same length, which is a power of 2.
+		/// </summary>
+		/// <param name="re">the real part of the input data and the magnitude of the output data</param>
+		/// <param name="im">the imaginary part of the input data and the phase of the output data</param>
 		private void MagnitudePhaseFFT(double[] re, double[] im)
 		{
 			PowerPhaseFFT(re, im);
 			ToMagnitude(re);
 		}
 
-		/** Fill an array with the values of a standard Hamming window function
-		 *  @param data the array to be filled
-		 *  @param size the number of non zero values; if the array is larger than
-		 *  this, it is zero-padded symmetrically at both ends
-		 */
+		/// <summary>
+		/// Fill an array with the values of a standard Hamming window function
+		/// </summary>
+		/// <param name="data">the array to be filled</param>
+		/// <param name="size">the number of non zero values; if the array is larger than
+		/// this, it is zero-padded symmetrically at both ends</param>
 		private void Hamming(int size)
 		{
 			int start = (windowFunction.Length - size) / 2;
@@ -366,11 +366,12 @@ namespace Comirva.Audio
 				windowFunction[i] = scale * (25.0/46.0 - 21.0/46.0 * Math.Cos(factor * i));
 		}
 
-		/** Fill an array with the values of a standard Hanning window function
-		 *  @param data the array to be filled
-		 *  @param size the number of non zero values; if the array is larger than
-		 *  this, it is zero-padded symmetrically at both ends
-		 */
+		/// <summary>
+		/// Fill an array with the values of a standard Hanning window function
+		/// </summary>
+		/// <param name="data">the array to be filled</param>
+		/// <param name="size">the number of non zero values; if the array is larger than
+		/// this, it is zero-padded symmetrically at both ends</param>
 		private void Hanning(int size)
 		{
 			int start = (windowFunction.Length - size) / 2;
@@ -381,12 +382,13 @@ namespace Comirva.Audio
 				windowFunction[i] = 0.5 * (1 - Math.Cos(factor * i));
 		}
 
-		/** Fill an array with the values of a minimum 4-sample Blackman-Harris
-		 *  window function
-		 *  @param data the array to be filled
-		 *  @param size the number of non zero values; if the array is larger than
-		 *  this, it is zero-padded symmetrically at both ends
-		 */
+		/// <summary>
+		/// Fill an array with the values of a minimum 4-sample Blackman-Harris
+		/// window function
+		/// </summary>
+		/// <param name="data">the array to be filled</param>
+		/// <param name="size">the number of non zero values; if the array is larger than
+		/// this, it is zero-padded symmetrically at both ends</param>
 		private void BlackmanHarris4sMin(int size)
 		{
 			int start = (windowFunction.Length - size) / 2;
@@ -400,12 +402,13 @@ namespace Comirva.Audio
 				                             0.01168 * Math.Cos(3 * PI2 * i / size));
 		}
 
-		/** Fill an array with the values of a 74-dB 4-sample Blackman-Harris
-		 *  window function
-		 *  @param data the array to be filled
-		 *  @param size the number of non zero values; if the array is larger than
-		 *  this, it is zero-padded symmetrically at both ends
-		 */
+		/// <summary>
+		/// Fill an array with the values of a 74-dB 4-sample Blackman-Harris
+		/// window function
+		/// </summary>
+		/// <param name="data">the array to be filled</param>
+		/// <param name="size">the number of non zero values; if the array is larger than
+		/// this, it is zero-padded symmetrically at both ends</param>
 		private void BlackmanHarris4s(int size)
 		{
 			int start = (windowFunction.Length - size) / 2;
@@ -419,12 +422,13 @@ namespace Comirva.Audio
 				                             0.00183 * Math.Cos(3 * PI2 * i / size));
 		}
 
-		/** Fill an array with the values of a minimum 3-sample Blackman-Harris
-		 *  window function
-		 *  @param data the array to be filled
-		 *  @param size the number of non zero values; if the array is larger than
-		 *  this, it is zero-padded symmetrically at both ends
-		 */
+		/// <summary>
+		/// Fill an array with the values of a minimum 3-sample Blackman-Harris
+		/// window function
+		/// </summary>
+		/// <param name="data">the array to be filled</param>
+		/// <param name="size">the number of non zero values; if the array is larger than
+		/// this, it is zero-padded symmetrically at both ends</param>
 		private void BlackmanHarris3sMin(int size)
 		{
 			int start = (windowFunction.Length - size) / 2;
@@ -437,12 +441,13 @@ namespace Comirva.Audio
 				                             0.07922 * Math.Cos(2 * PI2 * i / size));
 		}
 
-		/** Fill an array with the values of a 61-dB 3-sample Blackman-Harris
-		 *  window function
-		 *  @param data the array to be filled
-		 *  @param size the number of non zero values; if the array is larger than
-		 *  this, it is zero-padded symmetrically at both ends
-		 */
+		/// <summary>
+		/// Fill an array with the values of a 61-dB 3-sample Blackman-Harris
+		/// window function
+		/// </summary>
+		/// <param name="data">the array to be filled</param>
+		/// <param name="size">the number of non zero values; if the array is larger than
+		/// this, it is zero-padded symmetrically at both ends</param>
 		private void BlackmanHarris3s(int size)
 		{
 			int start = (windowFunction.Length - size) / 2;
@@ -455,11 +460,12 @@ namespace Comirva.Audio
 				                             0.05677 * Math.Cos(2 * PI2 * i / size));
 		}
 
-		/** Fill an array with the values of a Gaussian window function
-		 *  @param data the array to be filled
-		 *  @param size the number of non zero values; if the array is larger than
-		 *  this, it is zero-padded symmetrically at both ends
-		 */
+		/// <summary>
+		/// Fill an array with the values of a Gaussian window function
+		/// </summary>
+		/// <param name="data">the array to be filled</param>
+		/// <param name="size">the number of non zero values; if the array is larger than
+		/// this, it is zero-padded symmetrically at both ends</param>
 		private void Gauss(int size)
 		{ // ?? between 61/3 and 74/4 BHW
 			int start = (windowFunction.Length - size) / 2;
@@ -480,11 +486,12 @@ namespace Comirva.Audio
 				windowFunction[i] /= sum;
 		}
 
-		/** Fill an array with the values of a rectangular window function
-		 *  @param data the array to be filled
-		 *  @param size the number of non zero values; if the array is larger than
-		 *  this, it is zero-padded symmetrically at both ends
-		 */
+		/// <summary>
+		/// Fill an array with the values of a rectangular window function
+		/// </summary>
+		/// <param name="data">the array to be filled</param>
+		/// <param name="size">the number of non zero values; if the array is larger than
+		/// this, it is zero-padded symmetrically at both ends</param>
 		private void Rectangle(int size)
 		{
 			int start = (windowFunction.Length - size) / 2;
@@ -494,13 +501,12 @@ namespace Comirva.Audio
 				windowFunction[i] = 1.0 / (double) size;
 		}
 
-		/**
-		 * This method allows to change the window function to one of the predefined
-		 * window function types.
-		 *
-		 * @param windowFunctionType int the type of the window function
-		 * @param support int
-		 */
+		/// <summary>
+		/// This method allows to change the window function to one of the predefined
+		/// window function types.
+		/// </summary>
+		/// <param name="windowFunctionType">int the type of the window function</param>
+		/// <param name="support">int</param>
 		public void SetWindowFunction(int windowFunctionType, int support)
 		{
 			if (support > windowSize)
@@ -525,22 +531,31 @@ namespace Comirva.Audio
 			CalculateWindowFunctionSum();
 		}
 
+		/// <summary>
+		/// Return Transformation Type
+		/// </summary>
+		/// <returns>Transformation Type</returns>
 		public int GetTransformationType()
 		{
 			return transformationType;
 		}
 
+		/// <summary>
+		/// Return Window Function Type
+		/// </summary>
+		/// <returns>Window Function Type</returns>
 		public int GetWindowFunctionType()
 		{
 			return windowFunctionType;
 		}
 
-		/** Applies a window function to an array of data, storing the result in
-		 *  the data array.
-		 *  Performs a dot product of the data and window arrays.
-		 *  @param data   the array of input data, also used for output
-		 *  @param window the values of the window function to be applied to data
-		 */
+		/// <summary>
+		/// Applies a window function to an array of data, storing the result in
+		/// the data array.
+		/// Performs a dot product of the data and window arrays.
+		/// </summary>
+		/// <param name="data">  the array of input data, also used for output</param>
+		/// <param name="window">the values of the window function to be applied to data</param>
 		private void ApplyWindowFunction(double[] data)
 		{
 			if(windowFunctionType != WND_NONE)
@@ -550,6 +565,9 @@ namespace Comirva.Audio
 			}
 		}
 
+		/// <summary>
+		/// Calculate Window Function Sum
+		/// </summary>
 		private void CalculateWindowFunctionSum()
 		{
 			windowFunctionSum = 0;
