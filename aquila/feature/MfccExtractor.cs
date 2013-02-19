@@ -69,13 +69,9 @@ namespace Aquila
 			int N = wav.GetSamplesPerFrameZP();
 			UpdateFilters(wav.GetSampleFrequency(), N);
 			
-			// TODO: Fix these lists sizes
-			List<Complex> frameSpectrum = new List<Complex>(N);
-			List<double> filtersOutput = new List<double>(Dtw.MELFILTERS);
-			List<double> frameMfcc = new List<double>(m_paramsPerFrame);
-			//Complex[] frameSpectrum = new Complex[N];
-			//double[] filtersOutput = new double[Dtw.MELFILTERS];
-			//double[] frameMfcc = new double[m_paramsPerFrame];
+			Complex[] frameSpectrum = new Complex[N];
+			double[] filtersOutput = new double[Dtw.MELFILTERS];
+			double[] frameMfcc = new double[m_paramsPerFrame];
 			
 			Transform transform = new Transform(options);
 			
@@ -85,7 +81,10 @@ namespace Aquila
 				transform.Fft(wav.frames[i], ref frameSpectrum);
 				filters.ApplyAll(ref frameSpectrum, N, ref filtersOutput);
 				transform.Dct(filtersOutput, ref frameMfcc);
-				featureArray[i] = frameMfcc.ToArray();
+				
+				//featureArray[i] = frameMfcc;
+				featureArray[i] = new double[frameMfcc.Length];
+				frameMfcc.CopyTo(featureArray[i], 0);
 				
 				if (m_indicator != null)
 					m_indicator.Progress(i);

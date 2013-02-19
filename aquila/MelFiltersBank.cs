@@ -149,7 +149,7 @@ namespace Aquila
 		 * @param N spectrum size
 		 * @param filtersOutput results vector
 		 */
-		public void ApplyAll(ref List<Complex> frameSpectrum, int N, ref List<double> filtersOutput)
+		public void ApplyAll(ref Complex[] frameSpectrum, int N, ref double[] filtersOutput)
 		{
 			// precalculate spectrum magnitude
 			List<double> frameAbsSpectrum = new List<double>();

@@ -39,7 +39,6 @@ namespace Aquila
 		 * @param hdr const reference to feature header
 		 * @param featureArray const reference to feature data array
 		 */
-		//public abstract bool write(FeatureHeader hdr, Extractor featureArray);
 		public abstract bool Write(FeatureHeader hdr, double[][] featureArray);
 
 		/**

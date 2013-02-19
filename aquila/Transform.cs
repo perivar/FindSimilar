@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics; // for complex numbers
+using System.Linq;
 
 /**
  * @file Transform.cpp
@@ -76,8 +77,6 @@ namespace Aquila
 		{
 		}
 
-		//C++ TO C# CONVERTER NOTE: Overloaded method(s) are created above to convert the following method having default parameters:
-		//ORIGINAL LINE: Transform(uint length, WindowType window = WIN_HAMMING, double factor = 0.95): zeroPaddedLength(length), preemphasisFactor(factor), winType(window)
 		public Transform(int length, WindowType window, double factor)
 		{
 			zeroPaddedLength = length;
@@ -170,7 +169,7 @@ namespace Aquila
 		 * @param spectrum initialized complex vector of the same length as data
 		 * @return maximum magnitude of the spectrum
 		 */
-		public double Fft(double[] data, ref List<Complex> spectrum)
+		public double Fft(double[] data, ref Complex[] spectrum)
 		{
 			// input signal size
 			int N = data.Length;
@@ -275,19 +274,20 @@ namespace Aquila
 		 * @return maximum magnitude of the spectrum
 		 * @since 2.0.1
 		 */
-		public double Fft(Frame frame, ref List<Complex> spectrum)
+		public double Fft(Frame frame, ref Complex[] spectrum)
 		{
 			// the vector is initialized to zero padded length,
 			// what means that it contains default values of contained type
 			// (0.0 in case of double); that allows us to loop
 			// only to frame length without padding and
 			// automatically have zeros at the end of data
-			//List<double> data = new List<double>(zeroPaddedLength);
 			double[] data = new double[zeroPaddedLength];
 			int length = frame.GetLength();
 			
+			short[] frameArray = frame.ToArray();
+			
 			// first sample does not need preemphasis
-			data[0] = 0.0;
+			data[0] = frameArray[0];
 
 			double current = 0.0;
 			double previous = data[0];
@@ -297,14 +297,13 @@ namespace Aquila
 			// and apply a chosen window function
 			for (int n = 1; n < length; n++)
 			{
-				current = data[n];
+				current = frameArray[n];
 				data[n] = (current - preemphasisFactor * previous) * Window.Apply(winType, n, length);
 				previous = current;
 			}
 			
 			return Fft(data, ref spectrum);
 		}
-
 
 		/**
 		 * Calculates the Discrete Cosine Transform.
@@ -314,12 +313,11 @@ namespace Aquila
 		 * @param data input data vector
 		 * @param output initialized vector of output values
 		 */
-		public void Dct(List<double> data, ref List<double> output)
+		public void Dct(double[] data, ref double[] output)
 		{
-			
 			// output size determines how many coefficients will be calculated
-			int outputLength = output.Count;
-			int inputLength = data.Count;
+			int outputLength = output.Length;
+			int inputLength = data.Length;
 			
 			// DCT scaling factor
 			double c0 = Math.Sqrt(1.0 / inputLength);

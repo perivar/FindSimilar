@@ -265,16 +265,15 @@ namespace Mirage
 			Aquila.WaveFile wav = new Aquila.WaveFile(20, 0.66);
 			wav.Load(filename);
 			Aquila.Extractor extractor = new Aquila.MfccExtractor(20, 10);
+			//Aquila.Extractor extractor = new Aquila.EnergyExtractor(20);
+			//Aquila.Extractor extractor = new Aquila.PowerExtractor(20);
 			Aquila.TransformOptions options = new Aquila.TransformOptions();
 			options.PreemphasisFactor = 0.9375;
 			options.WindowType = Aquila.WindowType.WIN_HAMMING;
 			options.ZeroPaddedLength = wav.GetSamplesPerFrameZP();
 			Aquila.ConsoleProcessingIndicator cpi = new Aquila.ConsoleProcessingIndicator();
 			extractor.SetProcessingIndicator(cpi);
-
-			Console.Write("Extracting MFCC features from file ");
-			Console.Write(filename);
-			Console.Write("...\n");
+			Console.WriteLine("Extracting {0} features from file {1} ...", extractor.GetType(), filename);
 			extractor.Process(wav, options);
 			return extractor;
 		}
@@ -282,7 +281,9 @@ namespace Mirage
 		public static void Main(string[] args) {
 
 			Aquila.Extractor from = ReadIntoExtractor(@"aquila\examples\test.wav");
+			from.Save(new Aquila.TextFeatureWriter("from.txt"));
 			Aquila.Extractor to = ReadIntoExtractor(@"aquila\examples\test2.wav");
+			to.Save(new Aquila.TextFeatureWriter("to.txt"));
 
 			Console.WriteLine("Calculating DTW distance...");
 			Aquila.Dtw dtw = new Aquila.Dtw(from);

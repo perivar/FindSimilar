@@ -24,7 +24,7 @@ namespace Aquila
 		// http://geekswithblogs.net/abhijeetp/archive/2010/02/21/showing-progress-in-a-.net-console-application.aspx
 		public static void ShowPercentProgress(string message, int currElementIndex, int totalElementCount)
 		{
-			if (currElementIndex < 0 || currElementIndex >=totalElementCount)
+			if (currElementIndex < 0 || currElementIndex > totalElementCount)
 			{
 				throw new InvalidOperationException("currElement out of range");
 			}

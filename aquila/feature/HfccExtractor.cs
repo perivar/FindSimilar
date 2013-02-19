@@ -19,7 +19,11 @@ namespace Aquila
 	 */
 	public class HfccExtractor : MfccExtractor
 	{
-
+		/**
+		 * Mel filters bank, static and common to all HFCC extractors.
+		 */
+		protected static MelFiltersBank hfccFilters;
+		
 		/**
 		 * Sets frame length and number of parameters per frame.
 		 *
@@ -50,8 +54,6 @@ namespace Aquila
 			wavFilename = wav.GetFilename();
 			
 			int framesCount = wav.GetFramesCount();
-			
-			//featureArray.resize(framesCount);
 			Array.Resize(ref featureArray, framesCount);
 			
 			if (m_indicator != null)
@@ -60,9 +62,10 @@ namespace Aquila
 			int N = wav.GetSamplesPerFrameZP();
 			UpdateFilters(wav.GetSampleFrequency(), N);
 			
-			List<Complex> frameSpectrum = new List<Complex>(N);
-			List<double> filtersOutput = new List<double>(Dtw.MELFILTERS);
-			List<double> frameHfcc = new List<double>(m_paramsPerFrame);
+			Complex[] frameSpectrum = new Complex[N];
+			double[] filtersOutput = new double[Dtw.MELFILTERS];
+			double[] frameHfcc = new double[m_paramsPerFrame];
+			
 			Transform transform = new Transform(options);
 			
 			// for each frame: FFT -> Mel filtration -> DCT
@@ -71,7 +74,10 @@ namespace Aquila
 				transform.Fft(wav.frames[i], ref frameSpectrum);
 				hfccFilters.ApplyAll(ref frameSpectrum, N, ref filtersOutput);
 				transform.Dct(filtersOutput, ref frameHfcc);
-				featureArray[i] = frameHfcc.ToArray();
+				
+				//featureArray[i] = frameHfcc;
+				featureArray[i] = new double[frameHfcc.Length];
+				frameHfcc.CopyTo(featureArray[i], 0);
 				
 				if (m_indicator != null)
 					m_indicator.Progress(i);
@@ -80,11 +86,6 @@ namespace Aquila
 			if (m_indicator != null)
 				m_indicator.Stop();
 		}
-
-		/**
-		 * Mel filters bank, static and common to all HFCC extractors.
-		 */
-		protected static MelFiltersBank hfccFilters;
 
 		/**
 		 * Updates the filter bank.

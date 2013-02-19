@@ -247,7 +247,6 @@ namespace Aquila
 			int patternSize = pattern.GetFramesCount();
 			for (int i = 0; i < from.GetFramesCount(); ++i)
 			{
-				//points[i].resize(patternSize);
 				Array.Resize(ref points[i], patternSize);
 				for (int j = 0; j < patternSize; j++)
 					points[i][j] = new DtwPoint(i, j, distanceFn(from.GetVector(i), pattern.GetVector(j)));

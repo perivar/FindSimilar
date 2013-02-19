@@ -39,7 +39,6 @@ namespace Aquila
 	 */
 	public abstract class Extractor
 	{
-
 		/**
 		 * Frame length.
 		 */
@@ -102,7 +101,7 @@ namespace Aquila
 		 *
 		 * @param writer non-const reference to a writer object
 		 */
-		public bool Save(ref FeatureWriter writer)
+		public bool Save(FeatureWriter writer)
 		{
 			FeatureHeader hdr = new FeatureHeader();
 			hdr.type = type;

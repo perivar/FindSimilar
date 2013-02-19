@@ -528,7 +528,8 @@ namespace Aquila
 		{
 			for (int i = 0; i < channelSize; ++i)
 			{
-				LChTab[i] = data[i];
+				//LChTab[i] = data[i];
+				LChTab.Add(data[i]);
 			}
 		}
 
@@ -550,8 +551,10 @@ namespace Aquila
 				// left channel is in low byte, right in high
 				// values are unipolar, so we move them by half
 				// of the dynamic range
-				LChTab[i] = (short) (lb - 128);
-				RChTab[i] = (short) (hb - 128);
+				//LChTab[i] = (short) (lb - 128);
+				//RChTab[i] = (short) (hb - 128);
+				LChTab.Add((short) (lb - 128));
+				RChTab.Add((short) (hb - 128));
 			}
 		}
 
@@ -571,7 +574,8 @@ namespace Aquila
 				SplitBytes(data[i/2], ref lb, ref hb);
 				
 				// only the left channel collects samples
-				LChTab[i] = (short) (lb - 128);
+				//LChTab[i] = (short) (lb - 128);
+				LChTab.Add((short) (lb - 128));
 			}
 		}
 
