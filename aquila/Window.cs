@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System;
 
-
 /**
  * @file Window.cpp
  *
@@ -66,7 +65,6 @@ namespace Aquila
 		 * Window cache implemented as a static map.
 		 */
 		private static Dictionary<KeyValuePair<WindowType, int>, List<double>> windowsCache = new Dictionary<KeyValuePair<WindowType, int>, List<double>>();
-		//public static Window.windowsCacheType windowsCache = new Window.windowsCacheType();
 		
 		/**
 		 * Generates new window vector for a given type and size.
@@ -167,6 +165,17 @@ namespace Aquila
 		private class WinGenerator
 		{
 			/**
+			 * Window size.
+			 */
+			private int _N;
+
+			/**
+			 * Pointer to window function.
+			 */
+			public delegate double windowMethodDelegate(int NamelessParameter1, int NamelessParameter2);
+			public windowMethodDelegate windowMethod;
+
+			/**
 			 * Creates the generator functor.
 			 *
 			 * @param type window function type
@@ -197,17 +206,6 @@ namespace Aquila
 						break;
 				}
 			}
-
-			/**
-			 * Window size.
-			 */
-			private int _N;
-
-			/**
-			 * Pointer to window function.
-			 */
-			public delegate double windowMethodDelegate(int NamelessParameter1, int NamelessParameter2);
-			public windowMethodDelegate windowMethod;
 		}
 	}
 }

@@ -48,7 +48,6 @@ namespace Aquila
 			wavFilename = wav.GetFilename();
 			
 			int framesCount = wav.GetFramesCount();
-			//featureArray.resize(framesCount);
 			Array.Resize(ref featureArray, framesCount);
 			
 			if (m_indicator != null)
