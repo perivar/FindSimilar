@@ -18,6 +18,7 @@
     <DelaySign>False</DelaySign>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <RunCodeAnalysis>False</RunCodeAnalysis>
+    <SourceAnalysisOverrideSettingsFile>C:\Users\perivar.nerseth\AppData\Roaming\ICSharpCode/SharpDevelop4\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -62,6 +63,7 @@
       <HintPath>..\..\..\..\..\..\Program Files %28x86%29\SQLite.NET\bin\System.Data.SQLite.Linq.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -95,6 +97,28 @@
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\StringUtils.cs">
       <Link>StringUtils.cs</Link>
     </Compile>
+    <Compile Include="aquila\Cache.cs" />
+    <Compile Include="aquila\ConsoleProcessingIndicator.cs" />
+    <Compile Include="aquila\dtw\Dtw.cs" />
+    <Compile Include="aquila\dtw\DtwPoint.cs" />
+    <Compile Include="aquila\dtw\functions.cs" />
+    <Compile Include="aquila\feature\EnergyExtractor.cs" />
+    <Compile Include="aquila\feature\Extractor.cs" />
+    <Compile Include="aquila\feature\ExtractorFactory.cs" />
+    <Compile Include="aquila\feature\FeatureReader.cs" />
+    <Compile Include="aquila\feature\FeatureWriter.cs" />
+    <Compile Include="aquila\feature\HfccExtractor.cs" />
+    <Compile Include="aquila\feature\MfccExtractor.cs" />
+    <Compile Include="aquila\feature\PowerExtractor.cs" />
+    <Compile Include="aquila\feature\TextFeatureWriter.cs" />
+    <Compile Include="aquila\Frame.cs" />
+    <Compile Include="aquila\MelFilter.cs" />
+    <Compile Include="aquila\MelFiltersBank.cs" />
+    <Compile Include="aquila\ProcessingIndicator.cs" />
+    <Compile Include="aquila\Tools.cs" />
+    <Compile Include="aquila\Transform.cs" />
+    <Compile Include="aquila\WaveFile.cs" />
+    <Compile Include="aquila\Window.cs" />
     <Compile Include="CoMIRVA\AudioFeature.cs" />
     <Compile Include="CoMIRVA\Audio\FFT.cs" />
     <Compile Include="CoMIRVA\Audio\MFCC.cs" />
@@ -135,10 +159,12 @@
     <Compile Include="NDtw\SeriesVariable.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="sound_io.cs" />
-    <Compile Include="util.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="aquila" />
+    <Folder Include="aquila\dtw" />
+    <Folder Include="aquila\examples" />
+    <Folder Include="aquila\feature" />
     <Folder Include="CoMIRVA" />
     <Folder Include="CoMIRVA\Audio" />
     <Folder Include="Mirage" />
@@ -174,6 +200,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Mirage\Resources\filterweights.filter">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="aquila\examples\test.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="aquila\examples\test2.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="Mirage\Resources\writefilters.m" />
