@@ -19,8 +19,6 @@ namespace Aquila
 	 */
 	public class MelFilter
 	{
-		// friend partial class MelFiltersBank;
-
 		/**
 		 * Sample frequency of a signal which spectrum is to be filtered.
 		 */
@@ -47,6 +45,10 @@ namespace Aquila
 			enabled = true;
 		}
 
+		public double[] GetFilterSpectrum() {
+			return filterSpectrum;
+		}
+		
 		/**
 		 * Designs the Mel filter and creates triangular spectrum.
 		 *
@@ -169,7 +171,7 @@ namespace Aquila
 			double max = 1.0;
 			double value;
 			
-			for (int k = 0; k < N; ++k)
+			for (int k = 0; k < N; k++)
 			{
 				// outside the triangle spectrum has 0 values
 				if (k < minFreq || k > maxFreq)

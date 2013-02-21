@@ -41,10 +41,10 @@ namespace Mirage
 		public Mfcc (int winsize, int srate, int filters, int cc)
 		{
 			// Load the DCT
-			dct = Matrix.Load (new FileStream("Mirage/Resources/dct.filter", FileMode.Open));
+			dct = Matrix.Load(new FileStream("Mirage/Resources/dct.filter", FileMode.Open));
 
 			// Load the MFCC filters from the filter File.
-			filterWeights = Matrix.Load (new FileStream("Mirage/Resources/filterweights.filter", FileMode.Open));
+			filterWeights = Matrix.Load(new FileStream("Mirage/Resources/filterweights.filter", FileMode.Open));
 
 			fwFT = new int[filterWeights.rows, 2];
 			for (int i = 0; i < filterWeights.rows; i++) {
@@ -101,7 +101,7 @@ namespace Mirage
 
 				long stop = 0;
 				t.Stop (ref stop);
-				Dbg.WriteLine ("Mirage - mfcc Execution Time: {0}ms", stop);
+				Dbg.WriteLine ("Mirage - mfcc Execution Time: {0} ms", stop);
 
 				return mfcc;
 

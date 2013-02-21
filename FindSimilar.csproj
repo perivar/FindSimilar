@@ -68,6 +68,9 @@
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="ZedGraph">
+      <HintPath>NativeLibraries\ZedGraph\ZedGraph.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\Arguments.cs">
@@ -182,6 +185,7 @@
     <Folder Include="NativeLibraries\mplayer" />
     <Folder Include="NativeLibraries\sox" />
     <Folder Include="NativeLibraries\sox" />
+    <Folder Include="NativeLibraries\ZedGraph" />
     <Folder Include="NDtw" />
     <Folder Include="NDtw\Preprocessing" />
   </ItemGroup>
@@ -299,6 +303,10 @@
     <Content Include="NativeLibraries\sox\zlib1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="NativeLibraries\ZedGraph\ZedGraph.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

@@ -48,9 +48,8 @@ namespace Mirage
 		public const int MFCC_COEFFICIENTS = 20; //20
 		private const int SECONDS_TO_ANALYZE = 120;
 
-		//private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		//private static MFCC mfcc = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, 20000.0, MEL_COEFFICIENTS);
+		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		//private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		
 		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
 		
@@ -170,6 +169,8 @@ namespace Mirage
 			
 			Matrix stftdata = stft.Apply(audiodata);
 			
+			//stftdata.DrawMatrix("matrix-stftdata.png");
+			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
 			// reflecting similar effects in the human's subjective aural perception)
@@ -177,6 +178,8 @@ namespace Mirage
 			// 5. Take Logarithm
 			// 6. DCT (Discrete cosine transform)
 			Matrix mfccdata = mfcc.Apply(ref stftdata);
+			
+			//mfccdata.DrawMatrix("matrix-mfccdata.png");
 			
 			// Store in a Statistical Cluster Model Similarity class.
 			// A Gaussian representation of a song

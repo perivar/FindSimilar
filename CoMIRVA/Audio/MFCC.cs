@@ -1,7 +1,8 @@
-﻿using Comirva.Audio.Util.Maths;
-
-using System;
+﻿using System;
+using Comirva.Audio.Util.Maths;
 using CommonUtils;
+using System.IO;
+using System.Xml;
 
 /// <summary>
 /// <b>Mel Frequency Cepstrum Coefficients - MFCCs</b>
@@ -174,7 +175,11 @@ namespace Comirva.Audio
 
 			//store filter weights and DCT matrix due to performance reason
 			melFilterBanks = GetMelFilterBanks();
+			//melFilterBanks.Write(File.CreateText("melFilterBanks.xml"));
+			//melFilterBanks.DrawMatrix("matrix-melFilterBanks.png");
 			dctMatrix = GetDCTMatrix();
+			//dctMatrix.Write(File.CreateText("dctMatrix.xml"));
+			//dctMatrix.DrawMatrix("matrix-dctMatrix.png");
 
 			//create power fft object
 			normalizedPowerFFT = new FFT(FFT.FFT_NORMALIZED_POWER, windowSize, FFT.WND_HANNING);
@@ -448,7 +453,7 @@ namespace Comirva.Audio
 
 			//check start
 			if(start < 0)
-				throw new Exception("start must be a positve value");
+				throw new Exception("start must be a positive value");
 
 			//check window size
 			if(window == null || window.Length - start < windowSize)
@@ -477,7 +482,11 @@ namespace Comirva.Audio
 			//compute DCT
 			x = dctMatrix.Times(x);
 
+			//x.Write(File.CreateText("mfcc.xml"));
+			//x.DrawMatrix("matrix-mfcc.png");
+
 			return x.GetColumnPackedCopy();
+			
 		}
 	}
 }

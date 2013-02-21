@@ -280,9 +280,26 @@ namespace Mirage
 
 		public static void Main(string[] args) {
 
-			Aquila.Extractor from = ReadIntoExtractor(@"aquila\examples\test.wav");
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+			
+			/*
+			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+			
+			Compare(path1, path2, analysisMethod);
+			System.Console.ReadLine();
+			return;
+			 */
+			
+			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+			string path1 = @"aquila\examples\test.wav";
+			string path2 = @"aquila\examples\test2.wav";
+			
+			Aquila.Extractor from = ReadIntoExtractor(path1);
 			from.Save(new Aquila.TextFeatureWriter("from.txt"));
-			Aquila.Extractor to = ReadIntoExtractor(@"aquila\examples\test2.wav");
+			Aquila.Extractor to = ReadIntoExtractor(path2);
 			to.Save(new Aquila.TextFeatureWriter("to.txt"));
 
 			Console.WriteLine("Calculating DTW distance...");
@@ -292,6 +309,7 @@ namespace Mirage
 			
 			System.Console.ReadLine();
 			return;
+			
 			/*
 			DbgTimer t = new DbgTimer();
 			t.Start();
@@ -315,9 +333,6 @@ namespace Mirage
 			return;
 			 */
 			
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
-
 			string scanPath = "";
 			string queryPath = "";
 			int queryId = -1;

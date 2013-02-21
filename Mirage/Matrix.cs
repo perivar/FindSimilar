@@ -23,6 +23,11 @@
 using System;
 using System.IO;
 
+// For drawing graph
+using ZedGraph;
+using System.Drawing;
+using System.Drawing.Imaging;
+
 namespace Mirage
 {
 
@@ -324,6 +329,59 @@ namespace Mirage
 					}
 				}
 			}
+		}
+		
+		public void DrawMatrix(string fileName) {
+			
+			GraphPane myPane;
+			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
+			
+			PointPairList ppl = new PointPairList();
+			if (columns == 1) {
+				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
+				for(int i = 0; i < rows; i++) {
+					ppl.Add(i, d[i,0]);
+				}
+				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
+			} else if (rows == 1) {
+				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
+				for(int i = 0; i < columns; i++) {
+					ppl.Add(i, d[0,i]);
+				}
+				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
+			} else if (columns > rows) {
+				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
+				Random random = new Random();
+				for(int i = 0; i < rows; i++)
+				{
+					ppl.Clear();
+					for(int j = 0; j < columns; j++)
+					{
+						ppl.Add(j, d[i,j]);
+					}
+					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
+				}
+			} else { // (columns < rows)
+				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
+				Random random = new Random();
+				for(int i = 0; i < rows; i++)
+				{
+					ppl.Clear();
+					for(int j = 0; j < columns; j++)
+					{
+						ppl.Add(i, d[i,j]);
+					}
+					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
+				}
+			}
+
+			Bitmap bm = new Bitmap( 1, 1 );
+			using ( Graphics g = Graphics.FromImage( bm ) )
+				myPane.AxisChange( g );
+			
+			myPane.GetImage().Save(fileName, ImageFormat.Png);
 		}
 	}
 }

@@ -69,6 +69,8 @@ namespace Aquila
 			int N = wav.GetSamplesPerFrameZP();
 			UpdateFilters(wav.GetSampleFrequency(), N);
 			
+			filters.DrawMelFiltersBank("melfilters.png");
+			
 			Complex[] frameSpectrum = new Complex[N];
 			double[] filtersOutput = new double[Dtw.MELFILTERS];
 			double[] frameMfcc = new double[m_paramsPerFrame];

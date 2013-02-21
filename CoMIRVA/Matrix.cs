@@ -9,6 +9,11 @@ using System.Xml.Linq;
 
 using CommonUtils;
 
+// For drawing graph
+using ZedGraph;
+using System.Drawing;
+using System.Drawing.Imaging;
+
 namespace Comirva.Audio.Util.Maths
 {
 	/// <summary>
@@ -1127,8 +1132,9 @@ namespace Comirva.Audio.Util.Maths
 		/// <summary>
 		/// Writes the xml representation of this object to the xml text writer.<br>
 		/// <br>
-		/// There is the convetion, that each call to a <code>WriteXML()</code> method
+		/// There is the convention, that each call to a <code>WriteXML()</code> method
 		/// results in one xml element in the output stream.
+		/// Note! It is the callers responisbility to flush the stream.
 		/// </summary>
 		/// <param name="writer">XmlTextWriter the xml output stream</param>
 		/// <example>
@@ -1153,7 +1159,7 @@ namespace Comirva.Audio.Util.Maths
 				}
 				xmlWriter.WriteEndElement();
 			}
-
+			
 			xmlWriter.WriteEndElement();
 		}
 
@@ -1339,6 +1345,59 @@ namespace Comirva.Audio.Util.Maths
 				pw.Write("\r");
 			}
 			pw.Close();
+		}
+		
+		public void DrawMatrix(string fileName) {
+			
+			GraphPane myPane;
+			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
+			
+			PointPairList ppl = new PointPairList();
+			if (n == 1) {
+				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
+				for(int i = 0; i < m; i++) {
+					ppl.Add(i, A[i][0]);
+				}
+				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
+			} else if (m == 1) {
+				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
+				for(int i = 0; i < n; i++) {
+					ppl.Add(i, A[0][i]);
+				}
+				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
+			} else if (n > m) {
+				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
+				Random random = new Random();
+				for(int i = 0; i < m; i++)
+				{
+					ppl.Clear();
+					for(int j = 0; j < n; j++)
+					{
+						ppl.Add(j, A[i][j]);
+					}
+					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
+				}
+			} else { // (n < m)
+				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
+				Random random = new Random();
+				for(int i = 0; i < m; i++)
+				{
+					ppl.Clear();
+					for(int j = 0; j < n; j++)
+					{
+						ppl.Add(i, A[i][j]);
+					}
+					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
+				}
+			}
+
+			Bitmap bm = new Bitmap( 1, 1 );
+			using ( Graphics g = Graphics.FromImage( bm ) )
+				myPane.AxisChange( g );
+			
+			myPane.GetImage().Save(fileName, ImageFormat.Png);
 		}
 	}
 }

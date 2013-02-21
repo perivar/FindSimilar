@@ -2,6 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Numerics; // for complex numbers
 
+// For drawing graph
+using ZedGraph;
+using System.Drawing;
+using System.Drawing.Imaging;
+
 /**
  * @file MelFiltersBank.cpp
  *
@@ -201,5 +206,33 @@ namespace Aquila
 		{
 			return N_;
 		}
+		
+		public void DrawMelFiltersBank(string fileName) {
+			GraphPane myPane = new GraphPane( new RectangleF( 0, 0, 1200, 600 ),
+			                                 "Mel Filter Bank", "X Title", "Y Title" );
+
+			Random random = new Random();
+			
+			PointPairList ppl = new PointPairList();
+			double[] filterSpectrum;
+			foreach(var filter in filters) {
+				ppl.Clear();
+				if (filter.IsEnabled()) {
+					filterSpectrum = filter.GetFilterSpectrum();
+					for (int i = 0; i < 200; i++) {
+						ppl.Add(i, filterSpectrum[i]);
+					}
+					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None );
+				}
+			}
+
+			Bitmap bm = new Bitmap( 1, 1 );
+			using ( Graphics g = Graphics.FromImage( bm ) )
+				myPane.AxisChange( g );
+			
+			myPane.GetImage().Save(fileName, ImageFormat.Png);
+		}
+		
 	}
 }
