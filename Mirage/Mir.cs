@@ -268,8 +268,9 @@ namespace Mirage
 			//Aquila.Extractor extractor = new Aquila.EnergyExtractor(20);
 			//Aquila.Extractor extractor = new Aquila.PowerExtractor(20);
 			Aquila.TransformOptions options = new Aquila.TransformOptions();
-			options.PreemphasisFactor = 0.9375;
-			options.WindowType = Aquila.WindowType.WIN_HAMMING;
+			// Set to 0 if no pre-emphasis should be performed
+			options.PreemphasisFactor = 0; // 0.9375;
+			options.WindowType = Aquila.WindowType.WIN_HANN;
 			options.ZeroPaddedLength = wav.GetSamplesPerFrameZP();
 			Aquila.ConsoleProcessingIndicator cpi = new Aquila.ConsoleProcessingIndicator();
 			extractor.SetProcessingIndicator(cpi);

@@ -27,11 +27,6 @@ namespace Aquila
 		public const int MELFILTERS = 24;
 
 		/**
-		 * ln(2) - needed for calculating number of stages in FFT.
-		 */
-		public const double LN_2 = 0.69314718055994530941723212145818;
-
-		/**
 		 * Distance function prototype.
 		 */
 		public delegate double distanceFunction(double[] NamelessParameter1, double[] NamelessParameter2);

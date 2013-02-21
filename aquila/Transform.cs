@@ -77,6 +77,18 @@ namespace Aquila
 		{
 		}
 
+		/// <summary>
+		/// Transform
+		/// </summary>
+		/// <param name="length">length</param>
+		/// <param name="window">window type</param>
+		/// <param name="factor">preemhasis factor (Set to 0 if no pre-emphasis should be performed)</param>
+		/// <remarks>
+		/// The goal of pre-emphasis is to compensate the high-frequency part
+		/// that was suppressed during the sound production mechanism of humans.
+		/// Moreover, it can also amplify the importance of high-frequency formants.
+		/// It's not neccesary for only music, but important for speech
+		/// </remarks>
 		public Transform(int length, WindowType window, double factor)
 		{
 			zeroPaddedLength = length;
@@ -295,6 +307,11 @@ namespace Aquila
 			// iterate over all samples of the frame
 			// filter the data through preemphasis
 			// and apply a chosen window function
+			// The goal of pre-emphasis is to compensate the high-frequency part
+			// that was suppressed during the sound production mechanism of humans.
+			// Moreover, it can also amplify the importance of high-frequency formants.
+			// It's not neccesary for only music, but important for speech
+			// (Set to 0 if no pre-emphasis should be performed)
 			for (int n = 1; n < length; n++)
 			{
 				current = frameArray[n];
