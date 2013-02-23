@@ -35,7 +35,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-matchid=129</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -87,6 +87,9 @@
     </Compile>
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\ColorUtils.cs">
       <Link>ColorUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\FFT\fftw\FFTW.cs">
+      <Link>FFTW.cs</Link>
     </Compile>
     <Compile Include="..\..\AudioVSTToolbox\CommonUtils\ImageUtils.cs">
       <Link>ImageUtils.cs</Link>
@@ -162,6 +165,12 @@
     <Compile Include="NDtw\SeriesVariable.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpeechRecognitionHMM\ArrayWriter.cs" />
+    <Compile Include="SpeechRecognitionHMM\DCT.cs" />
+    <Compile Include="SpeechRecognitionHMM\EndPointDetection.cs" />
+    <Compile Include="SpeechRecognitionHMM\FFT.cs" />
+    <Compile Include="SpeechRecognitionHMM\MFCC.cs" />
+    <Compile Include="SpeechRecognitionHMM\PreProcess.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="aquila" />
@@ -188,6 +197,7 @@
     <Folder Include="NativeLibraries\ZedGraph" />
     <Folder Include="NDtw" />
     <Folder Include="NDtw\Preprocessing" />
+    <Folder Include="SpeechRecognitionHMM" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NativeLibraries\faad\faad.exe">
@@ -210,6 +220,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="aquila\examples\test2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="libfftw3-3.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="Mirage\Resources\writefilters.m" />

@@ -43,8 +43,8 @@ namespace Mirage
 		}
 		
 		private const int SAMPLING_RATE = 22050; //22050;
-		private const int WINDOW_SIZE = 1024; //1024;
-		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
+		private const int WINDOW_SIZE = 2048; //1024;
+		private const int MEL_COEFFICIENTS = 40; // 36 filters (SPHINX-III uses 40)
 		public const int MFCC_COEFFICIENTS = 20; //20
 		private const int SECONDS_TO_ANALYZE = 120;
 
@@ -80,7 +80,7 @@ namespace Mirage
 			
 			// Normalize
 			//MathUtils.NormalizeInPlace(audiodata);
-			Multiply(ref audiodata, 65536);
+			//Multiply(ref audiodata, 65536);
 			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-normalized.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),

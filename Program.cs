@@ -19,10 +19,10 @@ namespace Imghash
 			// TODO: remove this
 			Console.ReadKey();
 		}
-		*/
+		 */
 		
 		public static void DCTTester() {
-			int N = 2;
+			int N = 4;
 			Random generator = new Random();
 
 			double[,] f = new double[N,N];
@@ -31,19 +31,19 @@ namespace Imghash
 			// Generate random integers between 0 and 255
 			Console.WriteLine("Original values");
 			Console.WriteLine("-----------");
-			/*
-		int @value;
-		for (int x=0;x<N;x++)
-		{
-			for (int y=0;y<N;y++)
+
+			int @value;
+			for (int x=0;x<N;x++)
 			{
-				@value = generator.Next(255);
-				f[x,y] = @value;
-				Console.WriteLine(f[x,y]+" => f["+x+"]["+y+"]");
+				for (int y=0;y<N;y++)
+				{
+					@value = generator.Next(255);
+					f[x,y] = @value;
+					Console.WriteLine(f[x,y]+" => f["+x+"]["+y+"]");
+				}
 			}
-		}
-			 */
 			
+			/*
 			// force the values to compare
 			f = new double[,] { {54.0, 35.0}, {128.0, 185.0} };
 			for (int x=0;x<N;x++)
@@ -53,6 +53,7 @@ namespace Imghash
 					Console.WriteLine(f[x,y]+" => f["+x+"]["+y+"]");
 				}
 			}
+			 */
 			
 			//DCT dctApplied = new DCT(N);
 			//dctApplied.ForwardDCT(f, F);

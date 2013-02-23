@@ -280,14 +280,33 @@ namespace Mirage
 		}
 
 		public static void Main(string[] args) {
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
-			
 			/*
 			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
 			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+
+			//Imghash.Program.DCTTester();
 			
+			int SAMPLERATE = 22050;
+			//int SAMPLESPERFRAME = 44100 * 20 / 1000;
+			int SAMPLEPERFRAME = 30;
+			float[] audiodata = AudioFileReader.Decode(path1, SAMPLERATE, 120);
+			SpeechRecognitionHMM.PreProcess pre = new SpeechRecognitionHMM.PreProcess(audiodata, SAMPLEPERFRAME, SAMPLERATE);
+			float[][] framedSignal = pre.framedSignal;
+			SpeechRecognitionHMM.MFCC mfcc = new SpeechRecognitionHMM.MFCC(SAMPLEPERFRAME, SAMPLERATE, 40);
+			
+			double[][] mfccFeature = new double[pre.noOfFrames][];
+			for (int i = 0; i < pre.noOfFrames; i++) {
+				// for each frame i, make mfcc from current framed signal
+				mfccFeature[i] = mfcc.doMFCC(framedSignal[i]);// 2D data
+				//SpeechRecognitionHMM.ArrayWriter.PrintDoubleArrayToConsole(features);
+			}
+			return;
+			 */
+			
+			/*
 			Compare(path1, path2, analysisMethod);
 			System.Console.ReadLine();
 			return;
@@ -295,6 +314,7 @@ namespace Mirage
 			
 			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
 			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+			/*
 			string path1 = @"aquila\examples\test.wav";
 			string path2 = @"aquila\examples\test2.wav";
 			
@@ -311,7 +331,6 @@ namespace Mirage
 			System.Console.ReadLine();
 			return;
 			
-			/*
 			DbgTimer t = new DbgTimer();
 			t.Start();
 			
