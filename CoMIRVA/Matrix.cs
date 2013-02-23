@@ -18,7 +18,7 @@ namespace Comirva.Audio.Util.Maths
 {
 	/// <summary>
 	/// CoMIRVA: Collection of Music Information Retrieval and Visualization Applications
-	/// Ported from Java to C# by perivar@nerseth.com
+	/// Ported from Java to C# and enchanged by perivar@nerseth.com
 	/// </summary>
 
 	///   Jama = Java Matrix class.
@@ -58,8 +58,10 @@ namespace Comirva.Audio.Util.Maths
 	///      double rnorm = r.normInf();
 	///</PRE></DD>
 	///</DL>
-	///@author The MathWorks, Inc. and the National Institute of Standards and Technology.
-	///@version 5 August 1998
+	/// @author The MathWorks, Inc. and the National Institute of Standards and Technology.
+	/// @version 5 August 1998
+
+	/// @version 2013 - Enhancements by perivar@nerseth.com
 	public class Matrix
 	{
 		// ------------------------
@@ -70,11 +72,12 @@ namespace Comirva.Audio.Util.Maths
 		private double[][] matrixData;
 
 		//Number of rows.
-		private int rows;
+		private int rowCount;
 
 		//Number of columns.
-		private int columns;
+		private int columnCount;
 
+		#region Constructors
 		// ------------------------
 		//   Constructors
 		// ------------------------
@@ -83,8 +86,8 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="rows">Number of rows.</param>
 		/// <param name="columns">Number of colums.</param>
 		public Matrix (int rows, int columns) {
-			this.rows = rows;
-			this.columns = columns;
+			this.rowCount = rows;
+			this.columnCount = columns;
 			matrixData = new double[rows][];
 			for (int i=0;i<rows;i++)
 				matrixData[i] = new double[columns];
@@ -95,8 +98,8 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="columns">Number of colums.</param>
 		/// <param name="s">Fill the matrix with this scalar value.</param>
 		public Matrix (int rows, int columns, double s) {
-			this.rows = rows;
-			this.columns = columns;
+			this.rowCount = rows;
+			this.columnCount = columns;
 			matrixData = new double[rows][];
 			for (int i = 0; i < rows; i++)
 			{
@@ -113,11 +116,11 @@ namespace Comirva.Audio.Util.Maths
 		/// <seealso cref="">#constructWithCopy</seealso>
 		public Matrix (double[][] matrixData)
 		{
-			rows = matrixData.Length;
-			columns = matrixData[0].Length;
-			for (int i = 0; i < rows; i++)
+			rowCount = matrixData.Length;
+			columnCount = matrixData[0].Length;
+			for (int i = 0; i < rowCount; i++)
 			{
-				if (matrixData[i].Length != columns)
+				if (matrixData[i].Length != columnCount)
 				{
 					throw new ArgumentException("All rows must have the same length.");
 				}
@@ -132,8 +135,8 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix (double[][] matrixData, int rows, int columns)
 		{
 			this.matrixData = matrixData;
-			this.rows = rows;
-			this.columns = columns;
+			this.rowCount = rows;
+			this.columnCount = columns;
 		}
 
 		/// <summary>Construct matrixData matrix from matrixData one-dimensional packed array</summary>
@@ -142,9 +145,9 @@ namespace Comirva.Audio.Util.Maths
 		/// <exception cref="">ArgumentException Array length must be matrixData multiple of rows.</exception>
 		public Matrix (double[] vals, int rows)
 		{
-			this.rows = rows;
-			columns = (rows != 0 ? vals.Length/rows : 0);
-			if (rows*columns != vals.Length)
+			this.rowCount = rows;
+			columnCount = (rows != 0 ? vals.Length/rows : 0);
+			if (rows*columnCount != vals.Length)
 			{
 				throw new ArgumentException("Array length must be matrixData multiple of rows.");
 			}
@@ -152,13 +155,14 @@ namespace Comirva.Audio.Util.Maths
 			matrixData = new double[rows][];
 			for (int i = 0; i < rows; i++)
 			{
-				matrixData[i] = new double[columns];
-				for (int j = 0; j < columns; j++)
+				matrixData[i] = new double[columnCount];
+				for (int j = 0; j < columnCount; j++)
 				{
 					matrixData[i][j] = vals[i+j*rows];
 				}
 			}
 		}
+		#endregion
 
 		// ------------------------
 		// Public Methods
@@ -190,11 +194,11 @@ namespace Comirva.Audio.Util.Maths
 		/// Make matrixData deep copy of matrixData matrix
 		public Matrix Copy()
 		{
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = matrixData[i][j];
 				}
@@ -219,11 +223,11 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>Two-dimensional array copy of matrix elements.</returns>
 		public double[][] GetArrayCopy()
 		{
-			double[][] C = new double[rows][];
-			for (int i = 0; i < rows; i++)
+			double[][] C = new double[rowCount][];
+			for (int i = 0; i < rowCount; i++)
 			{
-				C[i] = new double[columns];
-				for (int j = 0; j < columns; j++)
+				C[i] = new double[columnCount];
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = matrixData[i][j];
 				}
@@ -235,12 +239,12 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>Matrix elements packed in matrixData one-dimensional array by columns.</returns>
 		public double[] GetColumnPackedCopy()
 		{
-			double[] vals = new double[rows*columns];
-			for (int i = 0; i < rows; i++)
+			double[] vals = new double[rowCount*columnCount];
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
-					vals[i+j*rows] = matrixData[i][j];
+					vals[i+j*rowCount] = matrixData[i][j];
 				}
 			}
 			return vals;
@@ -250,12 +254,12 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>Matrix elements packed in matrixData one-dimensional array by rows.</returns>
 		public double[] GetRowPackedCopy()
 		{
-			double[] vals = new double[rows*columns];
-			for (int i = 0; i < rows; i++)
+			double[] vals = new double[rowCount*columnCount];
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
-					vals[i*columns+j] = matrixData[i][j];
+					vals[i*columnCount+j] = matrixData[i][j];
 				}
 			}
 			return vals;
@@ -265,14 +269,14 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>rows, the number of rows.</returns>
 		public int GetRowDimension()
 		{
-			return rows;
+			return rowCount;
 		}
 
 		/// <summary>Get column dimension.</summary>
 		/// <returns>columns, the number of columns.</returns>
 		public int GetColumnDimension()
 		{
-			return columns;
+			return columnCount;
 		}
 
 		/// <summary>Get matrixData single element.</summary>
@@ -455,11 +459,11 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>matrixData'</returns>
 		public Matrix Transpose()
 		{
-			Matrix X = new Matrix(columns,rows);
+			Matrix X = new Matrix(columnCount,rowCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[j][i] = matrixData[i][j];
 				}
@@ -472,10 +476,10 @@ namespace Comirva.Audio.Util.Maths
 		public double Norm1()
 		{
 			double f = 0;
-			for (int j = 0; j < columns; j++)
+			for (int j = 0; j < columnCount; j++)
 			{
 				double s = 0;
-				for (int i = 0; i < rows; i++)
+				for (int i = 0; i < rowCount; i++)
 				{
 					s += Math.Abs(matrixData[i][j]);
 				}
@@ -496,10 +500,10 @@ namespace Comirva.Audio.Util.Maths
 		public double NormInf()
 		{
 			double f = 0;
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
 				double s = 0;
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					s += Math.Abs(matrixData[i][j]);
 				}
@@ -513,9 +517,9 @@ namespace Comirva.Audio.Util.Maths
 		public double NormF()
 		{
 			double f = 0;
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					f = MathUtils.Hypot(f,matrixData[i][j]);
 				}
@@ -527,11 +531,11 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>-matrixData</returns>
 		public Matrix Uminus()
 		{
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = -matrixData[i][j];
 				}
@@ -545,11 +549,11 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix Plus(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = matrixData[i][j] + B.matrixData[i][j];
 				}
@@ -563,9 +567,9 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix PlusEquals(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					matrixData[i][j] = matrixData[i][j] + B.matrixData[i][j];
 				}
@@ -579,11 +583,11 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix Minus(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = matrixData[i][j] - B.matrixData[i][j];
 				}
@@ -597,9 +601,9 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix MinusEquals(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					matrixData[i][j] = matrixData[i][j] - B.matrixData[i][j];
 				}
@@ -613,11 +617,11 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix ArrayTimes(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = matrixData[i][j] * B.matrixData[i][j];
 				}
@@ -631,9 +635,9 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix ArrayTimesEquals(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					matrixData[i][j] = matrixData[i][j] * B.matrixData[i][j];
 				}
@@ -647,11 +651,11 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix ArrayRightDivide(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = matrixData[i][j] / B.matrixData[i][j];
 				}
@@ -665,9 +669,9 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix ArrayRightDivideEquals(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					matrixData[i][j] = matrixData[i][j] / B.matrixData[i][j];
 				}
@@ -681,11 +685,11 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix ArrayLeftDivide(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = B.matrixData[i][j] / matrixData[i][j];
 				}
@@ -699,9 +703,9 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix ArrayLeftDivideEquals(Matrix B)
 		{
 			CheckMatrixDimensions(B);
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					matrixData[i][j] = B.matrixData[i][j] / matrixData[i][j];
 				}
@@ -714,11 +718,11 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>s*matrixData</returns>
 		public Matrix Times(double s)
 		{
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					C[i][j] = s*matrixData[i][j];
 				}
@@ -731,9 +735,9 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>replace matrixData by s*matrixData</returns>
 		public Matrix TimesEquals(double s)
 		{
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					matrixData[i][j] = s*matrixData[i][j];
 				}
@@ -747,24 +751,24 @@ namespace Comirva.Audio.Util.Maths
 		/// <exception cref="">ArgumentException Matrix inner dimensions must agree.</exception>
 		public Matrix Times(Matrix B)
 		{
-			if (B.rows != columns)
+			if (B.rowCount != columnCount)
 			{
 				throw new ArgumentException("Matrix inner dimensions must agree.");
 			}
-			Matrix X = new Matrix(rows,B.columns);
+			Matrix X = new Matrix(rowCount,B.columnCount);
 			double[][] C = X.GetArray();
-			double[] Bcolj = new double[columns];
-			for (int j = 0; j < B.columns; j++)
+			double[] Bcolj = new double[columnCount];
+			for (int j = 0; j < B.columnCount; j++)
 			{
-				for (int k = 0; k < columns; k++)
+				for (int k = 0; k < columnCount; k++)
 				{
 					Bcolj[k] = B.matrixData[k][j];
 				}
-				for (int i = 0; i < rows; i++)
+				for (int i = 0; i < rowCount; i++)
 				{
 					double[] Arowi = matrixData[i];
 					double s = 0;
-					for (int k = 0; k < columns; k++)
+					for (int k = 0; k < columnCount; k++)
 					{
 						s += Arowi[k]*Bcolj[k];
 					}
@@ -786,10 +790,10 @@ namespace Comirva.Audio.Util.Maths
 		/// <exception cref="">ArgumentException Matrix inner dimensions must agree.</exception>
 		public Matrix TimesTriangular(Matrix B)
 		{
-			if (B.rows != columns)
+			if (B.rowCount != columnCount)
 				throw new ArgumentException("Matrix inner dimensions must agree.");
 
-			Matrix X = new Matrix(rows,B.columns);
+			Matrix X = new Matrix(rowCount,B.columnCount);
 			double[][] c = X.GetArray();
 			double[][] b;
 			double s = 0;
@@ -798,12 +802,12 @@ namespace Comirva.Audio.Util.Maths
 
 			b = B.GetArray();
 			///multiply with each row of matrixData
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
 				Arowi = matrixData[i];
 
 				///for all columns of B
-				for (int j = 0; j < B.columns; j++)
+				for (int j = 0; j < B.columnCount; j++)
 				{
 					s = 0;
 					Browj = b[j];
@@ -835,7 +839,7 @@ namespace Comirva.Audio.Util.Maths
 
 				matrixData[i] = col;
 			}
-			columns--;
+			columnCount--;
 		}
 
 		/// <summary>
@@ -862,11 +866,11 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>Matrix</returns>
 		public Matrix Pow(double exp)
 		{
-			Matrix X = new Matrix(rows,columns);
+			Matrix X = new Matrix(rowCount,columnCount);
 			double[][] C = X.GetArray();
 
-			for (int i = 0; i < rows; i++)
-				for (int j = 0; j < columns; j++)
+			for (int i = 0; i < rowCount; i++)
+				for (int j = 0; j < columnCount; j++)
 					C[i][j] = Math.Pow(matrixData[i][j], exp);
 
 			return X;
@@ -932,7 +936,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>solution if matrixData is square, least squares solution otherwise</returns>
 		public Matrix Solve(Matrix B)
 		{
-			return (rows == columns ? (new LUDecomposition(this)).Solve(B) : (new QRDecomposition(this)).Solve(B));
+			return (rowCount == columnCount ? (new LUDecomposition(this)).Solve(B) : (new QRDecomposition(this)).Solve(B));
 		}
 
 		/// <summary>Solve X*matrixData = B, which is also matrixData'*X' = B'</summary>
@@ -947,7 +951,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>inverse(matrixData) if matrixData is square, pseudoinverse otherwise.</returns>
 		public Matrix Inverse()
 		{
-			return Solve(Identity(rows,rows));
+			return Solve(Identity(rowCount,rowCount));
 		}
 
 		/// <summary>Matrix determinant</summary>
@@ -976,7 +980,7 @@ namespace Comirva.Audio.Util.Maths
 		public double Trace()
 		{
 			double t = 0;
-			for (int i = 0; i < Math.Min(rows,columns); i++)
+			for (int i = 0; i < Math.Min(rowCount,columnCount); i++)
 			{
 				t += matrixData[i][i];
 			}
@@ -1016,6 +1020,8 @@ namespace Comirva.Audio.Util.Maths
 			}
 			return matrixData;
 		}
+		
+		#region Print
 
 		/// <summary>
 		/// Print the matrix to stdout. Line the elements up in columns
@@ -1071,9 +1077,9 @@ namespace Comirva.Audio.Util.Maths
 		public void Print(TextWriter output, NumberFormatInfo format, int width)
 		{
 			output.WriteLine(); // start on new line.
-			for (int i = 0; i < rows; i++)
+			for (int i = 0; i < rowCount; i++)
 			{
-				for (int j = 0; j < columns; j++)
+				for (int j = 0; j < columnCount; j++)
 				{
 					string s = matrixData[i][j].ToString("F", format); // format the number
 					output.Write(s.PadRight(width));
@@ -1082,7 +1088,25 @@ namespace Comirva.Audio.Util.Maths
 			}
 			output.WriteLine(); // end with blank line.
 		}
+		#endregion
 		
+		// ------------------------
+		//   Private Methods
+		// ------------------------
+
+		/// <summary>
+		/// Check if size(matrixData) == size(B)
+		/// </summary>
+		/// <param name="B">Matrix</param>
+		private void CheckMatrixDimensions(Matrix B)
+		{
+			if (B.rowCount != rowCount || B.columnCount != columnCount)
+			{
+				throw new ArgumentException("Matrix dimensions must agree.");
+			}
+		}
+
+		#region ReadWrite Methods
 		/// <summary>
 		/// Write XML to Text Writer
 		/// </summary>
@@ -1112,23 +1136,24 @@ namespace Comirva.Audio.Util.Maths
 			ReadXML(XDocument.Load(xmlTextReader), null);
 			xmlTextReader.Close();
 		}
-
-		// ------------------------
-		//   Private Methods
-		// ------------------------
-
-		/// <summary>
-		/// Check if size(matrixData) == size(B)
-		/// </summary>
-		/// <param name="B">Matrix</param>
-		private void CheckMatrixDimensions(Matrix B)
+		
+		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
+		/// Usage in Matlab: load('filename', '-ascii');</summary>
+		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\matrix.ascii"</param>
+		public void WriteAscii(string filename)
 		{
-			if (B.rows != rows || B.columns != columns)
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i< rowCount; i++)
 			{
-				throw new ArgumentException("Matrix dimensions must agree.");
+				for(int j = 0; j < columnCount; j++)
+				{
+					pw.Write("{0:#.0000000e+000} ", matrixData[i][j]);
+				}
+				pw.Write("\r");
 			}
+			pw.Close();
 		}
-
+		
 		/// <summary>
 		/// Writes the xml representation of this object to the xml text writer.<br>
 		/// <br>
@@ -1143,14 +1168,14 @@ namespace Comirva.Audio.Util.Maths
 		public void WriteXML(XmlWriter xmlWriter, string matrixName)
 		{
 			xmlWriter.WriteStartElement("matrix");
-			xmlWriter.WriteAttributeString("rows", rows.ToString());
-			xmlWriter.WriteAttributeString("cols", columns.ToString());
+			xmlWriter.WriteAttributeString("rows", rowCount.ToString());
+			xmlWriter.WriteAttributeString("cols", columnCount.ToString());
 			xmlWriter.WriteAttributeString("name", matrixName);
 
-			for(int i = 0; i < rows; i++)
+			for(int i = 0; i < rowCount; i++)
 			{
 				xmlWriter.WriteStartElement("matrixrow");
-				for(int j = 0; j < columns; j++)
+				for(int j = 0; j < columnCount; j++)
 				{
 					xmlWriter.WriteStartElement("cn");
 					//xmlWriter.WriteAttributeString("type","IEEE-754");
@@ -1197,8 +1222,8 @@ namespace Comirva.Audio.Util.Maths
 				// Dimension errors
 				throw new ArgumentException("Matrix dimensions must agree.");
 			} else {
-				this.rows = rows;
-				this.columns = columns;
+				this.rowCount = rows;
+				this.columnCount = columns;
 			}
 			
 			this.matrixData = new double[rows][];
@@ -1216,6 +1241,64 @@ namespace Comirva.Audio.Util.Maths
 			}
 		}
 
+		/// <summary>
+		/// Draw a matrix as an image
+		/// </summary>
+		/// <param name="fileName">filename</param>
+		public void DrawMatrixImage(string fileName) {
+			
+			GraphPane myPane;
+			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
+			
+			PointPairList ppl = new PointPairList();
+			if (columnCount == 1) {
+				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
+				for(int i = 0; i < rowCount; i++) {
+					ppl.Add(i, matrixData[i][0]);
+				}
+				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
+			} else if (rowCount == 1) {
+				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
+				for(int i = 0; i < columnCount; i++) {
+					ppl.Add(i, matrixData[0][i]);
+				}
+				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
+			} else if (columnCount > rowCount) {
+				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
+				Random random = new Random();
+				for(int i = 0; i < rowCount; i++)
+				{
+					ppl.Clear();
+					for(int j = 0; j < columnCount; j++)
+					{
+						ppl.Add(j, matrixData[i][j]);
+					}
+					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
+				}
+			} else { // (columns < rows)
+				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
+				Random random = new Random();
+				for(int i = 0; i < rowCount; i++)
+				{
+					ppl.Clear();
+					for(int j = 0; j < columnCount; j++)
+					{
+						ppl.Add(i, matrixData[i][j]);
+					}
+					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
+				}
+			}
+
+			Bitmap bm = new Bitmap( 1, 1 );
+			using ( Graphics g = Graphics.FromImage( bm ) )
+				myPane.AxisChange( g );
+			
+			myPane.GetImage().Save(fileName, ImageFormat.Png);
+		}
+		#endregion
+		
 		/// <summary>Returns the mean values along the specified dimension.</summary>
 		/// <param name="dim">If 1, then the mean of each column is returned in matrixData row
 		/// vector. If 2, then the mean of each row is returned in matrixData
@@ -1227,23 +1310,23 @@ namespace Comirva.Audio.Util.Maths
 			switch (dim)
 			{
 				case 1:
-					result = new Matrix(1, columns);
-					for (int currN = 0; currN < columns; currN++)
+					result = new Matrix(1, columnCount);
+					for (int currN = 0; currN < columnCount; currN++)
 					{
-						for (int currM = 0; currM < rows; currM++)
+						for (int currM = 0; currM < rowCount; currM++)
 							result.matrixData[0][currN] += matrixData[currM][currN];
-						result.matrixData[0][currN] /= rows;
+						result.matrixData[0][currN] /= rowCount;
 					}
 					return result;
 				case 2:
-					result = new Matrix(rows, 1);
-					for (int currM = 0; currM < rows; currM++)
+					result = new Matrix(rowCount, 1);
+					for (int currM = 0; currM < rowCount; currM++)
 					{
-						for (int currN = 0; currN < columns; currN++)
+						for (int currN = 0; currN < columnCount; currN++)
 						{
 							result.matrixData[currM][0] += matrixData[currM][currN];
 						}
-						result.matrixData[currM][0] /= columns;
+						result.matrixData[currM][0] /= columnCount;
 					}
 					return result;
 				default:
@@ -1257,10 +1340,10 @@ namespace Comirva.Audio.Util.Maths
 		public Matrix Cov()
 		{
 			Matrix transe = this.Transpose();
-			Matrix result = new Matrix(transe.rows, transe.rows);
-			for(int currM = 0; currM < transe.rows; currM++)
+			Matrix result = new Matrix(transe.rowCount, transe.rowCount);
+			for(int currM = 0; currM < transe.rowCount; currM++)
 			{
-				for(int currN = currM; currN < transe.rows; currN++)
+				for(int currN = currM; currN < transe.rowCount; currN++)
 				{
 					double covMN = Cov(transe.matrixData[currM], transe.matrixData[currN]);
 					result.matrixData[currM][currN] = covMN;
@@ -1322,7 +1405,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>matrixData new Matrix with all values being positive</returns>
 		public Matrix Abs()
 		{
-			Matrix result = new Matrix(rows, columns); // don't use clone(), as the values are assigned in the loop.
+			Matrix result = new Matrix(rowCount, columnCount); // don't use clone(), as the values are assigned in the loop.
 			for(int i=0; i<result.matrixData.Length; i++)
 			{
 				for(int j=0; j<result.matrixData[i].Length; j++)
@@ -1331,88 +1414,18 @@ namespace Comirva.Audio.Util.Maths
 			return result;
 		}
 
-		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
-		/// Usage in Matlab: load('filename', '-ascii');</summary>
-		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\matrix.ascii"</param>
-		public void WriteAscii(string filename)
-		{
-			TextWriter pw = File.CreateText(filename);
-			for(int i = 0; i< rows; i++)
-			{
-				for(int j = 0; j < columns; j++)
-				{
-					pw.Write("{0:#.0000000e+000} ", matrixData[i][j]);
-				}
-				pw.Write("\r");
-			}
-			pw.Close();
-		}
-		
-		public void DrawMatrix(string fileName) {
-			
-			GraphPane myPane;
-			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
-			
-			PointPairList ppl = new PointPairList();
-			if (columns == 1) {
-				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
-				for(int i = 0; i < rows; i++) {
-					ppl.Add(i, matrixData[i][0]);
-				}
-				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
-			} else if (rows == 1) {
-				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
-				for(int i = 0; i < columns; i++) {
-					ppl.Add(i, matrixData[0][i]);
-				}
-				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
-			} else if (columns > rows) {
-				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
-				Random random = new Random();
-				for(int i = 0; i < rows; i++)
-				{
-					ppl.Clear();
-					for(int j = 0; j < columns; j++)
-					{
-						ppl.Add(j, matrixData[i][j]);
-					}
-					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
-					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
-				}
-			} else { // (columns < rows)
-				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
-				Random random = new Random();
-				for(int i = 0; i < rows; i++)
-				{
-					ppl.Clear();
-					for(int j = 0; j < columns; j++)
-					{
-						ppl.Add(i, matrixData[i][j]);
-					}
-					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
-					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
-				}
-			}
-
-			Bitmap bm = new Bitmap( 1, 1 );
-			using ( Graphics g = Graphics.FromImage( bm ) )
-				myPane.AxisChange( g );
-			
-			myPane.GetImage().Save(fileName, ImageFormat.Png);
-		}
-
 		/// <summary>
 		/// Checks if number of rows equals number of columns.
 		/// </summary>
 		/// <returns>True iff matrix is n by n.</returns>
-		public bool IsSquare() {return (this.columns == this.rows);}
+		public bool IsSquare() {return (this.columnCount == this.rowCount);}
 
 		/// <summary>
 		/// Checks if A[i, j] == A[j, i].
 		/// </summary>
 		/// <returns>True iff matrix is symmetric.</returns>
 		public bool IsSymmetric() {
-			for (int i = 1; i <= this.rows; i++) for (int j = 1; j <= this.columns; j++) if (this.matrixData[i][j] != this.matrixData[j][i]) return false;
+			for (int i = 1; i <= this.rowCount; i++) for (int j = 1; j <= this.columnCount; j++) if (this.matrixData[i][j] != this.matrixData[j][i]) return false;
 			return true;
 		}
 		
@@ -1427,9 +1440,9 @@ namespace Comirva.Audio.Util.Maths
 		public override int GetHashCode() { return -1; }
 
 		public static bool operator ==(Matrix A, Matrix B) {
-			if (A.rows != B.rows || A.columns != B.columns) return false;
+			if (A.rowCount != B.rowCount || A.columnCount != B.columnCount) return false;
 
-			for (int i = 1; i <= A.rows; i++) for (int j = 1; j <= A.columns; j++) if (A.matrixData[i][j] != B.matrixData[i][j]) return false;
+			for (int i = 1; i <= A.rowCount; i++) for (int j = 1; j <= A.columnCount; j++) if (A.matrixData[i][j] != B.matrixData[i][j]) return false;
 			return true;
 		}
 
@@ -1442,5 +1455,56 @@ namespace Comirva.Audio.Util.Maths
 		public static Matrix operator /(Matrix A, Matrix B) { return A.ArrayRightDivide(B); }
 		public static Matrix operator ^(Matrix A, int k) { return A.Pow(k); }
 		#endregion
+		
+		#region Virtuals and Indexers
+		
+		/// <summary>
+		/// Access the component in row i, column j of a non-empty matrix.
+		/// </summary>
+		/// <param name="i">One-based row index.</param>
+		/// <param name="j">One-based column index.</param>
+		/// <returns></returns>
+		public virtual double this[int i, int j] {
+			set {
+				if (i <= 0 || j <= 0) throw new ArgumentOutOfRangeException("Indices must be real positive.");
+
+				if (i < rowCount && j < columnCount) {
+					matrixData[i][j] = value;
+				}
+			}
+			get {
+				if (i > 0 && i <= rowCount && j > 0 && j <= columnCount) return matrixData[i][j];
+				else throw new ArgumentOutOfRangeException("Indices must not exceed size of matrix.");
+			}
+		}
+
+		/// <summary>
+		/// Access to the i-th component of an n by one matrix (column vector)
+		/// or one by n matrix (row vector).
+		/// </summary>
+		/// <param name="i">One-based index.</param>
+		/// <returns></returns>
+		public virtual double this[int i] {
+			set {
+				if (rowCount == 1) {
+					// row vector
+					matrixData[0][i] = value;
+				} else if (columnCount == 1) {
+					// column vector
+					matrixData[i][0] = value;
+				} else
+					throw new InvalidOperationException("Cannot access multidimensional matrix via single index.");
+			}
+			get {
+				if (this.rowCount == 1) // row vector
+					return matrixData[0][i];
+				else if (this.columnCount == 1) // column vector
+					return matrixData[i][0];
+				else // neither
+					throw new InvalidOperationException("General matrix acces requires double indexing.");
+			}
+		}
+		#endregion
+		
 	}
 }

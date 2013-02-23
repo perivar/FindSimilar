@@ -80,7 +80,7 @@ namespace Mirage
 			
 			// Normalize
 			//MathUtils.NormalizeInPlace(audiodata);
-			//Multiply(ref audiodata, 65536);
+			Multiply(ref audiodata, 65536);
 			
 			/*
 			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-normalized.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),

@@ -140,6 +140,8 @@
     <Compile Include="DCT.cs" />
     <Compile Include="ImagePHash.cs" />
     <Compile Include="ImageAverageHash.cs" />
+    <Compile Include="MatchBox\MelFilterBank.cs" />
+    <Compile Include="MatchBox\TriangleFilter.cs" />
     <Compile Include="Mirage\Analyzer.cs" />
     <Compile Include="Mirage\AudioFileReader.cs" />
     <Compile Include="Mirage\Db.cs" />
@@ -179,6 +181,7 @@
     <Folder Include="aquila\feature" />
     <Folder Include="CoMIRVA" />
     <Folder Include="CoMIRVA\Audio" />
+    <Folder Include="MatchBox" />
     <Folder Include="Mirage" />
     <Folder Include="Mirage\Resources" />
     <Folder Include="NativeLibraries" />

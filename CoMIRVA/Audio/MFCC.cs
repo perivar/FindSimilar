@@ -175,11 +175,15 @@ namespace Comirva.Audio
 
 			//store filter weights and DCT matrix due to performance reason
 			melFilterBanks = GetMelFilterBanks();
-			//melFilterBanks.Write(File.CreateText("melFilterBanks.xml"));
-			//melFilterBanks.DrawMatrix("matrix-melFilterBanks.png");
+			#if DEBUG
+			melFilterBanks.Write(File.CreateText("melFilterBanks.xml"));
+			melFilterBanks.DrawMatrixImage("matrix-melFilterBanks.png");
+			#endif
 			dctMatrix = GetDCTMatrix();
-			//dctMatrix.Write(File.CreateText("dctMatrix.xml"));
-			//dctMatrix.DrawMatrix("matrix-dctMatrix.png");
+			#if DEBUG
+			dctMatrix.Write(File.CreateText("dctMatrix.xml"));
+			dctMatrix.DrawMatrixImage("matrix-dctMatrix.png");
+			#endif
 
 			//create power fft object
 			normalizedPowerFFT = new FFT(FFT.FFT_NORMALIZED_POWER, windowSize, FFT.WND_HANNING);
@@ -483,7 +487,7 @@ namespace Comirva.Audio
 			x = dctMatrix.Times(x);
 
 			//x.Write(File.CreateText("mfcc.xml"));
-			//x.DrawMatrix("matrix-mfcc.png");
+			//x.DrawMatrixImage("matrix-mfcc.png");
 
 			return x.GetColumnPackedCopy();
 			
