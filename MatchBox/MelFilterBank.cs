@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 
 using Comirva.Audio.Util.Maths;
@@ -156,9 +157,11 @@ namespace MatchBox
 				mel_bands[i] = filters_[i].Apply(fft_data);
 		}
 
-		/**
-		 * Utility function to convert HZ to Mel.
-		 */
+		/// <summary>
+		/// Utility function to convert HZ to Mel.
+		/// </summary>
+		/// <param name="hz"></param>
+		/// <returns></returns>
 		public static double HzToMel(double hz)
 		{
 			//melFrequency = 2595 * log(1 + linearFrequency/700)
@@ -167,9 +170,11 @@ namespace MatchBox
 			return f * Math.Log(1 + hz / 700.0f);
 		}
 
-		/**
-		 * Utility function to convert Mel to HZ.
-		 */
+		/// <summary>
+		/// Utility function to convert Mel to HZ.
+		/// </summary>
+		/// <param name="mel"></param>
+		/// <returns></returns>
 		public static double MelToHz(double mel)
 		{
 			double ln_10 = Math.Log(10.0f);
@@ -177,27 +182,36 @@ namespace MatchBox
 			return (Math.Exp(mel / f) - 1) * 700.0f;
 		}
 
-		/**
-		 * Used for debugging. Prints out a detailed descriptions of the
-		 * configured filters.
-		 */
-		public void Print()
+		/// <summary>
+		/// Used for debugging. Prints out a detailed descriptions of the configured filters.
+		/// </summary>
+		public void Print() {
+			Print(Console.Out);
+		}
+		
+		/// <summary>
+		/// Used for debugging. Prints out a detailed descriptions of the configured filters.
+		/// </summary>
+		public void Print(TextWriter @out)
 		{
-			Console.Write("mel_filters = [");
+			@out.Write("mel_filters = [");
 			for (int i = 0; i < filters_.Count; ++i)
 			{
 				if (i != 0)
 				{
-					Console.WriteLine(";");
+					@out.WriteLine(";");
 				}
 				
-				Console.Write(filters_[i]);
+				@out.Write(filters_[i]);
 			}
-			Console.Write("];");
-			Console.WriteLine();
-			Console.WriteLine();
+			@out.Write("];");
+			@out.WriteLine();
+			@out.WriteLine();
 		}
 		
+		/// <summary>
+		/// Return the filter bank as a Matrix
+		/// </summary>
 		public Matrix Matrix {
 			get {
 				int numberFilters = Filters.Count;

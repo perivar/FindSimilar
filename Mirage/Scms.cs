@@ -68,6 +68,53 @@ namespace Mirage
 		}
 
 		// Computes a Scms model from the MFCC representation of a song.
+		public static Scms GetScms(Comirva.Audio.Util.Maths.Matrix mfcc)
+		{
+			//mfcc.Print();
+			DbgTimer t = new DbgTimer();
+			t.Start();
+
+			// Mean
+			//Vector m = mfcc.Mean();
+			Comirva.Audio.Util.Maths.Matrix m = mfcc.Mean(2);
+			//m.WriteText("mean.txt");
+
+			// Covariance
+			Comirva.Audio.Util.Maths.Matrix c = mfcc.Covariance(m);
+			//c.WriteText("covariance.txt");
+
+			// Inverse Covariance
+			Comirva.Audio.Util.Maths.Matrix ic;
+			try {
+				//ic = c.Inverse();
+				ic = c.InverseGausJordan();
+			} catch (Exception) {
+				Dbg.WriteLine("MatrixSingularException - Scms failed!");
+				return null;
+			}
+			//ic.WriteAscii("inverse_covariance.txt");
+			
+			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
+			int dim = m.Rows;
+			Scms s = new Scms(dim);
+			int l = 0;
+			for (int i = 0; i < dim; i++) {
+				s.mean[i] = (float) m.MatrixData[i][0];
+				for (int j = i; j < dim; j++) {
+					s.cov[l] = (float) c.MatrixData[i][j];
+					s.icov[l] = (float) ic.MatrixData[i][j];
+					l++;
+				}
+			}
+
+			long stop = 0;
+			t.Stop(ref stop);
+			Dbg.WriteLine("Mirage - scms created in: {0}ms", stop);
+
+			return s;
+		}
+		
+		// Computes a Scms model from the MFCC representation of a song.
 		public static Scms GetScms(Matrix mfcc)
 		{
 			//mfcc.Print();
@@ -76,9 +123,11 @@ namespace Mirage
 
 			// Mean
 			Vector m = mfcc.Mean();
+			//m.WriteText("mean_orig.txt");
 
 			// Covariance
 			Matrix c = mfcc.Covariance(m);
+			//c.WriteText("covariance_orig.txt");
 
 			// Inverse Covariance
 			Matrix ic;
@@ -89,6 +138,7 @@ namespace Mirage
 				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;
 			}
+			//ic.WriteAscii("inverse_covariance_orig.txt");
 
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
 			int dim = m.rows;
@@ -119,9 +169,9 @@ namespace Mirage
 			}
 			Scms other = (Scms)f;
 			
-			Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), DistanceMeasure.Euclidean, true, true, null, null, null);
-			return dtw.GetCost();
-			//return Distance(this, other, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS));
+			//Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), DistanceMeasure.Euclidean, true, true, null, null, null);
+			//return dtw.GetCost();
+			return Distance(this, other, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS));
 		}
 		
 		public double[] GetArray() {

@@ -22,6 +22,7 @@
 
 using System;
 using System.IO;
+using System.Globalization;
 
 // For drawing graph
 using ZedGraph;
@@ -329,6 +330,47 @@ namespace Mirage
 					}
 				}
 			}
+		}
+		
+		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
+		/// Usage in Matlab: load('filename', '-ascii');</summary>
+		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\matrix.ascii"</param>
+		public void WriteAscii(string filename)
+		{
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i< rows; i++)
+			{
+				for(int j = 0; j < columns; j++)
+				{
+					pw.Write("{0:#.0000000e+000} ", d[i,j]);
+				}
+				pw.Write("\r");
+			}
+			pw.Close();
+		}
+		
+		/// <summary>
+		/// Write matrix to file
+		/// </summary>
+		/// <param name="filename"></param>
+		public void WriteText(string filename)
+		{
+			TextWriter output = File.CreateText(filename);
+			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
+			format.NumberDecimalDigits = 5;
+			
+			for (int i = 0; i < rows; i++)
+			{
+				for (int j = 0; j < columns; j++)
+				{
+					string s = d[i,j].ToString("F", format); // format the number
+					output.Write(s.PadRight(20));
+				}
+				output.WriteLine();
+			}
+			
+			output.Flush();
+			output.Close();
 		}
 		
 		public void DrawMatrix(string fileName) {

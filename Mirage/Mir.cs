@@ -280,19 +280,20 @@ namespace Mirage
 		}
 
 		public static void Main(string[] args) {
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
+			/*
 			MatchBox.MelFilterBank melFilterBank = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true);
+			melFilterBank.Print();
 			Comirva.Audio.Util.Maths.Matrix melFilterBanks = melFilterBank.Matrix;
 			melFilterBanks.Write(File.CreateText("melFilterBanks-new.xml"));
 			melFilterBanks.DrawMatrixImage("matrix-melFilterBanks-new.png");
+			 */
 			
 			/*
 			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
 			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
-
-			//Imghash.Program.DCTTester();
 			
 			int SAMPLERATE = 22050;
 			//int SAMPLESPERFRAME = 44100 * 20 / 1000;
@@ -336,6 +337,8 @@ namespace Mirage
 			System.Console.ReadLine();
 			return;
 			
+			//Imghash.Program.DCTTester();
+
 			DbgTimer t = new DbgTimer();
 			t.Start();
 			

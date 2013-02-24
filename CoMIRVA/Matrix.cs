@@ -77,6 +77,35 @@ namespace Comirva.Audio.Util.Maths
 		//Number of columns.
 		private int columnCount;
 
+		#region Setters and Getters
+		public int Rows {
+			get {
+				return rowCount;
+			}
+			set {
+				rowCount = value;
+			}
+		}
+
+		public int Columns {
+			get {
+				return columnCount;
+			}
+			set {
+				columnCount = value;
+			}
+		}
+
+		public double[][] MatrixData {
+			get {
+				return matrixData;
+			}
+			set {
+				matrixData = value;
+			}
+		}
+		#endregion
+		
 		#region Constructors
 		// ------------------------
 		//   Constructors
@@ -85,7 +114,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <summary>Construct an rows-by-columns matrix of zeros.</summary>
 		/// <param name="rows">Number of rows.</param>
 		/// <param name="columns">Number of colums.</param>
-		public Matrix (int rows, int columns) {
+		public Matrix(int rows, int columns) {
 			this.rowCount = rows;
 			this.columnCount = columns;
 			matrixData = new double[rows][];
@@ -97,7 +126,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="rows">Number of rows.</param>
 		/// <param name="columns">Number of colums.</param>
 		/// <param name="s">Fill the matrix with this scalar value.</param>
-		public Matrix (int rows, int columns, double s) {
+		public Matrix(int rows, int columns, double s) {
 			this.rowCount = rows;
 			this.columnCount = columns;
 			matrixData = new double[rows][];
@@ -114,7 +143,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="matrixData">Two-dimensional array of doubles.</param>
 		/// <exception cref="">ArgumentException All rows must have the same length</exception>
 		/// <seealso cref="">#constructWithCopy</seealso>
-		public Matrix (double[][] matrixData)
+		public Matrix(double[][] matrixData)
 		{
 			rowCount = matrixData.Length;
 			columnCount = matrixData[0].Length;
@@ -132,7 +161,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="matrixData">Two-dimensional array of doubles.</param>
 		/// <param name="rows">Number of rows.</param>
 		/// <param name="columns">Number of colums.</param>
-		public Matrix (double[][] matrixData, int rows, int columns)
+		public Matrix(double[][] matrixData, int rows, int columns)
 		{
 			this.matrixData = matrixData;
 			this.rowCount = rows;
@@ -143,7 +172,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="vals">One-dimensional array of doubles, packed by columns (ala Fortran).</param>
 		/// <param name="rows">Number of rows.</param>
 		/// <exception cref="">ArgumentException Array length must be matrixData multiple of rows.</exception>
-		public Matrix (double[] vals, int rows)
+		public Matrix(double[] vals, int rows)
 		{
 			this.rowCount = rows;
 			columnCount = (rows != 0 ? vals.Length/rows : 0);
@@ -730,6 +759,13 @@ namespace Comirva.Audio.Util.Maths
 			return X;
 		}
 
+		/// <summary>Multiply matrixData matrix by matrixData scalar, C = s*matrixData</summary>
+		/// <param name="s">scalar</param>
+		/// <returns>s*matrixData</returns>
+		public Matrix Multiply(double s) {
+			return Times(s);
+		}
+
 		/// <summary>Multiply matrixData matrix by matrixData scalar in place, matrixData = s*matrixData</summary>
 		/// <param name="s">scalar</param>
 		/// <returns>replace matrixData by s*matrixData</returns>
@@ -777,7 +813,14 @@ namespace Comirva.Audio.Util.Maths
 			}
 			return X;
 		}
-
+		
+		/// <summary>Linear algebraic matrix multiplication, matrixData * B</summary>
+		/// <param name="B">another matrix</param>
+		/// <returns>Matrix product, matrixData * B</returns>
+		public Matrix Multiply(Matrix B) {
+			return Times(B);
+		}
+		
 		/// <summary>Linear algebraic matrix multiplication, matrixData * B
 		/// B being matrixData triangular matrix
 		/// <b>Note:</b>
@@ -1046,6 +1089,7 @@ namespace Comirva.Audio.Util.Maths
 			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
 			format.NumberDecimalDigits = d;
 			Print(output,format,w+2);
+			output.Flush();
 		}
 
 		/// <summary>
@@ -1076,7 +1120,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <seealso cref="">NumberFormatInfo</seealso>
 		public void Print(TextWriter output, NumberFormatInfo format, int width)
 		{
-			output.WriteLine(); // start on new line.
+			//output.WriteLine(); // start on new line.
 			for (int i = 0; i < rowCount; i++)
 			{
 				for (int j = 0; j < columnCount; j++)
@@ -1086,7 +1130,7 @@ namespace Comirva.Audio.Util.Maths
 				}
 				output.WriteLine();
 			}
-			output.WriteLine(); // end with blank line.
+			//output.WriteLine(); // end with blank line.
 		}
 		#endregion
 		
@@ -1135,23 +1179,6 @@ namespace Comirva.Audio.Util.Maths
 			XmlTextReader xmlTextReader = new XmlTextReader(textReader);
 			ReadXML(XDocument.Load(xmlTextReader), null);
 			xmlTextReader.Close();
-		}
-		
-		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
-		/// Usage in Matlab: load('filename', '-ascii');</summary>
-		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\matrix.ascii"</param>
-		public void WriteAscii(string filename)
-		{
-			TextWriter pw = File.CreateText(filename);
-			for(int i = 0; i< rowCount; i++)
-			{
-				for(int j = 0; j < columnCount; j++)
-				{
-					pw.Write("{0:#.0000000e+000} ", matrixData[i][j]);
-				}
-				pw.Write("\r");
-			}
-			pw.Close();
 		}
 		
 		/// <summary>
@@ -1241,6 +1268,34 @@ namespace Comirva.Audio.Util.Maths
 			}
 		}
 
+		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
+		/// Usage in Matlab: load('filename', '-ascii');</summary>
+		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\matrix.ascii"</param>
+		public void WriteAscii(string filename)
+		{
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i< rowCount; i++)
+			{
+				for(int j = 0; j < columnCount; j++)
+				{
+					pw.Write("{0:#.0000000e+000} ", matrixData[i][j]);
+				}
+				pw.Write("\r");
+			}
+			pw.Close();
+		}
+		
+		/// <summary>
+		/// Write matrix to file
+		/// </summary>
+		/// <param name="filename"></param>
+		public void WriteText(string filename)
+		{
+			TextWriter pw = File.CreateText(filename);
+			Print(pw, 18, 5);
+			pw.Close();
+		}
+		
 		/// <summary>
 		/// Draw a matrix as an image
 		/// </summary>
@@ -1353,6 +1408,158 @@ namespace Comirva.Audio.Util.Maths
 			return result;
 		}
 
+		/// <summary>
+		/// Copied Covariance Methods from the Mirage matrix class
+		/// </summary>
+		/// <param name="mean">Column Vector Matrix with the mean values - e.g. mfcc.Mean(2);</param>
+		/// <returns>Covariance Matrix</returns>
+		public Matrix Covariance(Matrix mean)
+		{
+			Matrix cache = new Matrix (rowCount, columnCount);
+			float factor = 1.0f/(float)(columnCount - 1);
+			for (int j = 0; j < rowCount; j++) {
+				for (int i = 0; i < columnCount; i++) {
+					cache.MatrixData[j][i] = (MatrixData[j][i] - mean.MatrixData[j][0]);
+				}
+			}
+
+			Matrix cov = new Matrix (mean.rowCount, mean.rowCount);
+			for (int i = 0; i < cov.rowCount; i++) {
+				for (int j = 0; j <= i; j++) {
+					double sum = 0.0;
+					for (int k = 0; k < columnCount; k++) {
+						sum += cache.MatrixData[i][k] * cache.MatrixData[j][k];
+					}
+					sum *= factor;
+					cov.MatrixData[i][j] = sum;
+					if (i == j) {
+						continue;
+					}
+					cov.MatrixData[j][i] = sum;
+				}
+			}
+
+			return cov;
+		}
+		
+		/// <summary>
+		/// Gauss-Jordan routine to invert a matrix, decimal precision
+		/// </summary>
+		/// <returns></returns>
+		public Matrix InverseGausJordan()
+		{
+			decimal[,] e = new decimal[rowCount+1, columnCount+1];
+			for (int i = 1; i <= rowCount; i++) {
+				e[i,i] = 1;
+			}
+			decimal[,] m = new decimal[rowCount+1, columnCount+1];
+			for (int i = 1; i <= rowCount; i++) {
+				for (int j = 1; j <= columnCount; j++) {
+					if (!double.IsNaN(MatrixData[i-1][j-1]))
+						m[i, j] = (decimal) MatrixData[i-1][j-1];
+				}
+			}
+
+			GaussJordan (ref m, rowCount, ref e, rowCount);
+			Matrix inv = new Matrix (rowCount, columnCount);
+
+			for (int i = 1; i <= rowCount; i++) {
+				for (int j = 1; j <= columnCount; j++) {
+					inv.MatrixData[i-1][j-1] = (double) m[i, j];
+				}
+			}
+
+			return inv;
+		}
+
+		private void GaussJordan (ref decimal [,] a, int n, ref decimal [,] b, int m)
+		{
+			int [] indxc = new int[n+1];
+			int [] indxr = new int[n+1];
+			int [] ipiv = new int[n+1];
+			int i, icol = 0, irow = 0, j, k, l, ll;
+			decimal big, dum, pivinv, temp;
+
+			for (j = 1; j <= n; j++) {
+				ipiv[j] = 0;
+			}
+
+			for (i = 1; i <= n; i++) {
+				big = 0;
+				for (j = 1; j <= n; j++) {
+					if (ipiv[j] != 1) {
+						for (k = 1; k <= n; k++) {
+							if (ipiv[k] == 0) {
+								if (Math.Abs(a[j,k]) >= big) {
+									big=Math.Abs(a[j, k]);
+									irow=j;
+									icol=k;
+								}
+							} else if (ipiv[k] > 1) {
+								throw new Exception("Gauss/Jordan Singular Matrix (1)");
+							}
+						}
+					}
+				}
+
+				ipiv[icol]++;
+				if (irow != icol) {
+					for (l = 1; l <= n; l++) {
+						temp = a[irow,l];
+						a[irow,l] = a[icol, l];
+						a[icol,l] = temp;
+					}
+					for (l = 1; l <= m; l++) {
+						temp = b[irow,l];
+						b[irow,l] = b[icol, l];
+						b[icol,l] = temp;
+					}
+				}
+
+				indxr[i] = irow;
+				indxc[i] = icol;
+				if (a[icol,icol] == 0) {
+					throw new Exception("Gauss/Jordan Singular Matrix (2)");
+				}
+
+				pivinv = 1 / a[icol,icol];
+				a[icol,icol] = 1;
+
+				for (l = 1; l <= n; l++) {
+					a[icol,l] *= pivinv;
+				}
+
+				for (l = 1; l <= m; l++) {
+					b[icol,l] *= pivinv;
+				}
+
+				for (ll = 1; ll <= n; ll++) {
+					if (ll != icol) {
+						dum = a[ll,icol];
+						a[ll,icol] = 0;
+
+						for (l = 1; l <= n; l++) {
+							a[ll,l] -= a[icol, l]*dum;
+						}
+
+						for (l = 1; l <= m; l++) {
+							b[ll,l] -= b[icol, l]*dum;
+						}
+					}
+				}
+			}
+
+			for (l = n; l >= 1; l--) {
+				if (indxr[l] != indxc[l]) {
+					for (k = 1; k <= n; k++) {
+						temp = a[k,indxr[l]];
+						a[k,indxr[l]] = a[k, indxc[l]];
+						a[k,indxc[l]] = temp;
+					}
+				}
+			}
+		}
+		
 		/// <summary>Calculate the covariance between the two vectors.</summary>
 		/// <param name="vec1">double values</param>
 		/// <param name="vec2">double values</param>
@@ -1479,8 +1686,8 @@ namespace Comirva.Audio.Util.Maths
 		}
 
 		/// <summary>
-		/// Access to the i-th component of an n by one matrix (column vector)
-		/// or one by n matrix (row vector).
+		/// Access to the i-th component of an n by one Matrix(column vector)
+		/// or one by n Matrix(row vector).
 		/// </summary>
 		/// <param name="i">One-based index.</param>
 		/// <returns></returns>

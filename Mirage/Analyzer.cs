@@ -49,9 +49,11 @@ namespace Mirage
 		private const int SECONDS_TO_ANALYZE = 120;
 
 		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		private static MfccTest mfccTest = new MfccTest(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		//private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		
 		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
+		private static StftTest stftTest = new StftTest(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
 		
 		public static void Init () {}
 
@@ -167,6 +169,75 @@ namespace Mirage
 			}
 			 */
 			
+			//Matrix stftdata_orig = stft.Apply(audiodata);
+			//stftdata_orig.WriteText("stftdata_orig.txt");
+			Comirva.Audio.Util.Maths.Matrix stftdata = stftTest.Apply(audiodata);
+			//stftdata.WriteText("stftdata.txt");
+			
+			//stftdata.DrawMatrix("matrix-stftdata.png");
+			
+			// 4. Mel Scale Filterbank
+			// Mel-frequency is proportional to the logarithm of the linear frequency,
+			// reflecting similar effects in the human's subjective aural perception)
+			
+			// 5. Take Logarithm
+			// 6. DCT (Discrete cosine transform)
+			//Matrix mfccdata_orig = mfcc.Apply(ref stftdata_orig);
+			//mfccdata_orig.WriteText("mfccdata_orig.txt");
+			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccTest.Apply(ref stftdata);
+			//mfccdata.WriteText("mfccdata.txt");
+			
+			//mfccdata.DrawMatrix("matrix-mfccdata.png");
+			
+			// Store in a Statistical Cluster Model Similarity class.
+			// A Gaussian representation of a song
+			//Scms audioFeature_orig = Scms.GetScms(mfccdata_orig);
+			Scms audioFeature = Scms.GetScms(mfccdata);
+
+			if (audioFeature != null) {
+				// Store duration
+				audioFeature.Duration = (long) duration;
+				
+				// Store file name
+				audioFeature.Name = filePath.Name;
+			}
+			
+			long stop = 0;
+			t.Stop (ref stop);
+			Dbg.WriteLine ("Mirage - Total Execution Time: {0}ms", stop);
+
+			return audioFeature;
+		}
+		
+		/*
+		public static Scms AnalyzeScms(FileInfo filePath)
+		{
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+
+			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
+			if (audiodata == null || audiodata.Length == 0)  {
+				Dbg.WriteLine("Error! - No Audio Found");
+				return null;
+			}
+			
+			// Calculate duration in ms
+			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
+			
+			// Normalize
+			//MathUtils.NormalizeInPlace(audiodata);
+			Multiply(ref audiodata, 65536);
+			
+			// 2. Windowing
+			// 3. FFT
+			
+			// zero pad if the audio file is too short to perform a mfcc
+			if (audiodata.Length < WINDOW_SIZE * 8)
+			{
+				int lenNew = WINDOW_SIZE * 8;
+				Array.Resize<float>(ref audiodata, lenNew);
+			}
+			
 			Matrix stftdata = stft.Apply(audiodata);
 			
 			//stftdata.DrawMatrix("matrix-stftdata.png");
@@ -199,6 +270,7 @@ namespace Mirage
 
 			return audioFeature;
 		}
+		 */
 		
 		/// <summary>
 		/// Pre-Emphasis Alpha (Set to 0 if no pre-emphasis should be performed)

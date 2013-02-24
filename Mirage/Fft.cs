@@ -86,6 +86,22 @@ namespace Mirage
 			m.d[winsize/2, j] = fft[winsize]*fft[winsize];
 		}
 		
+		public void ComputeComirvaMatrix(ref Comirva.Audio.Util.Maths.Matrix m, int j, float[] audiodata, int pos)
+		{
+			win.Apply(ref data, audiodata, pos);
+
+			Marshal.Copy(data, 0, fftwData, fftsize);
+			fftwf_execute(fftwPlan);
+			Marshal.Copy(fftwData, fft, 0, fftsize);
+			
+			m.MatrixData[0][j] = fft[0]*fft[0];
+			for (int i = 1; i < winsize/2; i++) {
+				m.MatrixData[i][j] = (fft[i*2]*fft[i*2] +
+				                      fft[fftsize-i*2]*fft[fftsize-i*2]);
+			}
+			m.MatrixData[winsize/2][j] = fft[winsize]*fft[winsize];
+		}
+		
 		~Fft()
 		{
 			fftwf_destroy_plan(fftwPlan);

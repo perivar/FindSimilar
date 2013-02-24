@@ -36,6 +36,8 @@ namespace MatchBox
 	 */
 	public class TriangleFilter
 	{
+		private static NumberFormatInfo numberFormat = new CultureInfo("en-US", false).NumberFormat;
+		
 		private readonly int left_edge_;
 		private readonly int right_edge_;
 		private readonly float height_;
@@ -175,7 +177,8 @@ namespace MatchBox
 
 			for (int i = 0; i < f.size_; ++i)
 			{
-				@out.Write(", " + f.filter_data_[i].ToString("0.000", CultureInfo.InvariantCulture));
+				//@out.Write(", " + f.filter_data_[i].ToString("0.000", CultureInfo.InvariantCulture));
+				@out.Write(", " + f.filter_data_[i].ToString(numberFormat));
 			}
 		}
 	}
