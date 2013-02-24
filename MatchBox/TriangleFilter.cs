@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 
 //Copyright (c) 2011 Sebastian Böhm sebastian@sometimesfood.org
@@ -41,6 +42,36 @@ namespace MatchBox
 		private int size_;
 
 		private float[] filter_data_;
+		
+		public int LeftEdge {
+			get {
+				return left_edge_;
+			}
+		}
+		
+		public int RightEdge {
+			get {
+				return right_edge_;
+			}
+		}
+
+		public float Height {
+			get {
+				return height_;
+			}
+		}
+
+		public int Size {
+			get {
+				return size_;
+			}
+		}
+
+		public float[] FilterData {
+			get {
+				return filter_data_;
+			}
+		}
 		
 		/**
 		 * Creates a new TriangleFilter.
@@ -91,13 +122,9 @@ namespace MatchBox
 			// vDSP_vramp = Cnk = a + n * b  (n = 0 -> N-1)
 			for (int i = 0; i < right_side_length+1; i++) {
 				double val = height + i * right_dx;
-				val = Math.Round(val, 4);
+				val = Math.Round(val, 6);
 				filter_data_[size_-right_side_length-1 + i] = (float) val;
 			}
-		}
-
-		public void Dispose()
-		{
 		}
 
 		/**
@@ -128,7 +155,10 @@ namespace MatchBox
 
 		public override string ToString()
 		{
-			return string.Format("[TriangleFilter Left_edge_={0}, Right_edge_={1}, Height_={2}]", left_edge_, right_edge_, height_);
+			StringWriter writer = new StringWriter();
+			Print(writer, this);
+			writer.Close();
+			return writer.ToString();
 		}
 
 		/**
@@ -136,16 +166,16 @@ namespace MatchBox
 		 */
 		public static void Print(TextWriter @out, TriangleFilter f)
 		{
-			for (int i = 0; i<f.left_edge_; ++i)
+			for (int i = 0; i < f.left_edge_; ++i)
 			{
 				if (i != 0)
 					@out.Write(", ");
-				@out.Write("0 ");
+				@out.Write("0");
 			}
 
-			for (int i = 0; i<f.size_; ++i)
+			for (int i = 0; i < f.size_; ++i)
 			{
-				@out.Write(", {0}", f.filter_data_[i]);
+				@out.Write(", " + f.filter_data_[i].ToString("0.000", CultureInfo.InvariantCulture));
 			}
 		}
 	}

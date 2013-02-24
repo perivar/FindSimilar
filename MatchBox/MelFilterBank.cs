@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using Comirva.Audio.Util.Maths;
+using CommonUtils;
+
 //Copyright (c) 2011 Sebastian Böhm sebastian@sometimesfood.org
 //                   Heinrich Fink hf@hfink.eu
 //
@@ -110,7 +113,7 @@ namespace MatchBox
 			
 			// Fill up equidistant spacing in mel-space
 			float mel_left = mel_min;
-			for (int i = 0; i<num_mel_bands_; i++)
+			for (int i = 0; i < num_mel_bands_; i++)
 			{
 				float mel_center = mel_left + delta_freq_mel;
 				float mel_right = mel_center + delta_freq_mel;
@@ -148,8 +151,8 @@ namespace MatchBox
 		 */
 		public void Apply(float[] fft_data, float[] mel_bands)
 		{
-			//we assume the caller passes arrays with appropriates sizes
-			for (int i = 0; i<num_mel_bands_; ++i)
+			// we assume the caller passes arrays with appropriates sizes
+			for (int i = 0; i < num_mel_bands_; ++i)
 				mel_bands[i] = filters_[i].Apply(fft_data);
 		}
 
@@ -180,19 +183,55 @@ namespace MatchBox
 		 */
 		public void Print()
 		{
-			Console.Write("cpp_mel_filters = [");
-			for (int i = 0; i<filters_.Count; ++i)
+			Console.Write("mel_filters = [");
+			for (int i = 0; i < filters_.Count; ++i)
 			{
 				if (i != 0)
 				{
-					Console.Write("; ");
+					Console.WriteLine(";");
 				}
 				
 				Console.Write(filters_[i]);
 			}
-			Console.Write("]; ");
-			Console.Write("\n");
-			Console.Write("\n");
+			Console.Write("];");
+			Console.WriteLine();
+			Console.WriteLine();
+		}
+		
+		public Matrix Matrix {
+			get {
+				int numberFilters = Filters.Count;
+				
+				//create the filter bank matrix
+				double[][] matrix = new double[numberFilters][];
+
+				//fill each row of the filter bank matrix with one triangular mel filter
+				for(int i = 0; i < numberFilters; i++)
+				{
+					TriangleFilter triFilter = Filters[i];
+					int leftEdge = triFilter.LeftEdge;
+					int rightEdge = triFilter.RightEdge;
+					int size = triFilter.Size;
+					float[] filterdata = triFilter.FilterData;
+
+					double[] filter = new double[num_bins_+1];
+					
+					for (int j = 0; j < leftEdge; j++)
+					{
+						filter[j] = 0;
+					}
+
+					for (int j = 0; j < size; j++)
+					{
+						filter[j + leftEdge] = filterdata[j];
+					}
+					
+					matrix[i] = filter;
+				}
+
+				//return the filter bank
+				return new Matrix(matrix);
+			}
 		}
 	}
 }

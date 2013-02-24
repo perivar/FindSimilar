@@ -283,10 +283,10 @@ namespace Mirage
 			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
-			MatchBox.MelFilterBank melFilterBank = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, false);
-			foreach (var filter in melFilterBank.Filters) {
-				Console.Out.WriteLine(filter);
-			}
+			MatchBox.MelFilterBank melFilterBank = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true);
+			Comirva.Audio.Util.Maths.Matrix melFilterBanks = melFilterBank.Matrix;
+			melFilterBanks.Write(File.CreateText("melFilterBanks-new.xml"));
+			melFilterBanks.DrawMatrixImage("matrix-melFilterBanks-new.png");
 			
 			/*
 			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
