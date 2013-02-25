@@ -36,10 +36,11 @@ namespace Mirage
 	{
 	}
 
-	/** Statistical Cluster Model Similarity class. A Gaussian representation
-	 *  of a song. The distance between two models is computed with the
-	 *  symmetrized Kullback Leibler Divergence.
-	 */
+	/// <summary>
+	/// Statistical Cluster Model Similarity class. A Gaussian representation
+	/// of a song. The distance between two models is computed with the
+	/// symmetrized Kullback Leibler Divergence.
+	/// </summary>
 	public class Scms : AudioFeature
 	{
 		private float [] mean;
@@ -67,7 +68,11 @@ namespace Mirage
 			icov = new float [symDim];
 		}
 
-		// Computes a Scms model from the MFCC representation of a song.
+		/// <summary>
+		/// Computes a Scms model from the MFCC representation of a song.
+		/// </summary>
+		/// <param name="mfcc">Comirva.Audio.Util.Maths.Matrix mfcc</param>
+		/// <returns></returns>
 		public static Scms GetScms(Comirva.Audio.Util.Maths.Matrix mfcc)
 		{
 			DbgTimer t = new DbgTimer();
@@ -79,7 +84,7 @@ namespace Mirage
 			#endif
 
 			// Covariance
-			Comirva.Audio.Util.Maths.Matrix c = mfcc.Covariance(m);
+			Comirva.Audio.Util.Maths.Matrix c = mfcc.Cov(m);
 			#if DEBUG
 			c.WriteText("covariance.txt");
 			#endif
@@ -117,7 +122,11 @@ namespace Mirage
 			return s;
 		}
 		
-		// Computes a Scms model from the MFCC representation of a song.
+		/// <summary>
+		/// Computes a Scms model from the MFCC representation of a song.
+		/// </summary>
+		/// <param name="mfcc">Mirage.Matrix mfcc</param>
+		/// <returns></returns>
 		public static Scms GetScms(Matrix mfcc)
 		{
 			DbgTimer t = new DbgTimer();
@@ -233,8 +242,8 @@ namespace Mirage
 		/// </summary>
 		/// <param name="s1">A song model (Statistical Cluster Model Similarity class)</param>
 		/// <param name="s2">A song model (Statistical Cluster Model Similarity class)</param>
-		/// <param name="c"></param>
-		/// <returns></returns>
+		/// <param name="c">ScmsConfiguration</param>
+		/// <returns>float distance</returns>
 		public static float Distance(Scms s1, Scms s2, ScmsConfiguration c)
 		{
 			float val = 0;

@@ -43,15 +43,15 @@ namespace Mirage
 		}
 		
 		private const int SAMPLING_RATE = 22050; //22050;
-		private const int WINDOW_SIZE = 2048; //1024;
-		private const int MEL_COEFFICIENTS = 40; // 36 filters (SPHINX-III uses 40)
+		private const int WINDOW_SIZE = 1024; //2048 1024;
+		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
 		public const int MFCC_COEFFICIENTS = 20; //20
 		private const int SECONDS_TO_ANALYZE = 120;
-
+		
 		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		// TODO: Remove these!!
 		private static MfccMirage mfccMirage = new MfccMirage(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		//private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		private static Mfcc mfccOptimized = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		private static MFCC mfccComirva = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, SAMPLING_RATE/2, MEL_COEFFICIENTS);
 		
 		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
@@ -192,12 +192,12 @@ namespace Mirage
 			// 6. DCT (Discrete cosine transform)
 
 			// TODO: Remove these!!
-			mfccMirage.filterWeights = mfccComirva.GetMelFilterBanks();
-			mfccMirage.dct = mfccComirva.GetDCTMatrix();
+			//mfccMirage.filterWeights = mfccComirva.GetMelFilterBanks();
+			//mfccMirage.dct = mfccComirva.GetDCTMatrix();
 			
 			#if DEBUG
-			mfccMirage.filterWeights.DrawMatrixImage("melfilters-mirage.png");
-			mfccMirage.dct.DrawMatrixImage("dct-mirage.png");
+			//mfccMirage.filterWeights.DrawMatrixImage("melfilters-mirage.png");
+			//mfccMirage.dct.DrawMatrixImage("dct-mirage.png");
 			#endif
 			
 			#if DEBUG

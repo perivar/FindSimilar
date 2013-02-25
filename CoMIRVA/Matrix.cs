@@ -1449,11 +1449,11 @@ namespace Comirva.Audio.Util.Maths
 		}
 
 		/// <summary>
-		/// Copied Covariance Methods from the Mirage matrix class
+		/// Covariance Methods copied from the Mirage matrix class
 		/// </summary>
 		/// <param name="mean">Column Vector Matrix with the mean values - e.g. mfcc.Mean(2);</param>
 		/// <returns>Covariance Matrix</returns>
-		public Matrix Covariance(Matrix mean)
+		public Matrix Cov(Matrix mean)
 		{
 			Matrix cache = new Matrix (rowCount, columnCount);
 			float factor = 1.0f/(float)(columnCount - 1);
@@ -1512,6 +1512,13 @@ namespace Comirva.Audio.Util.Maths
 			return inv;
 		}
 
+		/// <summary>
+		/// GaussJordan routine to invert a matrix, decimal precision
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="n"></param>
+		/// <param name="b"></param>
+		/// <param name="m"></param>
 		private void GaussJordan (ref decimal [,] a, int n, ref decimal [,] b, int m)
 		{
 			int [] indxc = new int[n+1];

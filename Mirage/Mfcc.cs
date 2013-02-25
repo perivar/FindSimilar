@@ -42,10 +42,16 @@ namespace Mirage
 		{
 			// Load the DCT
 			dct = Matrix.Load(new FileStream("Mirage/Resources/dct.filter", FileMode.Open));
-
+			#if DEBUG
+			dct.DrawMatrixImage("dct-mirage-optimized.png");
+			#endif
+			
 			// Load the MFCC filters from the filter File.
 			filterWeights = Matrix.Load(new FileStream("Mirage/Resources/filterweights.filter", FileMode.Open));
-
+			#if DEBUG
+			filterWeights.DrawMatrixImage("melfilters-mirage-optimized.png");
+			#endif
+			
 			fwFT = new int[filterWeights.rows, 2];
 			for (int i = 0; i < filterWeights.rows; i++) {
 				float last = 0;
