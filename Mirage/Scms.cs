@@ -179,7 +179,19 @@ namespace Mirage
 			
 			//Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), DistanceMeasure.Euclidean, true, true, null, null, null);
 			//return dtw.GetCost();
-			return Distance(this, other, new ScmsConfiguration (Analyzer.MFCC_COEFFICIENTS));
+			return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));
+		}
+		
+		public double[] GetArrayShort() {
+			
+			double[] d = new double[mean.Length];
+
+			int start = 0;
+			for (int i = 0; i < mean.Length; i++) {
+				d[start + i] = mean[i];
+			}
+			
+			return d;
 		}
 		
 		public double[] GetArray() {
