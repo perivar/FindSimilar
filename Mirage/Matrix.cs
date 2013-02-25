@@ -373,7 +373,7 @@ namespace Mirage
 			output.Close();
 		}
 		
-		public void DrawMatrix(string fileName) {
+		public void DrawMatrixImage(string fileName) {
 			
 			GraphPane myPane;
 			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );

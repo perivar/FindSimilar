@@ -1288,12 +1288,52 @@ namespace Comirva.Audio.Util.Maths
 		/// <summary>
 		/// Write matrix to file
 		/// </summary>
-		/// <param name="filename"></param>
+		/// <param name="filename">filename</param>
 		public void WriteText(string filename)
 		{
 			TextWriter pw = File.CreateText(filename);
 			Print(pw, 18, 5);
 			pw.Close();
+		}
+
+		/// <summary>
+		/// Write Matrix to a binary file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public void WriteBinary(string filename)
+		{
+			using (var binWriter = new BinaryWriter(File.Open (filename, FileMode.Create))) {
+				binWriter.Write (rowCount);
+				binWriter.Write (columnCount);
+
+				for (int i = 0; i < rowCount; i++) {
+					for (int j = 0; j < columnCount; j++) {
+						binWriter.Write(MatrixData[i][j]);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Load a Matrix from a binary representation
+		/// </summary>
+		/// <param name="filestream">filestream</param>
+		/// <returns>a Matrix</returns>
+		/// <example>dct = Matrix.LoadBinary(new FileStream("Mirage/Resources/dct.filter", FileMode.Open));</example>
+		public static Matrix LoadBinary(Stream filestream)
+		{
+			using (var binReader = new BinaryReader(filestream)) {
+				int rows = binReader.ReadInt32();
+				int columns = binReader.ReadInt32();
+				Matrix m = new Matrix(rows, columns);
+
+				for (int i = 0; i < rows; i++) {
+					for (int j = 0; j < columns; j++) {
+						m.matrixData[i][j] = binReader.ReadDouble();
+					}
+				}
+				return m;
+			}
 		}
 		
 		/// <summary>

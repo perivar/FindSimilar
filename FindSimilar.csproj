@@ -134,10 +134,10 @@
     <Compile Include="CoMIRVA\MandelEllis.cs" />
     <Compile Include="CoMIRVA\MandelEllisExtractor.cs" />
     <Compile Include="CoMIRVA\Matrix.cs" />
-    <Compile Include="CoMIRVA\MfccTest.cs" />
+    <Compile Include="CoMIRVA\MfccMirage.cs" />
     <Compile Include="CoMIRVA\QRDecomposition.cs" />
     <Compile Include="CoMIRVA\SingularValueDecomposition.cs" />
-    <Compile Include="CoMIRVA\StftTest.cs" />
+    <Compile Include="CoMIRVA\StftMirage.cs" />
     <Compile Include="DCT2.cs" />
     <Compile Include="DCT.cs" />
     <Compile Include="ImagePHash.cs" />

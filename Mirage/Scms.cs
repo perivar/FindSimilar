@@ -70,29 +70,32 @@ namespace Mirage
 		// Computes a Scms model from the MFCC representation of a song.
 		public static Scms GetScms(Comirva.Audio.Util.Maths.Matrix mfcc)
 		{
-			//mfcc.Print();
 			DbgTimer t = new DbgTimer();
 			t.Start();
-
-			// Mean
-			//Vector m = mfcc.Mean();
+			
 			Comirva.Audio.Util.Maths.Matrix m = mfcc.Mean(2);
-			//m.WriteText("mean.txt");
+			#if DEBUG
+			m.WriteText("mean.txt");
+			#endif
 
 			// Covariance
 			Comirva.Audio.Util.Maths.Matrix c = mfcc.Covariance(m);
-			//c.WriteText("covariance.txt");
+			#if DEBUG
+			c.WriteText("covariance.txt");
+			#endif
 
 			// Inverse Covariance
 			Comirva.Audio.Util.Maths.Matrix ic;
 			try {
-				//ic = c.Inverse();
-				ic = c.InverseGausJordan();
+				ic = c.Inverse();
+				//ic = c.InverseGausJordan();
 			} catch (Exception) {
 				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;
 			}
-			//ic.WriteAscii("inverse_covariance.txt");
+			#if DEBUG
+			ic.WriteAscii("inverse_covariance.txt");
+			#endif
 			
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
 			int dim = m.Rows;
@@ -117,17 +120,20 @@ namespace Mirage
 		// Computes a Scms model from the MFCC representation of a song.
 		public static Scms GetScms(Matrix mfcc)
 		{
-			//mfcc.Print();
 			DbgTimer t = new DbgTimer();
 			t.Start();
 
 			// Mean
 			Vector m = mfcc.Mean();
-			//m.WriteText("mean_orig.txt");
-
+			#if DEBUG
+			m.WriteText("mean_orig.txt");
+			#endif
+			
 			// Covariance
 			Matrix c = mfcc.Covariance(m);
-			//c.WriteText("covariance_orig.txt");
+			#if DEBUG
+			c.WriteText("covariance_orig.txt");
+			#endif
 
 			// Inverse Covariance
 			Matrix ic;
@@ -138,7 +144,9 @@ namespace Mirage
 				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;
 			}
-			//ic.WriteAscii("inverse_covariance_orig.txt");
+			#if DEBUG
+			ic.WriteAscii("inverse_covariance_orig.txt");
+			#endif
 
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
 			int dim = m.rows;
@@ -205,10 +213,16 @@ namespace Mirage
 			);
 		}
 
-		/** Function to compute the spectral distance between two song models.
-		 *  This is a fast implementation of the symmetrized Kullback Leibler
-		 *  Divergence.
-		 */
+		/// <summary>
+		/// Function to compute the spectral distance between two song models.
+		/// (Statistical Cluster Model Similarity class. A Gaussian representation of a song.)
+		/// This is a fast implementation of the symmetrized Kullback Leibler
+		/// Divergence.
+		/// </summary>
+		/// <param name="s1">A song model (Statistical Cluster Model Similarity class)</param>
+		/// <param name="s2">A song model (Statistical Cluster Model Similarity class)</param>
+		/// <param name="c"></param>
+		/// <returns></returns>
 		public static float Distance(Scms s1, Scms s2, ScmsConfiguration c)
 		{
 			float val = 0;
@@ -268,7 +282,10 @@ namespace Mirage
 			return val;
 		}
 
-		// Manual serialization of a Scms object to a byte array
+		/// <summary>
+		/// Manual serialization of a Scms object to a byte array
+		/// </summary>
+		/// <returns></returns>
 		public override byte [] ToBytes()
 		{
 			using (var stream = new MemoryStream ()) {
@@ -292,14 +309,23 @@ namespace Mirage
 			}
 		}
 
-		public static Scms FromBytes(byte [] buf)
+		/// <summary>
+		/// Manual deserialization a byte array to a Scms object
+		/// </summary>
+		/// <param name="buf">byte array</param>
+		/// <returns>Song model</returns>
+		public static Scms FromBytes(byte[] buf)
 		{
 			var scms = new Scms(Analyzer.MFCC_COEFFICIENTS);
 			FromBytes (buf, scms);
 			return scms;
 		}
 
-		// Manual deserialization of an Scms from a LittleEndian byte array
+		/// <summary>
+		/// Manual deserialization of an Scms from a LittleEndian byte array
+		/// </summary>
+		/// <param name="buf">byte array</param>
+		/// <param name="s">song model</param>
 		public static void FromBytes(byte[] buf, Scms s)
 		{
 			byte [] buf4 = new byte[4];

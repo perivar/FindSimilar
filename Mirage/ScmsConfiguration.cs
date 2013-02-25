@@ -27,9 +27,10 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Mirage
 {
-	/** Utility class storing a cache and Configuration variables for the Scms
-	 *  distance computation.
-	 */
+	/// <summary>
+	/// Utility class storing a cache and Configuration variables for the Scms
+	/// distance computation.
+	/// </summary>
 	public class ScmsConfiguration
 	{
 		private int dim;

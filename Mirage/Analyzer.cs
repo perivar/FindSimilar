@@ -49,11 +49,13 @@ namespace Mirage
 		private const int SECONDS_TO_ANALYZE = 120;
 
 		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		private static MfccTest mfccTest = new MfccTest(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		// TODO: Remove these!!
+		private static MfccMirage mfccMirage = new MfccMirage(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		//private static Mfcc mfcc = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		private static MFCC mfccComirva = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, SAMPLING_RATE/2, MEL_COEFFICIENTS);
 		
 		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
-		private static StftTest stftTest = new StftTest(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
+		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
 		
 		public static void Init () {}
 
@@ -169,12 +171,18 @@ namespace Mirage
 			}
 			 */
 			
-			//Matrix stftdata_orig = stft.Apply(audiodata);
-			//stftdata_orig.WriteText("stftdata_orig.txt");
-			Comirva.Audio.Util.Maths.Matrix stftdata = stftTest.Apply(audiodata);
-			//stftdata.WriteText("stftdata.txt");
-			
-			//stftdata.DrawMatrix("matrix-stftdata.png");
+			#if DEBUG
+			Matrix stftdata_orig = stft.Apply(audiodata);
+			stftdata_orig.WriteText("stftdata_orig.txt");
+			stftdata_orig.DrawMatrixImage("stftdata_orig.png");
+			#endif
+
+			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audiodata);
+
+			#if DEBUG
+			stftdata.WriteText("stftdata.txt");
+			stftdata.DrawMatrixImage("stftdata.png");
+			#endif
 			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
@@ -182,16 +190,34 @@ namespace Mirage
 			
 			// 5. Take Logarithm
 			// 6. DCT (Discrete cosine transform)
-			//Matrix mfccdata_orig = mfcc.Apply(ref stftdata_orig);
-			//mfccdata_orig.WriteText("mfccdata_orig.txt");
-			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccTest.Apply(ref stftdata);
-			//mfccdata.WriteText("mfccdata.txt");
+
+			// TODO: Remove these!!
+			mfccMirage.filterWeights = mfccComirva.GetMelFilterBanks();
+			mfccMirage.dct = mfccComirva.GetDCTMatrix();
 			
-			//mfccdata.DrawMatrix("matrix-mfccdata.png");
+			#if DEBUG
+			mfccMirage.filterWeights.DrawMatrixImage("melfilters-mirage.png");
+			mfccMirage.dct.DrawMatrixImage("dct-mirage.png");
+			#endif
+			
+			#if DEBUG
+			Matrix mfccdata_orig = mfcc.Apply(ref stftdata_orig);
+			mfccdata_orig.WriteText("mfccdata_orig.txt");
+			mfccdata_orig.DrawMatrixImage("mfccdata_orig.png");
+			#endif
+			
+			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
+
+			#if DEBUG
+			mfccdata.WriteText("mfccdata.txt");
+			mfccdata.DrawMatrixImage("mfccdata.png");
+			#endif
 			
 			// Store in a Statistical Cluster Model Similarity class.
 			// A Gaussian representation of a song
-			//Scms audioFeature_orig = Scms.GetScms(mfccdata_orig);
+			#if DEBUG
+			Scms audioFeature_orig = Scms.GetScms(mfccdata_orig);
+			#endif
 			Scms audioFeature = Scms.GetScms(mfccdata);
 
 			if (audioFeature != null) {

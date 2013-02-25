@@ -176,13 +176,12 @@ namespace Comirva.Audio
 			//store filter weights and DCT matrix due to performance reason
 			melFilterBanks = GetMelFilterBanks();
 			#if DEBUG
-			melFilterBanks.Write(File.CreateText("melFilterBanks.xml"));
-			melFilterBanks.DrawMatrixImage("matrix-melFilterBanks.png");
+			melFilterBanks.DrawMatrixImage("melfilters-comirva.png");
 			#endif
+			
 			dctMatrix = GetDCTMatrix();
 			#if DEBUG
-			dctMatrix.Write(File.CreateText("dctMatrix.xml"));
-			dctMatrix.DrawMatrixImage("matrix-dctMatrix.png");
+			dctMatrix.DrawMatrixImage("dct-comirva.png");
 			#endif
 
 			//create power fft object
@@ -240,7 +239,7 @@ namespace Comirva.Audio
 		/// the filters can be applied at once by a simple matrix multiplication.
 		/// </summary>
 		/// <returns>Matrix a matrix containing the filter banks</returns>
-		private Matrix GetMelFilterBanks()
+		public Matrix GetMelFilterBanks()
 		{
 			//get boundaries of the different filters
 			double[] boundaries = GetMelFilterBankBoundaries(minFreq, maxFreq, numberFilters);
@@ -355,7 +354,7 @@ namespace Comirva.Audio
 		/// full matrix. Only the frist row is missing.
 		/// </summary>
 		/// <returns>Matrix the appropriate DCT matrix</returns>
-		private Matrix GetDCTMatrix()
+		public Matrix GetDCTMatrix()
 		{
 			//compute constants
 			double k = Math.PI/numberFilters;
@@ -377,7 +376,7 @@ namespace Comirva.Audio
 				}
 			}
 
-			//ajust index if we are using first coefficient
+			//adjust index if we are using first coefficient
 			if(!useFirstCoefficient)
 				matrix = matrix.GetMatrix(1, numberCoefficients-1, 0, numberFilters-1);
 
