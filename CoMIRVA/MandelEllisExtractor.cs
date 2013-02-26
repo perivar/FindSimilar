@@ -72,15 +72,21 @@ namespace Comirva.Audio.Extraction
 
 				//create mfcc matrix
 				Matrix mfccs = new Matrix(mfccCoefficients);
+				#if DEBUG
+				mfccs.WriteText("mfccdata-mandelellis.txt");
+				#endif
 
 				//create covariance matrix
 				Matrix covarMatrix = mfccs.Cov();
-
+				#if DEBUG
+				covarMatrix.WriteText("covariance-mandelellis.txt");
+				#endif
+				
 				//compute mean
 				Matrix mean = mfccs.Mean(1).Transpose();
-
-				//mfccs.WriteAscii("mfccs.ascii");
-				//mfccs.Write(File.CreateText("mfccs.xml"));
+				#if DEBUG
+				mean.WriteText("mean-mandelellis.txt");
+				#endif
 
 				MandelEllis.GmmMe gmmMe = new MandelEllis.GmmMe(mean, covarMatrix);
 				MandelEllis mandelEllis = new MandelEllis(gmmMe);

@@ -59,7 +59,7 @@ namespace Mirage
 			DbgTimer t = new DbgTimer();
 			t.Start();
 			
-			int hops = (audiodata.Length - winsize)/hopsize;
+			int hops = (audiodata.Length - winsize)/ hopsize;
 			
 			// Create a Matrix with "winsize" Rows and "hops" Columns
 			// Matrix[Row, Column]

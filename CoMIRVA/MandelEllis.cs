@@ -35,49 +35,18 @@ namespace Comirva.Audio.Feature
 			// the inverted covarMatrix, stored for computational efficiency
 			internal Matrix covarMatrixInv;
 			
-			/*
-			internal double[] meanOptimized;
-			internal double[] covOptimized;
-			internal double[] icovOptimized;
-			internal int dimensions;
-			
-			public GmmMe(int dimensions) {
-				this.dimensions = dimensions;
-				int symDim = (dimensions * dimensions + dimensions) / 2;
-				
-				this.meanOptimized = new double[dimensions];
-				this.covOptimized = new double[symDim];
-				this.icovOptimized = new double[symDim];
-			}
-			 */
-			
 			public GmmMe(Matrix mean, Matrix covarMatrix)
 			{
 				this.mean = mean;
 				this.covarMatrix = covarMatrix;
 
-				// this might throw an exception
-				this.covarMatrixInv = covarMatrix.Inverse();
-				
-				/*
-				// Store the Mean, Covariance, Inverse Covariance in an optimal format.
-				this.dimensions = mean.GetRowDimension();
-				int symDim = (dimensions * dimensions + dimensions) / 2;
-				
-				this.meanOptimized = new double[dimensions];
-				this.covOptimized = new double[symDim];
-				this.icovOptimized = new double[symDim];
-				
-				int l = 0;
-				for (int i = 0; i < dimensions; i++) {
-					this.meanOptimized[i] = mean.Get(i, 0);
-					for (int j = i; j < dimensions; j++) {
-						this.covOptimized[l] = covarMatrix.Get(i, j);
-						this.icovOptimized[l] = covarMatrixInv.Get(i, j);
-						l++;
-					}
+				// Inverse Covariance
+				try {
+					this.covarMatrixInv = covarMatrix.Inverse();
+				} catch (Exception) {
+					Console.Error.WriteLine("MatrixSingularException");
+					return;
 				}
-				 */
 			}
 			
 			public GmmMe(Matrix mean, Matrix covarMatrix, Matrix covarMatrixInv) {
@@ -204,6 +173,29 @@ namespace Comirva.Audio.Feature
 			xmlTextReader.Close();
 		}
 		
+		public byte[] ToBytesCompressed() {
+			using (var stream = new MemoryStream()) {
+				gmmMe.mean.WriteBinary(stream);
+				gmmMe.covarMatrix.WriteBinary(stream);
+				gmmMe.covarMatrixInv.WriteBinary(stream);
+				
+				return stream.ToArray();
+			}
+		}
+
+		public static AudioFeature FromBytesCompressed(byte[] byteArray)
+		{
+			using (Stream stream = new MemoryStream(byteArray)) {
+				Matrix mean = Matrix.LoadBinary(stream);
+				Matrix covarMatrix = Matrix.LoadBinary(stream);
+				Matrix covarMatrixInv = Matrix.LoadBinary(stream);
+				
+				MandelEllis.GmmMe gmmme = new MandelEllis.GmmMe(mean, covarMatrix, covarMatrixInv);
+				var mandelEllis = new MandelEllis(gmmme);
+				return mandelEllis;
+			}
+		}
+		
 		/// <summary>
 		/// Manual serialization of a AudioFeature object to a byte array
 		/// </summary>
@@ -212,6 +204,7 @@ namespace Comirva.Audio.Feature
 		{
 			//XmlWriterSettings settings = new XmlWriterSettings();
 			//settings.Indent = true;
+			/*
 			StringBuilder builder = new StringBuilder();
 			using (XmlWriter writer = XmlWriter.Create(builder))
 			{
@@ -219,28 +212,9 @@ namespace Comirva.Audio.Feature
 			}
 			
 			return StringUtils.GetBytes(builder.ToString());
-			
-			/*
-			using (var stream = new MemoryStream ()) {
-				using (var bw = new BinaryWriter(stream)) {
-					bw.Write ((Int32) this.gmmMe.dimensions);
-
-					for (int i = 0; i < this.gmmMe.meanOptimized.Length; i++) {
-						bw.Write (this.gmmMe.meanOptimized[i]);
-					}
-
-					for (int i = 0; i < this.gmmMe.covOptimized.Length; i++) {
-						bw.Write (this.gmmMe.covOptimized[i]);
-					}
-
-					for (int i = 0; i < this.gmmMe.icovOptimized.Length; i++) {
-						bw.Write (this.gmmMe.icovOptimized[i]);
-					}
-
-					return stream.ToArray();
-				}
-			}
 			 */
+			
+			return ToBytesCompressed();
 		}
 		
 		/// <summary>
@@ -249,50 +223,16 @@ namespace Comirva.Audio.Feature
 		/// <param name="buf">byte array</param>
 		public static AudioFeature FromBytes(byte[] buf)
 		{
+			/*
 			String xmlData = StringUtils.GetString(buf);
 			XmlTextReader xmlTextReader = new XmlTextReader(new StringReader(xmlData));
 			
 			MandelEllis mandelEllis = new MandelEllis();
 			mandelEllis.ReadXML(xmlTextReader);
 			return mandelEllis;
-			
-			/*
-			MandelEllis.GmmMe gmmme = new MandelEllis.GmmMe(Mirage.Analyzer.MFCC_COEFFICIENTS);
-			var mandelEllis = new MandelEllis(gmmme);
-			FromBytes (buf, mandelEllis);
-			return mandelEllis;
 			 */
-		}
-		
-		/// <summary>
-		/// Manual deserialization of an AudioFeature from a LittleEndian byte array
-		/// </summary>
-		/// <param name="buf">byte array</param>
-		/*
-		public static void FromBytes(byte[] buf, MandelEllis feature) {
-			byte [] buf4 = new byte[4];
-			int buf_i = 0;
 			
-			MandelEllis.GmmMe s = feature.gmmMe;
-			
-			int dim = GetInt32 (buf, buf_i, buf4);
-			buf_i += 4;
-
-			for (int i = 0; i < s.meanOptimized.Length; i++) {
-				s.meanOptimized[i] = GetFloat (buf, buf_i, buf4);
-				buf_i += 4;
-			}
-
-			for (int i = 0; i < s.covOptimized.Length; i++) {
-				s.covOptimized[i] = GetFloat (buf, buf_i, buf4);
-				buf_i += 4;
-			}
-
-			for (int i = 0; i < s.icovOptimized.Length; i++) {
-				s.icovOptimized[i] = GetFloat (buf, buf_i, buf4);
-				buf_i += 4;
-			}
+			return FromBytesCompressed(buf);
 		}
-		 */
 	}
 }

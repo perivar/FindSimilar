@@ -1072,9 +1072,20 @@ namespace Comirva.Audio.Util.Maths
 		/// </summary>
 		/// <param name="w">Column width.</param>
 		/// <param name="d">Number of digits after the decimal.</param>
+		public void Print()
+		{
+			Print(System.Console.Out, 15, 5);
+		}
+		
+		/// <summary>
+		/// Print the matrix to stdout. Line the elements up in columns
+		/// with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="w">Column width.</param>
+		/// <param name="d">Number of digits after the decimal.</param>
 		public void Print(int w, int d)
 		{
-			Print(System.Console.Out,w,d);
+			Print(System.Console.Out, w, d);
 		}
 
 		/// <summary>
@@ -1088,7 +1099,7 @@ namespace Comirva.Audio.Util.Maths
 		{
 			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
 			format.NumberDecimalDigits = d;
-			Print(output,format,w+2);
+			Print(output, format, w+2);
 			output.Flush();
 		}
 
@@ -1104,7 +1115,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <seealso cref="">NumberFormatInfo</seealso>
 		public void Print(NumberFormatInfo format, int width)
 		{
-			Print(System.Console.Out,format,width);
+			Print(System.Console.Out, format, width);
 		}
 
 		/// <summary>
@@ -1120,7 +1131,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <seealso cref="">NumberFormatInfo</seealso>
 		public void Print(TextWriter output, NumberFormatInfo format, int width)
 		{
-			//output.WriteLine(); // start on new line.
+			output.WriteLine(); // start on new line.
 			for (int i = 0; i < rowCount; i++)
 			{
 				for (int j = 0; j < columnCount; j++)
@@ -1130,7 +1141,7 @@ namespace Comirva.Audio.Util.Maths
 				}
 				output.WriteLine();
 			}
-			//output.WriteLine(); // end with blank line.
+			output.WriteLine(); // end with blank line.
 		}
 		#endregion
 		
@@ -1302,7 +1313,16 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="filename">filename</param>
 		public void WriteBinary(string filename)
 		{
-			using (var binWriter = new BinaryWriter(File.Open (filename, FileMode.Create))) {
+			WriteBinary(File.Open(filename, FileMode.Create));
+		}
+		
+		/// <summary>
+		/// Write Matrix to a stream
+		/// </summary>
+		/// <param name="filestream">filestream</param>
+		public void WriteBinary(Stream filestream)
+		{
+			using (var binWriter = new BinaryWriter(filestream)) {
 				binWriter.Write (rowCount);
 				binWriter.Write (columnCount);
 
@@ -1314,6 +1334,16 @@ namespace Comirva.Audio.Util.Maths
 			}
 		}
 
+		/// <summary>
+		/// Load a Matrix from a binary representation stored in a file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		/// <returns>a Matrix</returns>
+		public static Matrix LoadBinary(string filename)
+		{
+			return LoadBinary(new FileStream(filename, FileMode.Open));
+		}
+		
 		/// <summary>
 		/// Load a Matrix from a binary representation
 		/// </summary>

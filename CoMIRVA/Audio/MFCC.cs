@@ -485,8 +485,9 @@ namespace Comirva.Audio
 			//compute DCT
 			x = dctMatrix.Times(x);
 
-			//x.Write(File.CreateText("mfcc.xml"));
-			//x.DrawMatrixImage("matrix-mfcc.png");
+			#if DEBUG
+			x.DrawMatrixImage("mfccdata-mandelellis.png");
+			#endif
 
 			return x.GetColumnPackedCopy();
 			

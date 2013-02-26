@@ -279,9 +279,59 @@ namespace Mirage
 			return extractor;
 		}
 
+		private static void TestComirvaMatrix() {
+
+			// http://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
+
+			// octave-3.2.4.exe
+			// > format short g
+			// > X = [4, 2, 0.6; 4.2, 2.1, .59; 3.9, 2, .58; 4.3, 2.1, 0.6; 4.1, 2.2, 0.63]
+			// > mean (X)
+			// 	ans =
+			// 		4.10000   2.08000   0.60000
+
+			// 	> mean (X')
+			// 	ans =
+			// 		2.2      2.2967        2.16      2.3333        2.31
+
+			// > cov (X)
+			//	ans =
+			// 	 	0.025     0.0075   	0.00075
+			// 		0.0075    0.007    	0.00125
+			// 		0.00075   0.00125  	0.00035
+
+			// > inverse ( cov (X) )
+			// 	ans =
+			// 		 70.297 	-133.66     326.73
+			// 	   -133.66     	 648.51   -2029.7
+			// 		326.73 	   -2029.7     9405.9
+			
+			double[][] x = new double[][] {
+				new double[] {4.00000, 2.00000, 0.60000},
+				new double[] {4.20000, 2.10000, 0.59000},
+				new double[] {3.90000, 2.00000, 0.58000},
+				new double[] {4.30000, 2.10000, 0.60000},
+				new double[] {4.10000, 2.20000, 0.63000}
+			};
+			Comirva.Audio.Util.Maths.Matrix X = new Comirva.Audio.Util.Maths.Matrix(5, 3);
+			X.MatrixData = x;
+			
+			X.Print();
+			X.Mean(1).Print();
+			X.Transpose().Mean(1).Print(); // or X.Mean(2).Transpose().Print();
+			X.Cov().Print();
+			X.Cov().Inverse().Print();
+			
+			X.Cov(X.Mean(2)).Print();
+			
+			Console.In.ReadLine();
+			return;
+		}
+		
 		public static void Main(string[] args) {
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+			
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
 			/*
 			MatchBox.MelFilterBank melFilterBank = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true);
