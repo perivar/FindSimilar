@@ -57,10 +57,10 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data.SQLite">
-      <HintPath>..\..\..\..\..\..\Program Files %28x86%29\SQLite.NET\bin\System.Data.SQLite.dll</HintPath>
+      <HintPath>NativeLibraries\SQLite\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.SQLite.Linq">
-      <HintPath>..\..\..\..\..\..\Program Files %28x86%29\SQLite.NET\bin\System.Data.SQLite.Linq.dll</HintPath>
+      <HintPath>NativeLibraries\SQLite\System.Data.SQLite.Linq.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
