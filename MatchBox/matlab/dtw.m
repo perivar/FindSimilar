@@ -17,8 +17,8 @@ function [min_distance, d, g, path] = dtw(A, B, adjustment_window_size)
 r = adjustment_window_size;
 
 % get length of speech patterns A and B
-[~, I] = size(A);
-[~, J] = size(B);
+[ignore1, I] = size(A);
+[ignore2, J] = size(B);
 
 % local distance matrix
 d = zeros(I, J);

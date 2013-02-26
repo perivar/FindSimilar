@@ -1,4 +1,4 @@
-function minimum_distance = dtw_mfcc_distance(wav_file1, wav_file2, ~)
+function minimum_distance = dtw_mfcc_distance(wav_file1, wav_file2, dodebug)
 % Load wave files and return minimal time normalized dtw mfcc distance.
 
 % Matlab doesn't have real default arguments, use an ugly workaround
@@ -19,9 +19,9 @@ if (debug)
     len = max(length(data1), length(data2));
     pad1 = len - length(data1);
     pad2 = len - length(data2);
-    soundsc([padarray(data1, pad1, 0, 'post'), ...
-             padarray(data2, pad2, 0, 'post')],...
-            sr1);
+    %soundsc([padarray(data1, pad1, 0, 'post'), ...
+    %         padarray(data2, pad2, 0, 'post')],...
+    %        sr1);
 end
 
 % get mfcc ceps feature vectors
