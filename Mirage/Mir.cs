@@ -47,25 +47,25 @@ namespace Mirage
 		static string _version = "1.0.0";
 		
 		#region Similarity Search
-		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2) {
+		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
 			
-			var similarTracks = SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake, percentage);
+			var similarTracks = SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake, percentage, distanceType);
 			foreach (var entry in similarTracks)
 			{
 				Console.WriteLine("{0}, {1}", entry.Key, entry.Value);
 			}
 		}
 		
-		public static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2) {
+		public static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
 			
-			var similarTracks = SimilarTracks(path, db, analysisMethod, numToTake, percentage);
+			var similarTracks = SimilarTracks(path, db, analysisMethod, numToTake, percentage, distanceType);
 			foreach (var entry in similarTracks)
 			{
 				Console.WriteLine("{0}, {1}", entry.Key, entry.Value);
 			}
 		}
 		
-		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2)
+		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence)
 		{
 			FileInfo fi = new FileInfo(searchForPath);
 			AudioFeature seedAudioFeature = null;
@@ -97,7 +97,7 @@ namespace Mirage
 			while (read > 0) {
 				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100, analysisMethod);
 				for (int i = 0; i < read; i++) {
-					dcur = seedAudioFeature.GetDistance(audioFeatures[i]);
+					dcur = seedAudioFeature.GetDistance(audioFeatures[i], distanceType);
 					
 					// convert to positive values
 					dcur = Math.Abs(dcur);
@@ -115,7 +115,7 @@ namespace Mirage
 			return sortedDict;
 		}
 
-		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2)
+		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence)
 		{
 			AudioFeature[] seedAudioFeatures = null;
 			AudioFeature[] audioFeatures = null;
@@ -156,7 +156,7 @@ namespace Mirage
 					d = 0;
 					count = 0;
 					for (int j = 0; j < seedAudioFeatures.Length; j++) {
-						dcur = seedAudioFeatures[j].GetDistance(audioFeatures[i]);
+						dcur = seedAudioFeatures[j].GetDistance(audioFeatures[i], distanceType);
 						
 						// convert to positive values
 						dcur = Math.Abs(dcur);
@@ -416,6 +416,7 @@ namespace Mirage
 			int queryId = -1;
 			int numToTake = 25;
 			double percentage = 0.2;
+			AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 			
 			// Command line parsing
 			Arguments CommandLine = new Arguments(args);
@@ -435,6 +436,24 @@ namespace Mirage
 			}
 			if(CommandLine["percentage"] != null) {
 				double.TryParse(CommandLine["percentage"], NumberStyles.Number,CultureInfo.InvariantCulture, out percentage);
+			}
+			if(CommandLine["type"] != null) {
+				string type = CommandLine["type"];
+				if (type.Equals("kl", StringComparison.InvariantCultureIgnoreCase)) {
+					distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
+				} else if (type.StartsWith("dtw", StringComparison.InvariantCultureIgnoreCase)) {
+					if (type.Equals("dtwe", StringComparison.InvariantCultureIgnoreCase)) {
+						distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
+					} else if (type.Equals("dtwe2", StringComparison.InvariantCultureIgnoreCase)) {
+						distanceType = AudioFeature.DistanceType.Dtw_SquaredEuclidean;
+					} else if (type.Equals("dtwman", StringComparison.InvariantCultureIgnoreCase)) {
+						distanceType = AudioFeature.DistanceType.Dtw_Manhattan;
+					} else if (type.Equals("dtwmax", StringComparison.InvariantCultureIgnoreCase)) {
+						distanceType = AudioFeature.DistanceType.Dtw_Maximum;
+					} else {
+						distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
+					}
+				}
 			}
 			if(CommandLine["?"] != null) {
 				PrintUsage();
@@ -465,14 +484,14 @@ namespace Mirage
 			if (queryPath != "") {
 				FileInfo fi = new FileInfo(queryPath);
 				if (fi.Exists) {
-					FindSimilar(queryPath, db, analysisMethod, numToTake, percentage);
+					FindSimilar(queryPath, db, analysisMethod, numToTake, percentage, distanceType);
 				} else {
 					Console.Out.WriteLine("No file found {0}!", queryPath);
 				}
 			}
 			
 			if (queryId != -1) {
-				FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake, percentage);
+				FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake, percentage, distanceType);
 			}
 			
 			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
@@ -534,6 +553,7 @@ namespace Mirage
 			Console.WriteLine("Optional Arguments:");
 			Console.WriteLine("\t-num=<number of matches to return when querying>");
 			Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
+			Console.WriteLine("\t-type= <query method to use: kl (default), dtw, dtwe, dtwe2, dtwman, dtwemax>");
 			Console.WriteLine("\t-? or -help=show this usage help>");
 		}
 	}

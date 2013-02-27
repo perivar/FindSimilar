@@ -190,17 +190,24 @@ namespace Mirage
 			//return dtw.GetCost();
 			return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));
 		}
-		
-		public double[] GetArrayShort() {
-			
-			double[] d = new double[mean.Length];
 
-			int start = 0;
-			for (int i = 0; i < mean.Length; i++) {
-				d[start + i] = mean[i];
+		public override double GetDistance(AudioFeature f, AudioFeature.DistanceType t)
+		{
+			if(!(f is Scms))
+			{
+				new Exception("Can only handle AudioFeatures of type Scms, not of: "+f);
+				return -1;
 			}
+			Scms other = (Scms)f;
 			
-			return d;
+			switch (t) {
+				case AudioFeature.DistanceType.Dtw_Euclidean:
+					Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), DistanceMeasure.Euclidean, true, true, null, null, null);
+					return dtw.GetCost();
+				case AudioFeature.DistanceType.KullbackLeiblerDivergence:
+				default:
+					return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));
+			}
 		}
 		
 		public double[] GetArray() {
@@ -225,7 +232,7 @@ namespace Mirage
 			return d;
 		}
 		
-		public static float Distance(byte [] a, byte [] b)
+		public static float Distance(byte[] a, byte[] b)
 		{
 			return Distance (
 				FromBytes (a),
@@ -314,15 +321,15 @@ namespace Mirage
 					bw.Write ((Int32)dim);
 
 					for (int i = 0; i < mean.Length; i++) {
-						bw.Write (mean[i]);
+						bw.Write(mean[i]);
 					}
 
 					for (int i = 0; i < cov.Length; i++) {
-						bw.Write (cov[i]);
+						bw.Write(cov[i]);
 					}
 
 					for (int i = 0; i < icov.Length; i++) {
-						bw.Write (icov[i]);
+						bw.Write(icov[i]);
 					}
 
 					return stream.ToArray ();
@@ -352,23 +359,55 @@ namespace Mirage
 			byte [] buf4 = new byte[4];
 			int buf_i = 0;
 
-			s.dim = GetInt32 (buf, buf_i, buf4);
+			s.dim = GetInt32(buf, buf_i, buf4);
 			buf_i += 4;
 
 			for (int i = 0; i < s.mean.Length; i++) {
-				s.mean[i] = GetFloat (buf, buf_i, buf4);
+				s.mean[i] = GetFloat(buf, buf_i, buf4);
 				buf_i += 4;
 			}
 
 			for (int i = 0; i < s.cov.Length; i++) {
-				s.cov[i] = GetFloat (buf, buf_i, buf4);
+				s.cov[i] = GetFloat(buf, buf_i, buf4);
 				buf_i += 4;
 			}
 
 			for (int i = 0; i < s.icov.Length; i++) {
-				s.icov[i] = GetFloat (buf, buf_i, buf4);
+				s.icov[i] = GetFloat(buf, buf_i, buf4);
 				buf_i += 4;
 			}
 		}
+		
+		#region Static Helper methods
+		private static bool isLE = BitConverter.IsLittleEndian;
+		private static int GetInt32(byte [] buf, int i, byte [] buf4)
+		{
+			if (isLE) {
+				return BitConverter.ToInt32(buf, i);
+			} else {
+				return BitConverter.ToInt32(Reverse (buf, i, 4, buf4), 0);
+			}
+		}
+
+		private static float GetFloat(byte [] buf, int i, byte [] buf4)
+		{
+			if (isLE) {
+				return BitConverter.ToSingle(buf, i);
+			} else {
+				return BitConverter.ToSingle(Reverse (buf, i, 4, buf4), 0);
+			}
+		}
+
+		private static byte [] Reverse(byte [] buf, int start, int length, byte [] out_buf)
+		{
+			var ret = out_buf;
+			int end = start + length -1;
+			for (int i = 0; i < length; i++) {
+				ret[i] = buf[end - i];
+			}
+			return ret;
+		}
+		#endregion
+		
 	}
 }

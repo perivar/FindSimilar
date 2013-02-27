@@ -15,10 +15,6 @@ namespace Comirva.Audio.Extraction
 	/// </summary>
 	public class MandelEllisExtractor
 	{
-		public int skipIntroSeconds = 30; //number of seconds to skip at the beginning of the song
-		public int skipFinalSeconds = 30; //number of seconds to skip at the end of the song
-		public int minimumStreamLength = 30; //minimal number of seconds of audio data to return a vaild result
-		
 		public float sampleRate = 11025.0f;
 		public int windowSize = 512;
 		public int numberCoefficients = 20;
@@ -26,11 +22,7 @@ namespace Comirva.Audio.Extraction
 
 		protected internal MFCC mfcc;
 
-		public MandelEllisExtractor(float sampleRate, int windowSize, int numberCoefficients, int numberFilters) : this(sampleRate, windowSize, numberCoefficients, numberFilters, 30, 30, 30)
-		{
-		}
-
-		public MandelEllisExtractor(float sampleRate, int windowSize, int numberCoefficients, int numberFilters, int skipIntro, int skipEnd, int minimumLength)
+		public MandelEllisExtractor(float sampleRate, int windowSize, int numberCoefficients, int numberFilters)
 		{
 			this.sampleRate = sampleRate;
 			this.windowSize = windowSize;
@@ -38,20 +30,10 @@ namespace Comirva.Audio.Extraction
 			this.numberFilters = numberFilters;
 			
 			this.mfcc = new MFCC(sampleRate, windowSize, numberCoefficients, true, 20.0, sampleRate/2, numberFilters);
-
-			if(skipIntro < 0 || skipEnd < 0 || minimumStreamLength < 1)
-				throw new ArgumentException("Illegal parametes;");
-
-			this.skipIntroSeconds = skipIntro;
-			this.skipFinalSeconds = skipEnd;
-			this.minimumStreamLength = minimumLength;
 		}
 
 		public AudioFeature Calculate(double[] input)
 		{
-			//skip the intro part
-			//preProcessor.fastSkip((int) AudioPreProcessor.DEFAULT_SAMPLE_RATE * skipIntroSeconds);
-
 			//pack the mfccs into a pointlist
 			double[][] mfccCoefficients = mfcc.Process(input);
 
@@ -60,38 +42,35 @@ namespace Comirva.Audio.Extraction
 				if(mfccCoefficients.Length == 0)
 					throw new ArgumentException("The input stream is to short to process;");
 
-				//compute number of samples to skip at the end
-				//int skip = (int)((skipFinalSeconds * sampleRate)/(mfcc.GetWindowSize()/2));
-
-				//check if the resulting point list has the required minimum length and skip the last few samples
-				//if(mfccCoefficients.Length - skip > ((minimumStreamLength * sampleRate)/(mfcc.GetWindowSize()/2))) {
-				//mfccCoefficients = new List<double[]>(mfccCoefficients.subList(0, mfccCoefficients.Length - skip - 1));
-				//} else {
-				//	throw new ArgumentException("the input stream ist to short to process;");
-				//}
-
 				//create mfcc matrix
 				Matrix mfccs = new Matrix(mfccCoefficients);
 				#if DEBUG
 				mfccs.WriteText("mfccdata-mandelellis.txt");
 				#endif
 
-				//create covariance matrix
+				// compute mean
+				Matrix mean = mfccs.Mean(1).Transpose();
+				#if DEBUG
+				mean.WriteText("mean-mandelellis.txt");
+				#endif
+				
+				// create covariance matrix
 				Matrix covarMatrix = mfccs.Cov();
 				#if DEBUG
 				covarMatrix.WriteText("covariance-mandelellis.txt");
 				#endif
 				
-				//compute mean
-				Matrix mean = mfccs.Mean(1).Transpose();
+				// compute inverse covariance
+				Matrix covarMatrixInv = covarMatrix.Inverse();
 				#if DEBUG
-				mean.WriteText("mean-mandelellis.txt");
+				covarMatrixInv.WriteText("inverse_covariance-mandelellis.txt");
 				#endif
 
-				MandelEllis.GmmMe gmmMe = new MandelEllis.GmmMe(mean, covarMatrix);
+				MandelEllis.GmmMe gmmMe = new MandelEllis.GmmMe(mean, covarMatrix, covarMatrixInv);
 				MandelEllis mandelEllis = new MandelEllis(gmmMe);
 				return mandelEllis;
 			} catch (Exception) {
+				Console.Error.WriteLine("Mandel Ellis Extraction Failed!");
 				return null;
 			}
 		}

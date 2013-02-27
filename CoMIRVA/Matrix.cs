@@ -1322,16 +1322,17 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="filestream">filestream</param>
 		public void WriteBinary(Stream filestream)
 		{
-			using (var binWriter = new BinaryWriter(filestream)) {
-				binWriter.Write (rowCount);
-				binWriter.Write (columnCount);
+			//using (var binWriter = new BinaryWriter(filestream)) {
+			var binWriter = new BinaryWriter(filestream);
+			binWriter.Write (rowCount);
+			binWriter.Write (columnCount);
 
-				for (int i = 0; i < rowCount; i++) {
-					for (int j = 0; j < columnCount; j++) {
-						binWriter.Write(MatrixData[i][j]);
-					}
+			for (int i = 0; i < rowCount; i++) {
+				for (int j = 0; j < columnCount; j++) {
+					binWriter.Write(MatrixData[i][j]);
 				}
 			}
+			//}
 		}
 
 		/// <summary>
