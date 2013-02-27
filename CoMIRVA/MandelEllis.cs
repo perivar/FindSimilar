@@ -90,14 +90,26 @@ namespace Comirva.Audio.Feature
 			}
 			MandelEllis other = (MandelEllis)f;
 			
+			DistanceMeasure distanceMeasure = DistanceMeasure.Euclidean;
 			switch (t) {
 				case AudioFeature.DistanceType.Dtw_Euclidean:
-					Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), DistanceMeasure.Euclidean, true, true, null, null, null);
-					return dtw.GetCost();
+					distanceMeasure = DistanceMeasure.Euclidean;
+					break;
+				case AudioFeature.DistanceType.Dtw_SquaredEuclidean:
+					distanceMeasure = DistanceMeasure.SquaredEuclidean;
+					break;
+				case AudioFeature.DistanceType.Dtw_Manhattan:
+					distanceMeasure = DistanceMeasure.Manhattan;
+					break;
+				case AudioFeature.DistanceType.Dtw_Maximum:
+					distanceMeasure = DistanceMeasure.Maximum;
+					break;
 				case AudioFeature.DistanceType.KullbackLeiblerDivergence:
 				default:
 					return KullbackLeibler(this.gmmMe, other.gmmMe) + KullbackLeibler(other.gmmMe, this.gmmMe);
 			}
+			Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), distanceMeasure, true, true, null, null, null);
+			return dtw.GetCost();
 		}
 		
 		public double[] GetArray() {

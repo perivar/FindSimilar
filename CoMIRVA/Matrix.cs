@@ -1391,7 +1391,6 @@ namespace Comirva.Audio.Util.Maths
 				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
 			} else if (columnCount > rowCount) {
 				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
-				Random random = new Random();
 				for(int i = 0; i < rowCount; i++)
 				{
 					ppl.Clear();
@@ -1399,12 +1398,11 @@ namespace Comirva.Audio.Util.Maths
 					{
 						ppl.Add(j, matrixData[i][j]);
 					}
-					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
 				}
 			} else { // (columns < rows)
 				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
-				Random random = new Random();
 				for(int i = 0; i < rowCount; i++)
 				{
 					ppl.Clear();
@@ -1412,7 +1410,7 @@ namespace Comirva.Audio.Util.Maths
 					{
 						ppl.Add(i, matrixData[i][j]);
 					}
-					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
 				}
 			}

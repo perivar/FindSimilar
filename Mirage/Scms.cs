@@ -92,8 +92,8 @@ namespace Mirage
 			// Inverse Covariance
 			Comirva.Audio.Util.Maths.Matrix ic;
 			try {
-				ic = c.Inverse();
-				//ic = c.InverseGausJordan();
+				//ic = c.Inverse();
+				ic = c.InverseGausJordan();
 			} catch (Exception) {
 				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;
@@ -185,9 +185,6 @@ namespace Mirage
 				return -1;
 			}
 			Scms other = (Scms)f;
-			
-			//Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), DistanceMeasure.Euclidean, true, true, null, null, null);
-			//return dtw.GetCost();
 			return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));
 		}
 
@@ -200,14 +197,26 @@ namespace Mirage
 			}
 			Scms other = (Scms)f;
 			
+			DistanceMeasure distanceMeasure = DistanceMeasure.Euclidean;
 			switch (t) {
 				case AudioFeature.DistanceType.Dtw_Euclidean:
-					Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), DistanceMeasure.Euclidean, true, true, null, null, null);
-					return dtw.GetCost();
+					distanceMeasure = DistanceMeasure.Euclidean;
+					break;
+				case AudioFeature.DistanceType.Dtw_SquaredEuclidean:
+					distanceMeasure = DistanceMeasure.SquaredEuclidean;
+					break;
+				case AudioFeature.DistanceType.Dtw_Manhattan:
+					distanceMeasure = DistanceMeasure.Manhattan;
+					break;
+				case AudioFeature.DistanceType.Dtw_Maximum:
+					distanceMeasure = DistanceMeasure.Maximum;
+					break;
 				case AudioFeature.DistanceType.KullbackLeiblerDivergence:
 				default:
 					return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));
 			}
+			Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), distanceMeasure, true, true, null, null, null);
+			return dtw.GetCost();
 		}
 		
 		public double[] GetArray() {

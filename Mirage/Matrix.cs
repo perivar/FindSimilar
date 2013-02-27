@@ -28,6 +28,7 @@ using System.Globalization;
 using ZedGraph;
 using System.Drawing;
 using System.Drawing.Imaging;
+using CommonUtils;
 
 namespace Mirage
 {
@@ -359,6 +360,7 @@ namespace Mirage
 			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
 			format.NumberDecimalDigits = 5;
 			
+			output.WriteLine(); // start on new line.
 			for (int i = 0; i < rows; i++)
 			{
 				for (int j = 0; j < columns; j++)
@@ -368,6 +370,7 @@ namespace Mirage
 				}
 				output.WriteLine();
 			}
+			output.WriteLine(); // end with blank line.
 			
 			output.Flush();
 			output.Close();
@@ -393,7 +396,6 @@ namespace Mirage
 				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
 			} else if (columns > rows) {
 				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
-				Random random = new Random();
 				for(int i = 0; i < rows; i++)
 				{
 					ppl.Clear();
@@ -401,12 +403,11 @@ namespace Mirage
 					{
 						ppl.Add(j, d[i,j]);
 					}
-					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
 				}
 			} else { // (columns < rows)
 				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
-				Random random = new Random();
 				for(int i = 0; i < rows; i++)
 				{
 					ppl.Clear();
@@ -414,7 +415,7 @@ namespace Mirage
 					{
 						ppl.Add(i, d[i,j]);
 					}
-					Color color = Color.FromArgb(random.Next(0, 255), random.Next(0,255),random.Next(0,255));
+					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
 				}
 			}

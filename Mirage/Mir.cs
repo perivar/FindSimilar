@@ -260,6 +260,7 @@ namespace Mirage
 			}
 		}
 
+		#region Testing
 		private static Aquila.Extractor ReadIntoExtractor(string filename)
 		{
 			Aquila.WaveFile wav = new Aquila.WaveFile(20, 0.66);
@@ -327,11 +328,12 @@ namespace Mirage
 			Console.In.ReadLine();
 			return;
 		}
+		#endregion
 		
 		public static void Main(string[] args) {
 			
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
 			/*
 			MatchBox.MelFilterBank melFilterBank = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true);
@@ -553,7 +555,13 @@ namespace Mirage
 			Console.WriteLine("Optional Arguments:");
 			Console.WriteLine("\t-num=<number of matches to return when querying>");
 			Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
-			Console.WriteLine("\t-type= <query method to use: kl (default), dtw, dtwe, dtwe2, dtwman, dtwemax>");
+			Console.WriteLine("\t-type=<distance method to use when querying. Choose between:>");
+			Console.WriteLine("\t\tkl\t=Kullback Leibler Divergence/ Distance (default)");
+			Console.WriteLine("\t\tdtw\t=Dynamic Time Warping - Euclidean");
+			Console.WriteLine("\t\tdtwe\t=Dynamic Time Warping - Euclidean");
+			Console.WriteLine("\t\tdtwe2\t=Dynamic Time Warping - Squared Euclidean");
+			Console.WriteLine("\t\tdtwman\t=Dynamic Time Warping - Manhattan");
+			Console.WriteLine("\t\tdtwmax\t=Dynamic Time Warping - Maximum");
 			Console.WriteLine("\t-? or -help=show this usage help>");
 		}
 	}
