@@ -52,8 +52,8 @@ namespace Comirva.Audio
 		//implementation details
 		private double[] inputData;
 		private double[] buffer;
-		private Matrix dctMatrix;
-		private Matrix melFilterBanks;
+		public Matrix dctMatrix;
+		public Matrix melFilterBanks;
 		private FFT normalizedPowerFFT;
 
 		/// <summary>

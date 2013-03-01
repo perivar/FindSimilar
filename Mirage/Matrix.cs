@@ -232,7 +232,7 @@ namespace Mirage
 			}
 
 			GaussJordan (ref m, rows, ref e, rows);
-			Matrix inv = new Matrix (rows, columns);
+			Matrix inv = new Matrix(rows, columns);
 
 			for (int i = 1; i <= rows; i++) {
 				for (int j = 1; j <= columns; j++) {
@@ -376,7 +376,7 @@ namespace Mirage
 			output.Close();
 		}
 		
-		public void DrawMatrixImage(string fileName) {
+		public void DrawMatrixImage(string fileName, bool useColumnAsXCoordinate=true) {
 			
 			GraphPane myPane;
 			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
@@ -401,7 +401,11 @@ namespace Mirage
 					ppl.Clear();
 					for(int j = 0; j < columns; j++)
 					{
-						ppl.Add(j, d[i,j]);
+						if (useColumnAsXCoordinate) {
+							ppl.Add(j, d[i,j]);
+						} else {
+							ppl.Add(i, d[i,j]);
+						}
 					}
 					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
@@ -413,7 +417,11 @@ namespace Mirage
 					ppl.Clear();
 					for(int j = 0; j < columns; j++)
 					{
-						ppl.Add(i, d[i,j]);
+						if (useColumnAsXCoordinate) {
+							ppl.Add(j, d[i,j]);
+						} else {
+							ppl.Add(i, d[i,j]);
+						}
 					}
 					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
@@ -425,6 +433,19 @@ namespace Mirage
 				myPane.AxisChange( g );
 			
 			myPane.GetImage().Save(fileName, ImageFormat.Png);
+		}
+		
+		public Comirva.Audio.Util.Maths.Matrix GetComirvaMatrix() {
+			double[][] matrixData = new double[rows][];
+			
+			for (int i = 0; i < rows; i++) {
+				matrixData[i] = new double[columns];
+				for (int j = 0; j < columns; j++) {
+					matrixData[i][j] = d[i, j];
+				}
+			}
+			
+			return new Comirva.Audio.Util.Maths.Matrix(matrixData);
 		}
 	}
 }

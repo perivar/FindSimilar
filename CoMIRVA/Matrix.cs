@@ -1371,7 +1371,7 @@ namespace Comirva.Audio.Util.Maths
 		/// Draw a matrix as an image
 		/// </summary>
 		/// <param name="fileName">filename</param>
-		public void DrawMatrixImage(string fileName) {
+		public void DrawMatrixImage(string fileName, bool useColumnAsXCoordinate=true) {
 			
 			GraphPane myPane;
 			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
@@ -1396,7 +1396,11 @@ namespace Comirva.Audio.Util.Maths
 					ppl.Clear();
 					for(int j = 0; j < columnCount; j++)
 					{
-						ppl.Add(j, matrixData[i][j]);
+						if (useColumnAsXCoordinate) {
+							ppl.Add(j, matrixData[i][j]);
+						} else {
+							ppl.Add(i, matrixData[i][j]);
+						}
 					}
 					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
@@ -1408,7 +1412,11 @@ namespace Comirva.Audio.Util.Maths
 					ppl.Clear();
 					for(int j = 0; j < columnCount; j++)
 					{
-						ppl.Add(i, matrixData[i][j]);
+						if (useColumnAsXCoordinate) {
+							ppl.Add(j, matrixData[i][j]);
+						} else {
+							ppl.Add(i, matrixData[i][j]);
+						}
 					}
 					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
@@ -1421,6 +1429,7 @@ namespace Comirva.Audio.Util.Maths
 			
 			myPane.GetImage().Save(fileName, ImageFormat.Png);
 		}
+		
 		#endregion
 		
 		/// <summary>Returns the mean values along the specified dimension.</summary>
@@ -1529,8 +1538,8 @@ namespace Comirva.Audio.Util.Maths
 				}
 			}
 
-			GaussJordan (ref m, rowCount, ref e, rowCount);
-			Matrix inv = new Matrix (rowCount, columnCount);
+			GaussJordan(ref m, rowCount, ref e, rowCount);
+			Matrix inv = new Matrix(rowCount, columnCount);
 
 			for (int i = 1; i <= rowCount; i++) {
 				for (int j = 1; j <= columnCount; j++) {
@@ -1541,6 +1550,116 @@ namespace Comirva.Audio.Util.Maths
 			return inv;
 		}
 
+		public Matrix InverseGausJordan2() {
+			Invert(this.MatrixData);
+			rowCount = matrixData.Length;
+			columnCount = matrixData[0].Length;
+			return this;
+		}
+		
+		public static void Invert(double[][] A)
+		{
+			int n = A.Length;
+			int[] row = new int[n];
+			int[] col = new int[n];
+			double[] temp = new double[n];
+			int hold, I_pivot, J_pivot;
+			double pivot, abs_pivot;
+
+			if(A[0].Length!=n)
+			{
+				Console.WriteLine("Error in Matrix.invert, inconsistent array sizes.");
+			}
+			// set up row and column interchange vectors
+			for(int k=0; k<n; k++)
+			{
+				row[k] = k ;
+				col[k] = k ;
+			}
+			// begin main reduction loop
+			for(int k=0; k<n; k++)
+			{
+				// find largest element for pivot
+				pivot = A[row[k]][col[k]] ;
+				I_pivot = k;
+				J_pivot = k;
+				for(int i=k; i<n; i++)
+				{
+					for(int j=k; j<n; j++)
+					{
+						abs_pivot = Math.Abs(pivot) ;
+						if(Math.Abs(A[row[i]][col[j]]) > abs_pivot)
+						{
+							I_pivot = i ;
+							J_pivot = j ;
+							pivot = A[row[i]][col[j]] ;
+						}
+					}
+				}
+				if(Math.Abs(pivot) < 1.0E-10)
+				{
+					Console.WriteLine("Matrix is singular !");
+					return;
+				}
+				hold = row[k];
+				row[k]= row[I_pivot];
+				row[I_pivot] = hold ;
+				hold = col[k];
+				col[k]= col[J_pivot];
+				col[J_pivot] = hold ;
+				// reduce about pivot
+				A[row[k]][col[k]] = 1.0 / pivot ;
+				for(int j=0; j<n; j++)
+				{
+					if(j != k)
+					{
+						A[row[k]][col[j]] = A[row[k]][col[j]] * A[row[k]][col[k]];
+					}
+				}
+				// inner reduction loop
+				for(int i=0; i<n; i++)
+				{
+					if(k != i)
+					{
+						for(int j=0; j<n; j++)
+						{
+							if(k != j)
+							{
+								A[row[i]][col[j]] = A[row[i]][col[j]] - A[row[i]][col[k]] * A[row[k]][col[j]] ;
+							}
+						}
+						A[row[i]][col [k]] = - A[row[i]][col[k]] * A[row[k]][col[k]] ;
+					}
+				}
+			}
+			// end main reduction loop
+
+			// unscramble rows
+			for(int j=0; j<n; j++)
+			{
+				for(int i=0; i<n; i++)
+				{
+					temp[col[i]] = A[row[i]][j];
+				}
+				for(int i=0; i<n; i++)
+				{
+					A[i][j] = temp[i] ;
+				}
+			}
+			// unscramble columns
+			for(int i=0; i<n; i++)
+			{
+				for(int j=0; j<n; j++)
+				{
+					temp[row[j]] = A[i][col[j]] ;
+				}
+				for(int j=0; j<n; j++)
+				{
+					A[i][j] = temp[j] ;
+				}
+			}
+		}
+		
 		/// <summary>
 		/// GaussJordan routine to invert a matrix, decimal precision
 		/// </summary>
@@ -1572,7 +1691,7 @@ namespace Comirva.Audio.Util.Maths
 									icol=k;
 								}
 							} else if (ipiv[k] > 1) {
-								throw new Exception("Gauss/Jordan Singular Matrix (1)");
+								throw new Exception("Mirage - Gauss/Jordan Singular Matrix (1)");
 							}
 						}
 					}
@@ -1595,7 +1714,7 @@ namespace Comirva.Audio.Util.Maths
 				indxr[i] = irow;
 				indxc[i] = icol;
 				if (a[icol,icol] == 0) {
-					throw new Exception("Gauss/Jordan Singular Matrix (2)");
+					throw new Exception("Mirage - Gauss/Jordan Singular Matrix (2)");
 				}
 
 				pivinv = 1 / a[icol,icol];
@@ -1788,6 +1907,5 @@ namespace Comirva.Audio.Util.Maths
 			}
 		}
 		#endregion
-		
 	}
 }

@@ -81,25 +81,28 @@ namespace Mirage
 			Comirva.Audio.Util.Maths.Matrix m = mfcc.Mean(2);
 			#if DEBUG
 			m.WriteText("mean.txt");
+			m.DrawMatrixImage("mean.png");
 			#endif
 
 			// Covariance
 			Comirva.Audio.Util.Maths.Matrix c = mfcc.Cov(m);
 			#if DEBUG
 			c.WriteText("covariance.txt");
+			c.DrawMatrixImage("covariance.png");
 			#endif
 
 			// Inverse Covariance
 			Comirva.Audio.Util.Maths.Matrix ic;
 			try {
 				//ic = c.Inverse();
-				ic = c.InverseGausJordan();
+				ic = c.InverseGausJordan2();
 			} catch (Exception) {
 				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;
 			}
 			#if DEBUG
 			ic.WriteAscii("inverse_covariance.txt");
+			ic.DrawMatrixImage("inverse_covariance.png");
 			#endif
 			
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
@@ -136,12 +139,14 @@ namespace Mirage
 			Vector m = mfcc.Mean();
 			#if DEBUG
 			m.WriteText("mean_orig.txt");
+			m.DrawMatrixImage("mean_orig.png");
 			#endif
 			
 			// Covariance
 			Matrix c = mfcc.Covariance(m);
 			#if DEBUG
 			c.WriteText("covariance_orig.txt");
+			c.DrawMatrixImage("covariance_orig.png");
 			#endif
 
 			// Inverse Covariance
@@ -155,6 +160,7 @@ namespace Mirage
 			}
 			#if DEBUG
 			ic.WriteAscii("inverse_covariance_orig.txt");
+			ic.DrawMatrixImage("inverse_covariance_orig.png");
 			#endif
 
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.

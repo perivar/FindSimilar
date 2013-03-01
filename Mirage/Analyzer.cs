@@ -43,15 +43,15 @@ namespace Mirage
 		}
 		
 		private const int SAMPLING_RATE = 22050; //22050;
-		private const int WINDOW_SIZE = 1024; //2048 1024;
-		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
+		private const int WINDOW_SIZE = 2048; //2048 1024;
+		private const int MEL_COEFFICIENTS = 40; // 36 filters (SPHINX-III uses 40)
 		public const int MFCC_COEFFICIENTS = 20; //20
 		private const int SECONDS_TO_ANALYZE = 120;
 		
 		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		// TODO: Remove these!!
 		private static MfccMirage mfccMirage = new MfccMirage(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		private static Mfcc mfccOptimized = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		//private static Mfcc mfccOptimized = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		private static MFCC mfccComirva = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, SAMPLING_RATE/2, MEL_COEFFICIENTS);
 		
 		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE, new HannWindow());
@@ -174,14 +174,14 @@ namespace Mirage
 			#if DEBUG
 			Matrix stftdata_orig = stft.Apply(audiodata);
 			stftdata_orig.WriteText("stftdata_orig.txt");
-			stftdata_orig.DrawMatrixImage("stftdata_orig.png");
+			stftdata_orig.DrawMatrixImage("stftdata_orig.png", false);
 			#endif
 
 			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audiodata);
 
 			#if DEBUG
 			stftdata.WriteText("stftdata.txt");
-			stftdata.DrawMatrixImage("stftdata.png");
+			stftdata.DrawMatrixImage("stftdata.png", false);
 			#endif
 			
 			// 4. Mel Scale Filterbank
@@ -206,7 +206,7 @@ namespace Mirage
 			mfccdata_orig.DrawMatrixImage("mfccdata_orig.png");
 			#endif
 			
-			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
+			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 
 			#if DEBUG
 			mfccdata.WriteText("mfccdata.txt");
@@ -216,7 +216,7 @@ namespace Mirage
 			// Store in a Statistical Cluster Model Similarity class.
 			// A Gaussian representation of a song
 			#if DEBUG
-			Scms audioFeature_orig = Scms.GetScms(mfccdata_orig);
+			Scms audioFeature_orig = Scms.GetScms(new Matrix(mfccdata.MatrixData));
 			#endif
 			Scms audioFeature = Scms.GetScms(mfccdata);
 
