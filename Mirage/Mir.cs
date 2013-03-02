@@ -328,9 +328,82 @@ namespace Mirage
 			Console.In.ReadLine();
 			return;
 		}
+		
+		private static void TestMirageMatrix() {
+
+			// http://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
+
+			// Tested in:
+			// octave-3.2.4.exe or
+			// octave3.6.2_gcc4.6.2
+			
+			// > format short g
+			// > X = [4, 2, 0.6; 4.2, 2.1, .59; 3.9, 2, .58; 4.3, 2.1, 0.6; 4.1, 2.2, 0.63]
+			
+			// > mean (X)
+			// ans =
+			// 	4.1        2.08         0.6
+			
+			// 	> mean (X')
+			// 	ans =
+			// 		2.2      2.2967        2.16      2.3333        2.31
+			
+			// > cov (X)
+			//	ans =
+			// 	 	0.025     0.0075   	0.00075
+			// 		0.0075    0.007    	0.00125
+			// 		0.00075   0.00125  	0.00035
+
+			// 	> cov (X')
+			// 	ans =
+			// 		2.92       3.098       2.846        3.18       2.966
+			// 		3.098       3.287      3.0199      3.3737      3.1479
+			// 		2.846      3.0199      2.7748       3.099      2.8933
+			// 		3.18      3.3737       3.099      3.4633       3.229
+			// 		2.966      3.1479      2.8933       3.229      3.0193
+			
+			// > inverse ( cov (X) )
+			// 	ans =
+			// 		 70.297 	-133.66     326.73
+			// 	   -133.66     	 648.51   -2029.7
+			// 		326.73 	   -2029.7     9405.9
+			
+			// > inverse (cov (X'))
+			// warning: inverse: matrix singular to machine precision, rcond = 2.41562e-018
+			// ans =
+			//   -1.1505e+015  6.7533e+014   1.9306e+015  -4.7521e+014  -9.1573e+014
+			//   -7.9177e+015 -9.2709e+015   1.0708e+016   7.809e+015   -1.1689e+015
+			//    3.8489e+015  1.4136e+015  -3.5083e+015  -2.405e+015    6.7916e+014
+			//    4.7087e+015  5.3658e+015  -7.4667e+015  -4.0211e+015   1.2355e+015
+			//    6.6107e+014  1.9093e+015  -1.7135e+015  -1.0698e+015   1.4605e+014
+			
+			double[][] x = new double[][] {
+				new double[] {4.00000, 2.00000, 0.60000},
+				new double[] {4.20000, 2.10000, 0.59000},
+				new double[] {3.90000, 2.00000, 0.58000},
+				new double[] {4.30000, 2.10000, 0.60000},
+				new double[] {4.10000, 2.20000, 0.63000}
+			};
+			Mirage.Matrix X = new Matrix(x);
+			
+			X.Print();
+			Vector mean = X.Mean();
+			mean.Print();
+			Matrix cov = X.Covariance(mean);
+			cov.Print();
+			Matrix icov = cov.Inverse();
+			icov.Print();
+			
+			Console.In.ReadLine();
+			return;
+		}
 		#endregion
 		
 		public static void Main(string[] args) {
+			
+			//TestMirageMatrix();
+			TestComirvaMatrix();
+			return;
 			
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;

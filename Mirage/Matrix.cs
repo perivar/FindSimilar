@@ -116,45 +116,6 @@ namespace Mirage
 			return mean;
 		}
 
-		public void Print ()
-		{
-			Print (rows, columns);
-		}
-
-		public void Print (int rows, int columns)
-		{
-			System.Console.WriteLine ("Rows: " + this.rows + " Columns: " + this.columns);
-			System.Console.WriteLine ("[");
-
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < columns; j++) {
-					System.Console.Write (d[i, j] + " ");
-				}
-				System.Console.WriteLine (";");
-			}
-			System.Console.WriteLine ("]");
-
-		}
-
-		public void PrintTurn ()
-		{
-			PrintTurn (rows, columns);
-		}
-
-		public void PrintTurn (int rows, int columns)
-		{
-			System.Console.WriteLine ("Rows: " + this.rows + " Columns: " + this.columns);
-			System.Console.WriteLine ("[");
-
-			for (int i = 0; i < columns; i++) {
-				for (int j = 0; j < rows; j++) {
-					System.Console.Write (d[j, i] + " ");
-				}
-				System.Console.WriteLine (";");
-			}
-			System.Console.WriteLine ("]");
-		}
-
 		public Matrix Covariance (Vector mean)
 		{
 			Matrix cache = new Matrix (rows, columns);
@@ -350,32 +311,6 @@ namespace Mirage
 			pw.Close();
 		}
 		
-		/// <summary>
-		/// Write matrix to file
-		/// </summary>
-		/// <param name="filename"></param>
-		public void WriteText(string filename)
-		{
-			TextWriter output = File.CreateText(filename);
-			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
-			format.NumberDecimalDigits = 5;
-			
-			output.WriteLine(); // start on new line.
-			for (int i = 0; i < rows; i++)
-			{
-				for (int j = 0; j < columns; j++)
-				{
-					string s = d[i,j].ToString("F", format); // format the number
-					output.Write(s.PadRight(20));
-				}
-				output.WriteLine();
-			}
-			output.WriteLine(); // end with blank line.
-			
-			output.Flush();
-			output.Close();
-		}
-		
 		public void DrawMatrixImage(string fileName, bool useColumnAsXCoordinate=true) {
 			
 			GraphPane myPane;
@@ -447,5 +382,121 @@ namespace Mirage
 			
 			return new Comirva.Audio.Util.Maths.Matrix(matrixData);
 		}
+		
+		#region Print
+		/// <summary>
+		/// Write matrix to file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public void WriteText(string filename)
+		{
+			TextWriter pw = File.CreateText(filename);
+			Print(pw, 18, 5);
+			pw.Close();
+		}
+
+		/// <summary>
+		/// Print the matrix to stdout. Line the elements up in columns
+		/// with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="w">Column width.</param>
+		/// <param name="d">Number of digits after the decimal.</param>
+		public void Print()
+		{
+			Print(System.Console.Out, 15, 5);
+			//Print(System.Console.Out, CultureInfo.InvariantCulture, 15);
+		}
+		
+		/// <summary>
+		/// Print the matrix to stdout. Line the elements up in columns
+		/// with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="w">Column width.</param>
+		/// <param name="d">Number of digits after the decimal.</param>
+		public void Print(int w, int d)
+		{
+			Print(System.Console.Out, w, d);
+		}
+		
+		/// <summary>
+		/// Print the matrix to the output stream. Line the elements up in
+		/// columns with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="output">Output stream.</param>
+		/// <param name="w">Column width.</param>
+		/// <param name="d">Number of digits after the decimal.</param>
+		public void Print(TextWriter output, int w, int d)
+		{
+			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
+			format.NumberDecimalDigits = d;
+			Print(output, format, w);
+			output.Flush();
+		}
+
+		/// <summary>
+		/// Print the matrix to the output stream. Line the elements up in columns.
+		/// Use the format object, and right justify within columns of width
+		/// characters.
+		/// Note that is the matrix is to be read back in, you probably will want
+		/// to use matrixData NumberFormat that is set to US Locale.
+		/// </summary>
+		/// <param name="output">the output stream.</param>
+		/// <param name="format">matrixData formatting object to format the matrix elements</param>
+		/// <param name="width">Column width.</param>
+		/// <seealso cref="">NumberFormatInfo</seealso>
+		public void Print(TextWriter output, IFormatProvider format, int width)
+		{
+			output.WriteLine(); // start on new line.
+			for (int i = 0; i < rows; i++)
+			{
+				for (int j = 0; j < columns; j++)
+				{
+					string s = d[i,j].ToString(format);
+					output.Write(s.PadRight(width));
+				}
+				output.WriteLine();
+			}
+			output.WriteLine(); // end with blank line.
+		}
+
+		public void PrintOriginal()
+		{
+			PrintOriginal(rows, columns);
+		}
+
+		public void PrintOriginal(int rows, int columns)
+		{
+			System.Console.WriteLine ("Rows: " + this.rows + " Columns: " + this.columns);
+			System.Console.WriteLine ("[");
+
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < columns; j++) {
+					System.Console.Write (d[i, j] + " ");
+				}
+				System.Console.WriteLine (";");
+			}
+			System.Console.WriteLine ("]");
+
+		}
+
+		public void PrintTurn()
+		{
+			PrintTurn (rows, columns);
+		}
+
+		public void PrintTurn(int rows, int columns)
+		{
+			System.Console.WriteLine ("Rows: " + this.rows + " Columns: " + this.columns);
+			System.Console.WriteLine ("[");
+
+			for (int i = 0; i < columns; i++) {
+				for (int j = 0; j < rows; j++) {
+					System.Console.Write (d[j, i] + " ");
+				}
+				System.Console.WriteLine (";");
+			}
+			System.Console.WriteLine ("]");
+		}
+		#endregion
 	}
 }

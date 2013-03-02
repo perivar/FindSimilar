@@ -1075,6 +1075,7 @@ namespace Comirva.Audio.Util.Maths
 		public void Print()
 		{
 			Print(System.Console.Out, 15, 5);
+			//Print(System.Console.Out, CultureInfo.InvariantCulture, 15);
 		}
 		
 		/// <summary>
@@ -1087,7 +1088,7 @@ namespace Comirva.Audio.Util.Maths
 		{
 			Print(System.Console.Out, w, d);
 		}
-
+		
 		/// <summary>
 		/// Print the matrix to the output stream. Line the elements up in
 		/// columns with matrixData Fortran-like 'Fw.d' style format.
@@ -1099,23 +1100,8 @@ namespace Comirva.Audio.Util.Maths
 		{
 			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
 			format.NumberDecimalDigits = d;
-			Print(output, format, w+2);
+			Print(output, format, w);
 			output.Flush();
-		}
-
-		/// <summary>
-		/// Print the matrix to stdout. Line the elements up in columns.
-		/// Use the format object, and right justify within columns of width
-		/// characters.
-		/// Note that is the matrix is to be read back in, you probably will want
-		/// to use matrixData NumberFormat that is set to US Locale.
-		/// </summary>
-		/// <param name="format">matrixData  Formatting object for individual elements.</param>
-		/// <param name="width">Field width for each column.</param>
-		/// <seealso cref="">NumberFormatInfo</seealso>
-		public void Print(NumberFormatInfo format, int width)
-		{
-			Print(System.Console.Out, format, width);
 		}
 
 		/// <summary>
@@ -1129,14 +1115,14 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="format">matrixData formatting object to format the matrix elements</param>
 		/// <param name="width">Column width.</param>
 		/// <seealso cref="">NumberFormatInfo</seealso>
-		public void Print(TextWriter output, NumberFormatInfo format, int width)
+		public void Print(TextWriter output, IFormatProvider format, int width)
 		{
 			output.WriteLine(); // start on new line.
 			for (int i = 0; i < rowCount; i++)
 			{
 				for (int j = 0; j < columnCount; j++)
 				{
-					string s = matrixData[i][j].ToString("F", format); // format the number
+					string s = matrixData[i][j].ToString(format);
 					output.Write(s.PadRight(width));
 				}
 				output.WriteLine();
