@@ -14,8 +14,8 @@ function r = mfcc(s, fs)
 % Authors:     Christian Cornaz
 %              Urs Hunkeler
 
-m = 100;
-n = 256;
+n = 2048;%256;
+m = n/2; % 50% Overleap
 l = length(s);
 
 nbFrame = floor((l - n) / m) + 1;
@@ -37,7 +37,7 @@ end
 t = n / 2;
 tmax = l / fs;
 
-m = melfb(20, n, fs);
+m = melfb(40, n, fs); %(20, n, fs);
 n2 = 1 + floor(n / 2);
 z = m * abs(frame(1:n2, :)).^2;
 

@@ -7,3 +7,10 @@ http://davefancher.com/2012/04/22/string-distances-9/
 http://saikatd.wordpress.com/2009/10/25/hamming-distance/
 
 http://soundfingerprinting.googlecode.com/svn-history/r314/trunk/Sources/SoundFingerprinting/SoundFingerprintingLib/FingerprintLib/QueryFingerprintManager.cs
+
+
+Good MFCC summary
+http://yaafe.sourceforge.net/features.html#mfcc
+
+Matlab Tricks (e.g. framing and windowing without loops)
+http://www.ee.columbia.edu/~marios/matlab/matlab_tricks.html
