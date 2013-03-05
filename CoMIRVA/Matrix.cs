@@ -1122,7 +1122,11 @@ namespace Comirva.Audio.Util.Maths
 			{
 				for (int j = 0; j < columnCount; j++)
 				{
-					string s = matrixData[i][j].ToString(format);
+					//string s = matrixData[i][j].ToString("F", format);
+					// round to better printable precision
+					decimal d = (decimal) matrixData[i][j];
+					decimal rounded = Math.Round(d, ((NumberFormatInfo)format).NumberDecimalDigits);
+					string s = rounded.ToString("G29");
 					output.Write(s.PadRight(width));
 				}
 				output.WriteLine();
@@ -1536,13 +1540,6 @@ namespace Comirva.Audio.Util.Maths
 			return inv;
 		}
 
-		public Matrix InverseGausJordan2() {
-			Invert(this.MatrixData);
-			rowCount = matrixData.Length;
-			columnCount = matrixData[0].Length;
-			return this;
-		}
-		
 		public static void Invert(double[][] A)
 		{
 			int n = A.Length;
@@ -1700,7 +1697,7 @@ namespace Comirva.Audio.Util.Maths
 				indxr[i] = irow;
 				indxc[i] = icol;
 				if (a[icol,icol] == 0) {
-					throw new Exception("Mirage - Gauss/Jordan Singular Matrix (2)");
+					 throw new Exception("Mirage - Gauss/Jordan Singular Matrix (2)");
 				}
 
 				pivinv = 1 / a[icol,icol];

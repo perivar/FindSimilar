@@ -95,7 +95,7 @@ namespace Mirage
 			Comirva.Audio.Util.Maths.Matrix ic;
 			try {
 				//ic = c.Inverse();
-				ic = c.InverseGausJordan2();
+				ic = c.InverseGausJordan();
 			} catch (Exception) {
 				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;

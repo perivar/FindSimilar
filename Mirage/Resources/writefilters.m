@@ -56,5 +56,4 @@ fclose(filterweights_f);
 %mfcc_filterweights
 
 size(dct)
-
 size(mfcc_filterweights)
