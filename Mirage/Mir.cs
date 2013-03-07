@@ -447,8 +447,8 @@ namespace Mirage
 			return;
 			 */
 			
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
 			/*
 			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
