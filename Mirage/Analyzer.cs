@@ -190,15 +190,6 @@ namespace Mirage
 			
 			// 5. Take Logarithm
 			// 6. DCT (Discrete cosine transform)
-
-			// TODO: Remove these!!
-			//mfccMirage.filterWeights = mfccComirva.GetMelFilterBanks();
-			//mfccMirage.dct = mfccComirva.GetDCTMatrix();
-			
-			#if DEBUG
-			//mfccMirage.filterWeights.DrawMatrixImage("melfilters-mirage.png");
-			//mfccMirage.dct.DrawMatrixImage("dct-mirage.png");
-			#endif
 			
 			#if DEBUG
 			Matrix mfccdata_orig = mfcc.Apply(ref stftdata_orig);

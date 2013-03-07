@@ -29,7 +29,7 @@ namespace Comirva.Audio.Extraction
 			this.numberCoefficients = numberCoefficients;
 			this.numberFilters = numberFilters;
 			
-			this.mfcc = new MFCC(sampleRate, windowSize, numberCoefficients, true, 20.0, sampleRate/2, numberFilters);
+			this.mfcc = new MFCC(sampleRate, windowSize, numberCoefficients, true, 20.0, sampleRate, numberFilters);
 		}
 
 		public AudioFeature Calculate(double[] input)
@@ -37,42 +37,49 @@ namespace Comirva.Audio.Extraction
 			//pack the mfccs into a pointlist
 			double[][] mfccCoefficients = mfcc.Process(input);
 
+			//check if element 0 exists
+			if(mfccCoefficients.Length == 0)
+				throw new ArgumentException("The input stream is to short to process;");
+
+			//create mfcc matrix
+			Matrix mfccs = new Matrix(mfccCoefficients);
+			#if DEBUG
+			mfccs.WriteText("mfccdata-mandelellis.txt");
+			mfccs.DrawMatrixImage("mfccdata-mandelellis.png");
+			#endif
+
+			// compute mean
+			//Matrix mean = mfccs.Mean(1).Transpose();
+			Matrix mean = mfccs.Mean(2);
+			#if DEBUG
+			mean.WriteText("mean-mandelellis.txt");
+			mean.DrawMatrixImage("mean-mandelellis.png");
+			#endif
+			
+			// create covariance matrix
+			Matrix covarMatrix = mfccs.Cov();
+			#if DEBUG
+			covarMatrix.WriteText("covariance-mandelellis.txt");
+			covarMatrix.DrawMatrixImage("covariance-mandelellis.png");
+			#endif
+			
+			// Inverse Covariance
+			Matrix covarMatrixInv;
 			try {
-				//check if element 0 exists
-				if(mfccCoefficients.Length == 0)
-					throw new ArgumentException("The input stream is to short to process;");
-
-				//create mfcc matrix
-				Matrix mfccs = new Matrix(mfccCoefficients);
-				#if DEBUG
-				mfccs.WriteText("mfccdata-mandelellis.txt");
-				#endif
-
-				// compute mean
-				Matrix mean = mfccs.Mean(1).Transpose();
-				#if DEBUG
-				mean.WriteText("mean-mandelellis.txt");
-				#endif
-				
-				// create covariance matrix
-				Matrix covarMatrix = mfccs.Cov();
-				#if DEBUG
-				covarMatrix.WriteText("covariance-mandelellis.txt");
-				#endif
-				
-				// compute inverse covariance
-				Matrix covarMatrixInv = covarMatrix.Inverse();
-				#if DEBUG
-				covarMatrixInv.WriteText("inverse_covariance-mandelellis.txt");
-				#endif
-
-				MandelEllis.GmmMe gmmMe = new MandelEllis.GmmMe(mean, covarMatrix, covarMatrixInv);
-				MandelEllis mandelEllis = new MandelEllis(gmmMe);
-				return mandelEllis;
+				//covarMatrixInv = covarMatrix.Inverse();
+				covarMatrixInv = covarMatrix.InverseGausJordan();
 			} catch (Exception) {
 				Console.Error.WriteLine("Mandel Ellis Extraction Failed!");
 				return null;
 			}
+			#if DEBUG
+			covarMatrixInv.WriteText("inverse_covariance-mandelellis.txt");
+			covarMatrixInv.DrawMatrixImage("inverse_covariance-mandelellis.png");
+			#endif
+
+			MandelEllis.GmmMe gmmMe = new MandelEllis.GmmMe(mean, covarMatrix, covarMatrixInv);
+			MandelEllis mandelEllis = new MandelEllis(gmmMe);
+			return mandelEllis;
 		}
 
 		public virtual int GetAttributeType()

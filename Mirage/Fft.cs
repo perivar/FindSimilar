@@ -70,7 +70,7 @@ namespace Mirage
 			data = new float[fftsize];
 		}
 		
-		public void Compute(ref Matrix m, int j, float[] audiodata, int pos)
+		public void ComputeMirageMatrix(ref Matrix m, int j, float[] audiodata, int pos)
 		{
 			win.Apply(ref data, audiodata, pos);
 

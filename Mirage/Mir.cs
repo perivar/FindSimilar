@@ -347,7 +347,7 @@ namespace Mirage
 			X.Transpose().Cov().Print(); // or X.Cov(X.Mean(2)).Print();
 
 			X.Cov().Inverse().Print();
-			X.Transpose().Cov().Inverse().Print();
+			//X.Transpose().Cov().Inverse().Print();
 			//X.Transpose().Cov().InverseGausJordan().Print();
 			
 			Console.In.ReadLine();
@@ -426,20 +426,29 @@ namespace Mirage
 		
 		public static void Main(string[] args) {
 			
+			/*
+			Comirva.Audio.Util.Maths.Matrix dct = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\dct2.filter");
+			#if DEBUG
+			dct.DrawMatrixImage("dct-matlab.png");
+			#endif
+
+			Comirva.Audio.Util.Maths.Matrix melfilter = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\filterweights2.filter");
+			#if DEBUG
+			melfilter.DrawMatrixImage("melfilters-matlab.png");
+			#endif
+			
+			Comirva.Audio.Util.Maths.Matrix melfilter2 = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true).Matrix;
+			#if DEBUG
+			melfilter2.DrawMatrixImage("melfilters-matchbox.png");
+			#endif
+
 			TestMirageMatrix();
 			TestComirvaMatrix();
 			return;
-			
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
-			
-			/*
-			MatchBox.MelFilterBank melFilterBank = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true);
-			melFilterBank.Print();
-			Comirva.Audio.Util.Maths.Matrix melFilterBanks = melFilterBank.Matrix;
-			melFilterBanks.Write(File.CreateText("melFilterBanks-new.xml"));
-			melFilterBanks.DrawMatrixImage("matrix-melFilterBanks-new.png");
 			 */
+			
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
 			/*
 			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";

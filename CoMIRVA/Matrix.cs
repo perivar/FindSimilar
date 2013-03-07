@@ -824,7 +824,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <summary>Linear algebraic matrix multiplication, matrixData * B
 		/// B being matrixData triangular matrix
 		/// <b>Note:</b>
-		/// Actually the matrix should be matrixData <b>column orienten, upper triangular
+		/// Actually the matrix should be matrixData <b>column oriented, upper triangular
 		/// matrix</b> but use the <b>row oriented, lower triangular matrix</b>
 		/// instead (transposed), because this is faster due to the easyer array
 		/// access.</summary>
@@ -1074,7 +1074,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="d">Number of digits after the decimal.</param>
 		public void Print()
 		{
-			Print(System.Console.Out, 15, 5);
+			Print(System.Console.Out);
 			//Print(System.Console.Out, CultureInfo.InvariantCulture, 15);
 		}
 		
@@ -1089,6 +1089,16 @@ namespace Comirva.Audio.Util.Maths
 			Print(System.Console.Out, w, d);
 		}
 		
+		/// <summary>
+		/// Print the matrix to the output stream. Line the elements up in
+		/// columns with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="output">Output stream.</param>
+		public void Print(TextWriter output)
+		{
+			Print(output, 18, 7);
+		}
+
 		/// <summary>
 		/// Print the matrix to the output stream. Line the elements up in
 		/// columns with matrixData Fortran-like 'Fw.d' style format.
@@ -1126,7 +1136,7 @@ namespace Comirva.Audio.Util.Maths
 					// round to better printable precision
 					decimal d = (decimal) matrixData[i][j];
 					decimal rounded = Math.Round(d, ((NumberFormatInfo)format).NumberDecimalDigits);
-					string s = rounded.ToString("G29");
+					string s = rounded.ToString("G29", format);
 					output.Write(s.PadRight(width));
 				}
 				output.WriteLine();
@@ -1225,7 +1235,8 @@ namespace Comirva.Audio.Util.Maths
 		/// </example>
 		public void ReadXML(XDocument xdoc, string matrixName)
 		{
-			// XElement crashes SharpDevelop in Debug mode when you want to see variables in the IDE
+			// TODO: XElement crashes SharpDevelop in Debug mode when you want to see variables in the IDE
+			#if !DEBUG
 			XElement dimensions = null;
 			if (matrixName != null) {
 				// look up by attribute name
@@ -1267,6 +1278,7 @@ namespace Comirva.Audio.Util.Maths
 				}
 				i++;
 			}
+			#endif
 		}
 
 		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
@@ -1293,10 +1305,19 @@ namespace Comirva.Audio.Util.Maths
 		public void WriteText(string filename)
 		{
 			TextWriter pw = File.CreateText(filename);
-			Print(pw, 18, 5);
+			Print(pw);
 			pw.Close();
 		}
 
+		/// <summary>
+		/// Write Matrix to a binary file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public void Write(string filename)
+		{
+			WriteBinary(filename);
+		}
+		
 		/// <summary>
 		/// Write Matrix to a binary file
 		/// </summary>
@@ -1312,19 +1333,27 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="filestream">filestream</param>
 		public void WriteBinary(Stream filestream)
 		{
-			//using (var binWriter = new BinaryWriter(filestream)) {
 			var binWriter = new BinaryWriter(filestream);
 			binWriter.Write (rowCount);
 			binWriter.Write (columnCount);
 
 			for (int i = 0; i < rowCount; i++) {
 				for (int j = 0; j < columnCount; j++) {
-					binWriter.Write(MatrixData[i][j]);
+					binWriter.Write((float)MatrixData[i][j]);
 				}
 			}
-			//}
 		}
 
+		/// <summary>
+		/// Load a Matrix from a binary representation stored in a file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		/// <returns>a Matrix</returns>
+		public static Matrix Load(string filename)
+		{
+			return LoadBinary(filename);
+		}
+		
 		/// <summary>
 		/// Load a Matrix from a binary representation stored in a file
 		/// </summary>
@@ -1350,7 +1379,7 @@ namespace Comirva.Audio.Util.Maths
 
 				for (int i = 0; i < rows; i++) {
 					for (int j = 0; j < columns; j++) {
-						m.matrixData[i][j] = binReader.ReadDouble();
+						m.matrixData[i][j] = binReader.ReadSingle();
 					}
 				}
 				return m;
@@ -1697,7 +1726,7 @@ namespace Comirva.Audio.Util.Maths
 				indxr[i] = irow;
 				indxc[i] = icol;
 				if (a[icol,icol] == 0) {
-					 throw new Exception("Mirage - Gauss/Jordan Singular Matrix (2)");
+					throw new Exception("Mirage - Gauss/Jordan Singular Matrix (2)");
 				}
 
 				pivinv = 1 / a[icol,icol];
@@ -1816,12 +1845,16 @@ namespace Comirva.Audio.Util.Maths
 		
 		#region Overrides & Operators
 		public override string ToString() {
-			StringWriter str = new StringWriter();
-			Print(str, 10, 7);
-			return str.ToString();
+			return String.Format("Rows: {0}, Columns: {1}", this.rowCount, this.columnCount);
 		}
 
-		public override bool Equals(object obj) { return obj.ToString() == this.ToString(); }
+		public string GetAsString() {
+			StringWriter str = new StringWriter();
+			Print(str);
+			return str.ToString();
+		}
+		
+		public override bool Equals(object obj) { return ((Matrix)obj).GetAsString() == this.GetAsString(); }
 		public override int GetHashCode() { return -1; }
 
 		public static bool operator ==(Matrix A, Matrix B) {

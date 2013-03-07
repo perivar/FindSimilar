@@ -73,47 +73,46 @@ namespace Mirage
 		/// </summary>
 		/// <param name="mfcc">Comirva.Audio.Util.Maths.Matrix mfcc</param>
 		/// <returns></returns>
-		public static Scms GetScms(Comirva.Audio.Util.Maths.Matrix mfcc)
+		public static Scms GetScms(Comirva.Audio.Util.Maths.Matrix mfccs)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start();
 			
-			Comirva.Audio.Util.Maths.Matrix m = mfcc.Mean(2);
+			Comirva.Audio.Util.Maths.Matrix mean = mfccs.Mean(2);
 			#if DEBUG
-			m.WriteText("mean.txt");
-			m.DrawMatrixImage("mean.png");
+			mean.WriteText("mean.txt");
+			mean.DrawMatrixImage("mean.png");
 			#endif
 
 			// Covariance
-			Comirva.Audio.Util.Maths.Matrix c = mfcc.Cov(m);
+			Comirva.Audio.Util.Maths.Matrix covarMatrix = mfccs.Cov(mean);
 			#if DEBUG
-			c.WriteText("covariance.txt");
-			c.DrawMatrixImage("covariance.png");
+			covarMatrix.WriteText("covariance.txt");
+			covarMatrix.DrawMatrixImage("covariance.png");
 			#endif
 
 			// Inverse Covariance
-			Comirva.Audio.Util.Maths.Matrix ic;
+			Comirva.Audio.Util.Maths.Matrix covarMatrixInv;
 			try {
-				//ic = c.Inverse();
-				ic = c.InverseGausJordan();
+				covarMatrixInv = covarMatrix.InverseGausJordan();
 			} catch (Exception) {
 				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;
 			}
 			#if DEBUG
-			ic.WriteAscii("inverse_covariance.txt");
-			ic.DrawMatrixImage("inverse_covariance.png");
+			covarMatrixInv.WriteAscii("inverse_covariance.txt");
+			covarMatrixInv.DrawMatrixImage("inverse_covariance.png");
 			#endif
 			
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
-			int dim = m.Rows;
+			int dim = mean.Rows;
 			Scms s = new Scms(dim);
 			int l = 0;
 			for (int i = 0; i < dim; i++) {
-				s.mean[i] = (float) m.MatrixData[i][0];
+				s.mean[i] = (float) mean.MatrixData[i][0];
 				for (int j = i; j < dim; j++) {
-					s.cov[l] = (float) c.MatrixData[i][j];
-					s.icov[l] = (float) ic.MatrixData[i][j];
+					s.cov[l] = (float) covarMatrix.MatrixData[i][j];
+					s.icov[l] = (float) covarMatrixInv.MatrixData[i][j];
 					l++;
 				}
 			}
