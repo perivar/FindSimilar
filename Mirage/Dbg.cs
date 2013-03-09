@@ -21,24 +21,22 @@
  * Boston, MA  02110-1301, USA.
  */
 
-
 using System;
 using System.IO;
 using System.Diagnostics;
 
 namespace Mirage
 {
-
 	public class Dbg
 	{
 		[Conditional("DEBUG")]
-		public static void WriteLine (String l, params object[] args)
+		public static void WriteLine(String l, params object[] args)
 		{
 			Console.WriteLine (l, args);
 		}
 
 		[Conditional("DEBUG")]
-		public static void Write (String l)
+		public static void Write(String l)
 		{
 			Console.Write (l);
 		}
@@ -46,25 +44,19 @@ namespace Mirage
 
 	public class DbgTimer
 	{
-		long start;
+		Stopwatch stopWatch;
 
-		[Conditional("DEBUG")]
-		public void Start ()
+		public void Start()
 		{
-			start = Environment.TickCount;
+			stopWatch = Stopwatch.StartNew();
 		}
 
-		[Conditional("DEBUG")]
-		public void Stop (ref long stop)
+		public TimeSpan Stop()
 		{
-			stop = Environment.TickCount - start;
-		}
-		
-		public long Stop()
-		{
-			long stop = 0;
-			Stop (ref stop);
-			return stop;
+			stopWatch.Stop();
+			
+			// Get the elapsed time as a TimeSpan value.
+			return stopWatch.Elapsed;
 		}
 	}
 }

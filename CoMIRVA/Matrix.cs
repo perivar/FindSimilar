@@ -197,6 +197,7 @@ namespace Comirva.Audio.Util.Maths
 		// Public Methods
 		// ------------------------
 
+		#region Constructors, Copy and Clone
 		/// <summary>Construct matrixData matrix from matrixData copy of matrixData 2-D array.</summary>
 		/// <param name="matrixData">Two-dimensional array of doubles.</param>
 		/// <exception cref="">ArgumentException All rows must have the same length</exception>
@@ -240,7 +241,9 @@ namespace Comirva.Audio.Util.Maths
 		{
 			return this.Copy();
 		}
+		#endregion
 
+		#region Get Methods
 		/// Access the internal two-dimensional array.
 		/// <returns>Pointer to the two-dimensional array of matrix elements.</returns>
 		public double[][] GetArray()
@@ -401,7 +404,9 @@ namespace Comirva.Audio.Util.Maths
 			}
 			return X;
 		}
+		#endregion
 
+		#region Set Methods
 		/// <summary>Set matrixData single element.</summary>
 		/// <param name="i">Row index.</param>
 		/// <param name="j">Column index.</param>
@@ -483,7 +488,9 @@ namespace Comirva.Audio.Util.Maths
 				throw new Exception("Submatrix indices");
 			}
 		}
+		#endregion
 
+		#region Math and Matrix Methods
 		/// <summary>Matrix transpose.</summary>
 		/// <returns>matrixData'</returns>
 		public Matrix Transpose()
@@ -1064,393 +1071,6 @@ namespace Comirva.Audio.Util.Maths
 			return matrixData;
 		}
 		
-		#region Print
-
-		/// <summary>
-		/// Print the matrix to stdout. Line the elements up in columns
-		/// with matrixData Fortran-like 'Fw.d' style format.
-		/// </summary>
-		/// <param name="w">Column width.</param>
-		/// <param name="d">Number of digits after the decimal.</param>
-		public void Print()
-		{
-			Print(System.Console.Out);
-			//Print(System.Console.Out, CultureInfo.InvariantCulture, 15);
-		}
-		
-		/// <summary>
-		/// Print the matrix to stdout. Line the elements up in columns
-		/// with matrixData Fortran-like 'Fw.d' style format.
-		/// </summary>
-		/// <param name="w">Column width.</param>
-		/// <param name="d">Number of digits after the decimal.</param>
-		public void Print(int w, int d)
-		{
-			Print(System.Console.Out, w, d);
-		}
-		
-		/// <summary>
-		/// Print the matrix to the output stream. Line the elements up in
-		/// columns with matrixData Fortran-like 'Fw.d' style format.
-		/// </summary>
-		/// <param name="output">Output stream.</param>
-		public void Print(TextWriter output)
-		{
-			Print(output, 18, 7);
-		}
-
-		/// <summary>
-		/// Print the matrix to the output stream. Line the elements up in
-		/// columns with matrixData Fortran-like 'Fw.d' style format.
-		/// </summary>
-		/// <param name="output">Output stream.</param>
-		/// <param name="w">Column width.</param>
-		/// <param name="d">Number of digits after the decimal.</param>
-		public void Print(TextWriter output, int w, int d)
-		{
-			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
-			format.NumberDecimalDigits = d;
-			Print(output, format, w);
-			output.Flush();
-		}
-
-		/// <summary>
-		/// Print the matrix to the output stream. Line the elements up in columns.
-		/// Use the format object, and right justify within columns of width
-		/// characters.
-		/// Note that is the matrix is to be read back in, you probably will want
-		/// to use matrixData NumberFormat that is set to US Locale.
-		/// </summary>
-		/// <param name="output">the output stream.</param>
-		/// <param name="format">matrixData formatting object to format the matrix elements</param>
-		/// <param name="width">Column width.</param>
-		/// <seealso cref="">NumberFormatInfo</seealso>
-		public void Print(TextWriter output, IFormatProvider format, int width)
-		{
-			output.WriteLine(); // start on new line.
-			for (int i = 0; i < rowCount; i++)
-			{
-				for (int j = 0; j < columnCount; j++)
-				{
-					//string s = matrixData[i][j].ToString("F", format);
-					// round to better printable precision
-					decimal d = (decimal) matrixData[i][j];
-					decimal rounded = Math.Round(d, ((NumberFormatInfo)format).NumberDecimalDigits);
-					string s = rounded.ToString("G29", format);
-					output.Write(s.PadRight(width));
-				}
-				output.WriteLine();
-			}
-			output.WriteLine(); // end with blank line.
-		}
-		#endregion
-		
-		// ------------------------
-		//   Private Methods
-		// ------------------------
-
-		/// <summary>
-		/// Check if size(matrixData) == size(B)
-		/// </summary>
-		/// <param name="B">Matrix</param>
-		private void CheckMatrixDimensions(Matrix B)
-		{
-			if (B.rowCount != rowCount || B.columnCount != columnCount)
-			{
-				throw new ArgumentException("Matrix dimensions must agree.");
-			}
-		}
-
-		#region ReadWrite Methods
-		/// <summary>
-		/// Write XML to Text Writer
-		/// </summary>
-		/// <param name="textWriter"></param>
-		/// <example>
-		/// mfccs.Write(File.CreateText("mfccs.xml"));
-		/// </example>
-		public void Write(TextWriter textWriter)
-		{
-			XmlTextWriter xmlTextWriter = new XmlTextWriter(textWriter);
-			xmlTextWriter.Formatting = Formatting.Indented;
-			xmlTextWriter.Indentation = 4;
-			WriteXML(xmlTextWriter, null);
-			xmlTextWriter.Close();
-		}
-
-		/// <summary>
-		/// Read XML from Text Reader
-		/// </summary>
-		/// <param name="textReader"></param>
-		/// <example>
-		/// mfccs.Read(new StreamReader("mfccs.xml"));
-		/// </example>
-		public void Read(TextReader textReader)
-		{
-			XmlTextReader xmlTextReader = new XmlTextReader(textReader);
-			ReadXML(XDocument.Load(xmlTextReader), null);
-			xmlTextReader.Close();
-		}
-		
-		/// <summary>
-		/// Writes the xml representation of this object to the xml text writer.<br>
-		/// <br>
-		/// There is the convention, that each call to matrixData <code>WriteXML()</code> method
-		/// results in one xml element in the output stream.
-		/// Note! It is the callers responisbility to flush the stream.
-		/// </summary>
-		/// <param name="writer">XmlTextWriter the xml output stream</param>
-		/// <example>
-		/// mfccs.WriteXML(new XmlTextWriter("mfccs.xml", null));
-		/// </example>
-		public void WriteXML(XmlWriter xmlWriter, string matrixName)
-		{
-			xmlWriter.WriteStartElement("matrix");
-			xmlWriter.WriteAttributeString("rows", rowCount.ToString());
-			xmlWriter.WriteAttributeString("cols", columnCount.ToString());
-			xmlWriter.WriteAttributeString("name", matrixName);
-
-			for(int i = 0; i < rowCount; i++)
-			{
-				xmlWriter.WriteStartElement("matrixrow");
-				for(int j = 0; j < columnCount; j++)
-				{
-					xmlWriter.WriteStartElement("cn");
-					//xmlWriter.WriteAttributeString("type","IEEE-754");
-					xmlWriter.WriteString(matrixData[i][j].ToString());
-					xmlWriter.WriteEndElement();
-				}
-				xmlWriter.WriteEndElement();
-			}
-			
-			xmlWriter.WriteEndElement();
-		}
-
-		/// <summary>
-		/// Reads the xml representation of an object form the xml text reader.<br>
-		/// </summary>
-		/// <param name="parser">XmlTextReader the xml input stream</param>
-		/// <example>
-		/// mfccs.ReadXML(new XmlTextReader("mfccs.xml"));
-		/// </example>
-		public void ReadXML(XDocument xdoc, string matrixName)
-		{
-			// TODO: XElement crashes SharpDevelop in Debug mode when you want to see variables in the IDE
-			#if !DEBUG
-			XElement dimensions = null;
-			if (matrixName != null) {
-				// look up by attribute name
-				dimensions = (from x in xdoc.Descendants("matrix")
-				              where x.Attribute("name").Value == matrixName
-				              select x).FirstOrDefault();
-			} else {
-				dimensions = xdoc.Element("matrix");
-			}
-			
-			string srows = dimensions.Attribute("rows").Value;
-			string scols = dimensions.Attribute("cols").Value;
-			int rows = int.Parse(srows);
-			int columns = int.Parse(scols);
-
-			var matrixrows = from row in dimensions.Descendants("matrixrow")
-				select new {
-				Children = row.Descendants("cn")
-			};
-			
-			if (rows != matrixrows.Count() || columns != matrixrows.FirstOrDefault().Children.Count()) {
-				// Dimension errors
-				throw new ArgumentException("Matrix dimensions must agree.");
-			} else {
-				this.rowCount = rows;
-				this.columnCount = columns;
-			}
-			
-			this.matrixData = new double[rows][];
-
-			int i = 0, j = 0;
-			foreach (var matrixrow in matrixrows) {
-				this.matrixData[i] = new double[columns];
-				j = 0;
-				foreach(var cn in matrixrow.Children) {
-					string val = cn.Value;
-					this.matrixData[i][j] = double.Parse(val);
-					j++;
-				}
-				i++;
-			}
-			#endif
-		}
-
-		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
-		/// Usage in Matlab: load('filename', '-ascii');</summary>
-		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\matrix.ascii"</param>
-		public void WriteAscii(string filename)
-		{
-			TextWriter pw = File.CreateText(filename);
-			for(int i = 0; i< rowCount; i++)
-			{
-				for(int j = 0; j < columnCount; j++)
-				{
-					pw.Write("{0:#.0000000e+000} ", matrixData[i][j]);
-				}
-				pw.Write("\r");
-			}
-			pw.Close();
-		}
-		
-		/// <summary>
-		/// Write matrix to file
-		/// </summary>
-		/// <param name="filename">filename</param>
-		public void WriteText(string filename)
-		{
-			TextWriter pw = File.CreateText(filename);
-			Print(pw);
-			pw.Close();
-		}
-
-		/// <summary>
-		/// Write Matrix to a binary file
-		/// </summary>
-		/// <param name="filename">filename</param>
-		public void Write(string filename)
-		{
-			WriteBinary(filename);
-		}
-		
-		/// <summary>
-		/// Write Matrix to a binary file
-		/// </summary>
-		/// <param name="filename">filename</param>
-		public void WriteBinary(string filename)
-		{
-			WriteBinary(File.Open(filename, FileMode.Create));
-		}
-		
-		/// <summary>
-		/// Write Matrix to a stream
-		/// </summary>
-		/// <param name="filestream">filestream</param>
-		public void WriteBinary(Stream filestream)
-		{
-			var binWriter = new BinaryWriter(filestream);
-			binWriter.Write (rowCount);
-			binWriter.Write (columnCount);
-
-			for (int i = 0; i < rowCount; i++) {
-				for (int j = 0; j < columnCount; j++) {
-					binWriter.Write((float)MatrixData[i][j]);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Load a Matrix from a binary representation stored in a file
-		/// </summary>
-		/// <param name="filename">filename</param>
-		/// <returns>a Matrix</returns>
-		public static Matrix Load(string filename)
-		{
-			return LoadBinary(filename);
-		}
-		
-		/// <summary>
-		/// Load a Matrix from a binary representation stored in a file
-		/// </summary>
-		/// <param name="filename">filename</param>
-		/// <returns>a Matrix</returns>
-		public static Matrix LoadBinary(string filename)
-		{
-			return LoadBinary(new FileStream(filename, FileMode.Open));
-		}
-		
-		/// <summary>
-		/// Load a Matrix from a binary representation
-		/// </summary>
-		/// <param name="filestream">filestream</param>
-		/// <returns>a Matrix</returns>
-		/// <example>dct = Matrix.LoadBinary(new FileStream("Mirage/Resources/dct.filter", FileMode.Open));</example>
-		public static Matrix LoadBinary(Stream filestream)
-		{
-			using (var binReader = new BinaryReader(filestream)) {
-				int rows = binReader.ReadInt32();
-				int columns = binReader.ReadInt32();
-				Matrix m = new Matrix(rows, columns);
-
-				for (int i = 0; i < rows; i++) {
-					for (int j = 0; j < columns; j++) {
-						m.matrixData[i][j] = binReader.ReadSingle();
-					}
-				}
-				return m;
-			}
-		}
-		
-		/// <summary>
-		/// Draw a matrix as an image
-		/// </summary>
-		/// <param name="fileName">filename</param>
-		public void DrawMatrixImage(string fileName, bool useColumnAsXCoordinate=true) {
-			
-			GraphPane myPane;
-			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
-			
-			PointPairList ppl = new PointPairList();
-			if (columnCount == 1) {
-				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
-				for(int i = 0; i < rowCount; i++) {
-					ppl.Add(i, matrixData[i][0]);
-				}
-				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
-			} else if (rowCount == 1) {
-				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
-				for(int i = 0; i < columnCount; i++) {
-					ppl.Add(i, matrixData[0][i]);
-				}
-				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
-			} else if (columnCount > rowCount) {
-				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
-				for(int i = 0; i < rowCount; i++)
-				{
-					ppl.Clear();
-					for(int j = 0; j < columnCount; j++)
-					{
-						if (useColumnAsXCoordinate) {
-							ppl.Add(j, matrixData[i][j]);
-						} else {
-							ppl.Add(i, matrixData[i][j]);
-						}
-					}
-					Color color = ColorUtils.MatlabGraphColor(i);
-					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
-				}
-			} else { // (columns < rows)
-				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
-				for(int i = 0; i < rowCount; i++)
-				{
-					ppl.Clear();
-					for(int j = 0; j < columnCount; j++)
-					{
-						if (useColumnAsXCoordinate) {
-							ppl.Add(j, matrixData[i][j]);
-						} else {
-							ppl.Add(i, matrixData[i][j]);
-						}
-					}
-					Color color = ColorUtils.MatlabGraphColor(i);
-					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
-				}
-			}
-
-			Bitmap bm = new Bitmap( 1, 1 );
-			using ( Graphics g = Graphics.FromImage( bm ) )
-				myPane.AxisChange( g );
-			
-			myPane.GetImage().Save(fileName, ImageFormat.Png);
-		}
-		
-		#endregion
-		
 		/// <summary>Returns the mean values along the specified dimension.</summary>
 		/// <param name="dim">If 1, then the mean of each column is returned in matrixData row
 		/// vector. If 2, then the mean of each row is returned in matrixData
@@ -1842,6 +1462,413 @@ namespace Comirva.Audio.Util.Maths
 			for (int i = 1; i <= this.rowCount; i++) for (int j = 1; j <= this.columnCount; j++) if (this.matrixData[i][j] != this.matrixData[j][i]) return false;
 			return true;
 		}
+		#endregion
+		
+		#region Print
+
+		/// <summary>
+		/// Print the matrix to stdout. Line the elements up in columns
+		/// with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="w">Column width.</param>
+		/// <param name="d">Number of digits after the decimal.</param>
+		public void Print()
+		{
+			Print(System.Console.Out);
+			//Print(System.Console.Out, CultureInfo.InvariantCulture, 15);
+		}
+		
+		/// <summary>
+		/// Print the matrix to stdout. Line the elements up in columns
+		/// with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="w">Column width.</param>
+		/// <param name="d">Number of digits after the decimal.</param>
+		public void Print(int w, int d)
+		{
+			Print(System.Console.Out, w, d);
+		}
+		
+		/// <summary>
+		/// Print the matrix to the output stream. Line the elements up in
+		/// columns with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="output">Output stream.</param>
+		public void Print(TextWriter output)
+		{
+			Print(output, 18, 7);
+		}
+
+		/// <summary>
+		/// Print the matrix to the output stream. Line the elements up in
+		/// columns with matrixData Fortran-like 'Fw.d' style format.
+		/// </summary>
+		/// <param name="output">Output stream.</param>
+		/// <param name="w">Column width.</param>
+		/// <param name="d">Number of digits after the decimal.</param>
+		public void Print(TextWriter output, int w, int d)
+		{
+			NumberFormatInfo format = new CultureInfo("en-US", false).NumberFormat;
+			format.NumberDecimalDigits = d;
+			Print(output, format, w);
+			output.Flush();
+		}
+
+		/// <summary>
+		/// Print the matrix to the output stream. Line the elements up in columns.
+		/// Use the format object, and right justify within columns of width
+		/// characters.
+		/// Note that is the matrix is to be read back in, you probably will want
+		/// to use matrixData NumberFormat that is set to US Locale.
+		/// </summary>
+		/// <param name="output">the output stream.</param>
+		/// <param name="format">matrixData formatting object to format the matrix elements</param>
+		/// <param name="width">Column width.</param>
+		/// <seealso cref="">NumberFormatInfo</seealso>
+		public void Print(TextWriter output, IFormatProvider format, int width)
+		{
+			output.WriteLine(); // start on new line.
+			for (int i = 0; i < rowCount; i++)
+			{
+				for (int j = 0; j < columnCount; j++)
+				{
+					//string s = matrixData[i][j].ToString("F", format);
+					// round to better printable precision
+					decimal d = (decimal) matrixData[i][j];
+					decimal rounded = Math.Round(d, ((NumberFormatInfo)format).NumberDecimalDigits);
+					string s = rounded.ToString("G29", format);
+					output.Write(s.PadRight(width));
+				}
+				output.WriteLine();
+			}
+			output.WriteLine(); // end with blank line.
+		}
+		#endregion
+		
+		#region ReadWrite Methods
+		/// <summary>
+		/// Write XML to Text Writer
+		/// </summary>
+		/// <param name="textWriter"></param>
+		/// <example>
+		/// mfccs.Write(File.CreateText("mfccs.xml"));
+		/// </example>
+		public void Write(TextWriter textWriter)
+		{
+			XmlTextWriter xmlTextWriter = new XmlTextWriter(textWriter);
+			xmlTextWriter.Formatting = Formatting.Indented;
+			xmlTextWriter.Indentation = 4;
+			WriteXML(xmlTextWriter, null);
+			xmlTextWriter.Close();
+		}
+
+		/// <summary>
+		/// Read XML from Text Reader
+		/// </summary>
+		/// <param name="textReader"></param>
+		/// <example>
+		/// mfccs.Read(new StreamReader("mfccs.xml"));
+		/// </example>
+		public void Read(TextReader textReader)
+		{
+			XmlTextReader xmlTextReader = new XmlTextReader(textReader);
+			ReadXML(XDocument.Load(xmlTextReader), null);
+			xmlTextReader.Close();
+		}
+		
+		/// <summary>
+		/// Writes the xml representation of this object to the xml text writer.<br>
+		/// <br>
+		/// There is the convention, that each call to matrixData <code>WriteXML()</code> method
+		/// results in one xml element in the output stream.
+		/// Note! It is the callers responisbility to flush the stream.
+		/// </summary>
+		/// <param name="writer">XmlTextWriter the xml output stream</param>
+		/// <example>
+		/// mfccs.WriteXML(new XmlTextWriter("mfccs.xml", null));
+		/// </example>
+		public void WriteXML(XmlWriter xmlWriter, string matrixName)
+		{
+			xmlWriter.WriteStartElement("matrix");
+			xmlWriter.WriteAttributeString("rows", rowCount.ToString());
+			xmlWriter.WriteAttributeString("cols", columnCount.ToString());
+			xmlWriter.WriteAttributeString("name", matrixName);
+
+			for(int i = 0; i < rowCount; i++)
+			{
+				xmlWriter.WriteStartElement("matrixrow");
+				for(int j = 0; j < columnCount; j++)
+				{
+					xmlWriter.WriteStartElement("cn");
+					//xmlWriter.WriteAttributeString("type","IEEE-754");
+					xmlWriter.WriteString(matrixData[i][j].ToString());
+					xmlWriter.WriteEndElement();
+				}
+				xmlWriter.WriteEndElement();
+			}
+			
+			xmlWriter.WriteEndElement();
+		}
+
+		/// <summary>
+		/// Reads the xml representation of an object form the xml text reader.<br>
+		/// </summary>
+		/// <param name="parser">XmlTextReader the xml input stream</param>
+		/// <example>
+		/// mfccs.ReadXML(new XmlTextReader("mfccs.xml"));
+		/// </example>
+		public void ReadXML(XDocument xdoc, string matrixName)
+		{
+			// TODO: XElement crashes SharpDevelop in Debug mode when you want to see variables in the IDE
+			#if !DEBUG
+			XElement dimensions = null;
+			if (matrixName != null) {
+				// look up by attribute name
+				dimensions = (from x in xdoc.Descendants("matrix")
+				              where x.Attribute("name").Value == matrixName
+				              select x).FirstOrDefault();
+			} else {
+				dimensions = xdoc.Element("matrix");
+			}
+			
+			string srows = dimensions.Attribute("rows").Value;
+			string scols = dimensions.Attribute("cols").Value;
+			int rows = int.Parse(srows);
+			int columns = int.Parse(scols);
+
+			var matrixrows = from row in dimensions.Descendants("matrixrow")
+				select new {
+				Children = row.Descendants("cn")
+			};
+			
+			if (rows != matrixrows.Count() || columns != matrixrows.FirstOrDefault().Children.Count()) {
+				// Dimension errors
+				throw new ArgumentException("Matrix dimensions must agree.");
+			} else {
+				this.rowCount = rows;
+				this.columnCount = columns;
+			}
+			
+			this.matrixData = new double[rows][];
+
+			int i = 0, j = 0;
+			foreach (var matrixrow in matrixrows) {
+				this.matrixData[i] = new double[columns];
+				j = 0;
+				foreach(var cn in matrixrow.Children) {
+					string val = cn.Value;
+					this.matrixData[i][j] = double.Parse(val);
+					j++;
+				}
+				i++;
+			}
+			#endif
+		}
+
+		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
+		/// Usage in Matlab: load('filename', '-ascii');</summary>
+		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\matrix.ascii"</param>
+		public void WriteAscii(string filename)
+		{
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i< rowCount; i++)
+			{
+				for(int j = 0; j < columnCount; j++)
+				{
+					pw.Write(" {0}", matrixData[i][j].ToString("#.00000000e+000", CultureInfo.InvariantCulture));
+				}
+				pw.Write("\r");
+			}
+			pw.Close();
+		}
+		
+		/// <summary>
+		/// Write matrix to file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public void WriteText(string filename)
+		{
+			TextWriter pw = File.CreateText(filename);
+			Print(pw);
+			pw.Close();
+		}
+
+		/// <summary>
+		/// Write Matrix to a binary file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public void Write(string filename)
+		{
+			WriteBinary(filename);
+		}
+		
+		/// <summary>
+		/// Write Matrix to a binary file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public void WriteBinary(string filename)
+		{
+			WriteBinary(File.Open(filename, FileMode.Create));
+		}
+		
+		/// <summary>
+		/// Write Matrix to a stream
+		/// </summary>
+		/// <param name="filestream">filestream</param>
+		public void WriteBinary(Stream filestream)
+		{
+			var binWriter = new BinaryWriter(filestream);
+			binWriter.Write (rowCount);
+			binWriter.Write (columnCount);
+
+			for (int i = 0; i < rowCount; i++) {
+				for (int j = 0; j < columnCount; j++) {
+					binWriter.Write((float)MatrixData[i][j]);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Load a Matrix from a binary representation stored in a file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		/// <returns>a Matrix</returns>
+		public static Matrix Load(string filename)
+		{
+			return LoadBinary(filename);
+		}
+		
+		/// <summary>
+		/// Load a Matrix from a binary representation stored in a file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		/// <returns>a Matrix</returns>
+		public static Matrix LoadBinary(string filename)
+		{
+			return LoadBinary(new FileStream(filename, FileMode.Open));
+		}
+		
+		/// <summary>
+		/// Load a Matrix from a binary representation
+		/// </summary>
+		/// <param name="filestream">filestream</param>
+		/// <returns>a Matrix</returns>
+		/// <example>dct = Matrix.LoadBinary(new FileStream("Mirage/Resources/dct.filter", FileMode.Open));</example>
+		public static Matrix LoadBinary(Stream filestream)
+		{
+			using (var binReader = new BinaryReader(filestream)) {
+				int rows = binReader.ReadInt32();
+				int columns = binReader.ReadInt32();
+				Matrix m = new Matrix(rows, columns);
+
+				for (int i = 0; i < rows; i++) {
+					for (int j = 0; j < columns; j++) {
+						m.matrixData[i][j] = binReader.ReadSingle();
+					}
+				}
+				return m;
+			}
+		}
+		#endregion
+
+		#region Draw Methods
+		/// <summary>
+		/// Draw the matrix as a image graph
+		/// Imitating Matlabs plot(M), where M is the matrix
+		/// </summary>
+		/// <param name="fileName">filename</param>
+		public void DrawMatrixGraph(string fileName) {
+			
+			GraphPane myPane;
+			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
+			
+			PointPairList ppl = new PointPairList();
+			if (columnCount == 1) {
+				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
+				for(int i = 0; i < rowCount; i++) {
+					ppl.Add(i, matrixData[i][0]);
+				}
+				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
+			} else if (rowCount == 1) {
+				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
+				for(int i = 0; i < columnCount; i++) {
+					ppl.Add(i, matrixData[0][i]);
+				}
+				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
+			} else if (columnCount > rowCount) {
+				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
+				for(int i = 0; i < rowCount; i++)
+				{
+					ppl.Clear();
+					for(int j = 0; j < columnCount; j++)
+					{
+						ppl.Add(j, matrixData[i][j]);
+					}
+					Color color = ColorUtils.MatlabGraphColor(i);
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
+				}
+			} else { // (columns < rows)
+				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
+				for(int j = 0; j < columnCount; j++)
+				{
+					ppl.Clear();
+					for(int i = 0; i < rowCount; i++)
+					{
+						ppl.Add(i, matrixData[i][j]);
+					}
+					Color color = ColorUtils.MatlabGraphColor(j);
+					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
+				}
+			}
+
+			Bitmap bm = new Bitmap( 1, 1 );
+			using ( Graphics g = Graphics.FromImage( bm ) )
+				myPane.AxisChange( g );
+			
+			myPane.GetImage().Save(fileName, ImageFormat.Png);
+		}
+		
+		/// <summary>
+		/// Draw the matrix as an image
+		/// Imitating Matlabs imagesc(M), where M is the matrix
+		/// </summary>
+		/// <param name="fileName">filename</param>
+		public void DrawMatrixImage(string fileName) {
+			
+			// Find maximum number when all numbers are made positive.
+			double maxValue = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
+			
+			if (maxValue == 0.0f)
+				return;
+			
+			// map matrix values to colormap
+			List<byte> rgb = new List<byte>();
+			for(int i = 0; i < rowCount; i++)
+			{
+				for(int j = 0; j < columnCount; j++)
+				{
+					double val = this.MatrixData[i][j];
+					val /= maxValue;
+					byte color = (byte) MathUtils.ConvertAndMainainRatio(val, -1, 1, 0, 255);
+					
+					// Pixel data is ARGB, 1 byte for alpha, 1 for red, 1 for green, 1 for blue.
+					// On a little-endian machine, like yours and many others,
+					// the byte order is B G R A (little end is first).
+					// So 0 0 255 255 equals blue = 0, green = 0, red = 255, alpha = 255. Red.
+					// This endian-ness order disappears when you cast bd.Scan0 to an int* (pointer-to-integer)
+					// since integers are stored little-endian as well.
+					rgb.Add(color); // B
+					rgb.Add(color); // G
+					rgb.Add(color); // R
+					rgb.Add(255); 	// A
+				}
+			}
+			Image img = ImageUtils.ByteArrayToImage(rgb.ToArray(), columnCount, rowCount, PixelFormat.Format32bppArgb);
+			img = ImageUtils.Resize(img, 450, 350, false);
+			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
+			img.Save(fileName, ImageFormat.Png);
+		}
+		#endregion
 		
 		#region Overrides & Operators
 		public override string ToString() {
@@ -1919,9 +1946,25 @@ namespace Comirva.Audio.Util.Maths
 				else if (this.columnCount == 1) // column vector
 					return matrixData[i][0];
 				else // neither
-					throw new InvalidOperationException("General matrix acces requires double indexing.");
+					throw new InvalidOperationException("General matrix access requires double indexing.");
 			}
 		}
 		#endregion
+		
+		// ------------------------
+		//   Private Methods
+		// ------------------------
+
+		/// <summary>
+		/// Check if size(matrixData) == size(B)
+		/// </summary>
+		/// <param name="B">Matrix</param>
+		private void CheckMatrixDimensions(Matrix B)
+		{
+			if (B.rowCount != rowCount || B.columnCount != columnCount)
+			{
+				throw new ArgumentException("Matrix dimensions must agree.");
+			}
+		}
 	}
 }

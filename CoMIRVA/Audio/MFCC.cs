@@ -176,12 +176,12 @@ namespace Comirva.Audio
 			//store filter weights and DCT matrix due to performance reason
 			melFilterBanks = GetMelFilterBanks();
 			#if DEBUG
-			melFilterBanks.DrawMatrixImage("melfilters-comirva.png");
+			melFilterBanks.DrawMatrixGraph("melfilters-comirva.png");
 			#endif
 			
 			dctMatrix = GetDCTMatrix();
 			#if DEBUG
-			dctMatrix.DrawMatrixImage("dct-comirva.png");
+			dctMatrix.DrawMatrixGraph("dct-comirva.png");
 			#endif
 
 			//create power fft object

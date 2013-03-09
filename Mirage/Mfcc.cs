@@ -38,18 +38,18 @@ namespace Mirage
 		Matrix dct;
 		int[,] fwFT;
 
-		public Mfcc (int winsize, int srate, int filters, int cc)
+		public Mfcc(int winsize, int srate, int filters, int cc)
 		{
 			// Load the DCT
 			dct = Matrix.Load(new FileStream("Mirage/Resources/dct.filter", FileMode.Open));
 			#if DEBUG
-			dct.DrawMatrixImage("dct-mirage-optimized.png");
+			dct.DrawMatrixGraph("dct-mirage-optimized.png");
 			#endif
 			
 			// Load the MFCC filters from the filter File.
 			filterWeights = Matrix.Load(new FileStream("Mirage/Resources/filterweights.filter", FileMode.Open));
 			#if DEBUG
-			filterWeights.DrawMatrixImage("melfilters-mirage-optimized.png");
+			filterWeights.DrawMatrixGraph("melfilters-mirage-optimized.png");
 			#endif
 			
 			fwFT = new int[filterWeights.rows, 2];
@@ -105,9 +105,7 @@ namespace Mirage
 			try {
 				Matrix mfcc = dct.Multiply (mel);
 
-				long stop = 0;
-				t.Stop (ref stop);
-				Dbg.WriteLine ("Mirage - mfcc Execution Time: {0} ms", stop);
+				Dbg.WriteLine ("Mirage - mfcc Execution Time: {0} ms", t.Stop().Milliseconds);
 
 				return mfcc;
 

@@ -81,14 +81,14 @@ namespace Mirage
 			Comirva.Audio.Util.Maths.Matrix mean = mfccs.Mean(2);
 			#if DEBUG
 			mean.WriteText("mean.txt");
-			mean.DrawMatrixImage("mean.png");
+			mean.DrawMatrixGraph("mean.png");
 			#endif
 
 			// Covariance
 			Comirva.Audio.Util.Maths.Matrix covarMatrix = mfccs.Cov(mean);
 			#if DEBUG
 			covarMatrix.WriteText("covariance.txt");
-			covarMatrix.DrawMatrixImage("covariance.png");
+			covarMatrix.DrawMatrixGraph("covariance.png");
 			#endif
 
 			// Inverse Covariance
@@ -101,7 +101,7 @@ namespace Mirage
 			}
 			#if DEBUG
 			covarMatrixInv.WriteAscii("inverse_covariance.txt");
-			covarMatrixInv.DrawMatrixImage("inverse_covariance.png");
+			covarMatrixInv.DrawMatrixGraph("inverse_covariance.png");
 			#endif
 			
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
@@ -117,9 +117,7 @@ namespace Mirage
 				}
 			}
 
-			long stop = 0;
-			t.Stop(ref stop);
-			Dbg.WriteLine("Mirage - scms created in: {0}ms", stop);
+			Dbg.WriteLine("Mirage - scms created in: {0} ms", t.Stop().Milliseconds);
 
 			return s;
 		}
@@ -138,14 +136,14 @@ namespace Mirage
 			Vector m = mfcc.Mean();
 			#if DEBUG
 			m.WriteText("mean_orig.txt");
-			m.DrawMatrixImage("mean_orig.png");
+			m.DrawMatrixGraph("mean_orig.png");
 			#endif
 			
 			// Covariance
 			Matrix c = mfcc.Covariance(m);
 			#if DEBUG
 			c.WriteText("covariance_orig.txt");
-			c.DrawMatrixImage("covariance_orig.png");
+			c.DrawMatrixGraph("covariance_orig.png");
 			#endif
 
 			// Inverse Covariance
@@ -159,7 +157,7 @@ namespace Mirage
 			}
 			#if DEBUG
 			ic.WriteAscii("inverse_covariance_orig.txt");
-			ic.DrawMatrixImage("inverse_covariance_orig.png");
+			ic.DrawMatrixGraph("inverse_covariance_orig.png");
 			#endif
 
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
@@ -175,9 +173,7 @@ namespace Mirage
 				}
 			}
 
-			long stop = 0;
-			t.Stop(ref stop);
-			Dbg.WriteLine("Mirage - scms created in: {0}ms", stop);
+			Dbg.WriteLine("Mirage - scms created in: {0} ms", t.Stop().Milliseconds);
 
 			return s;
 		}
@@ -328,7 +324,7 @@ namespace Mirage
 		/// Manual serialization of a Scms object to a byte array
 		/// </summary>
 		/// <returns></returns>
-		public override byte [] ToBytes()
+		public override byte[] ToBytes()
 		{
 			using (var stream = new MemoryStream ()) {
 				using (var bw = new BinaryWriter(stream)) {
@@ -359,7 +355,7 @@ namespace Mirage
 		public static Scms FromBytes(byte[] buf)
 		{
 			var scms = new Scms(Analyzer.MFCC_COEFFICIENTS);
-			FromBytes (buf, scms);
+			FromBytes(buf, scms);
 			return scms;
 		}
 

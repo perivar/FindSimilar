@@ -45,7 +45,7 @@ namespace Comirva.Audio.Extraction
 			Matrix mfccs = new Matrix(mfccCoefficients);
 			#if DEBUG
 			mfccs.WriteText("mfccdata-mandelellis.txt");
-			mfccs.DrawMatrixImage("mfccdata-mandelellis.png");
+			mfccs.DrawMatrixGraph("mfccdata-mandelellis.png");
 			#endif
 
 			// compute mean
@@ -53,14 +53,14 @@ namespace Comirva.Audio.Extraction
 			Matrix mean = mfccs.Mean(2);
 			#if DEBUG
 			mean.WriteText("mean-mandelellis.txt");
-			mean.DrawMatrixImage("mean-mandelellis.png");
+			mean.DrawMatrixGraph("mean-mandelellis.png");
 			#endif
 			
 			// create covariance matrix
 			Matrix covarMatrix = mfccs.Cov();
 			#if DEBUG
 			covarMatrix.WriteText("covariance-mandelellis.txt");
-			covarMatrix.DrawMatrixImage("covariance-mandelellis.png");
+			covarMatrix.DrawMatrixGraph("covariance-mandelellis.png");
 			#endif
 			
 			// Inverse Covariance
@@ -74,7 +74,7 @@ namespace Comirva.Audio.Extraction
 			}
 			#if DEBUG
 			covarMatrixInv.WriteText("inverse_covariance-mandelellis.txt");
-			covarMatrixInv.DrawMatrixImage("inverse_covariance-mandelellis.png");
+			covarMatrixInv.DrawMatrixGraph("inverse_covariance-mandelellis.png");
 			#endif
 
 			MandelEllis.GmmMe gmmMe = new MandelEllis.GmmMe(mean, covarMatrix, covarMatrixInv);

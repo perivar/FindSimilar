@@ -125,7 +125,8 @@ namespace Mirage
 					{
 						Console.WriteLine(io);
 					}
-					Dbg.WriteLine("Decoding Execution Time: " + t.Stop() + "ms");
+					
+					Dbg.WriteLine("Decoding Execution Time: " + t.Stop().Milliseconds + " ms");
 				}
 				return floatBuffer;
 			}
@@ -180,7 +181,7 @@ namespace Mirage
 					Console.WriteLine(io);
 				}
 				
-				Dbg.WriteLine("Decoding Execution Time: " + t.Stop() + "ms");
+				Dbg.WriteLine("Decoding Execution Time: " + t.Stop().Milliseconds + " ms");
 				return floatBuffer;
 			}
 		}
@@ -234,10 +235,10 @@ namespace Mirage
 				{
 					Console.WriteLine(io);
 				}
-				Dbg.WriteLine("Decoding Execution Time: " + t.Stop() + "ms");
+				
+				Dbg.WriteLine("Decoding Execution Time: " + t.Stop().Milliseconds + " ms");
 				return floatBuffer;
 			}
 		}
-		
 	}
 }

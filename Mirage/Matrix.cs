@@ -311,7 +311,7 @@ namespace Mirage
 			pw.Close();
 		}
 		
-		public void DrawMatrixImage(string fileName, bool useColumnAsXCoordinate=true) {
+		public void DrawMatrixGraph(string fileName) {
 			
 			GraphPane myPane;
 			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
@@ -336,29 +336,21 @@ namespace Mirage
 					ppl.Clear();
 					for(int j = 0; j < columns; j++)
 					{
-						if (useColumnAsXCoordinate) {
-							ppl.Add(j, d[i,j]);
-						} else {
-							ppl.Add(i, d[i,j]);
-						}
+						ppl.Add(j, d[i,j]);
 					}
 					Color color = ColorUtils.MatlabGraphColor(i);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
 				}
 			} else { // (columns < rows)
 				myPane = new GraphPane( rect, "Matrix", "Rows", "Value" );
-				for(int i = 0; i < rows; i++)
+				for(int j = 0; j < columns; j++)
 				{
 					ppl.Clear();
-					for(int j = 0; j < columns; j++)
+					for(int i = 0; i < rows; i++)
 					{
-						if (useColumnAsXCoordinate) {
-							ppl.Add(j, d[i,j]);
-						} else {
-							ppl.Add(i, d[i,j]);
-						}
+						ppl.Add(i, d[i,j]);
 					}
-					Color color = ColorUtils.MatlabGraphColor(i);
+					Color color = ColorUtils.MatlabGraphColor(j);
 					LineItem myCurve = myPane.AddCurve("", ppl.Clone(), color, SymbolType.None);
 				}
 			}

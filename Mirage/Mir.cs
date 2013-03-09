@@ -67,6 +67,9 @@ namespace Mirage
 		
 		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence)
 		{
+			DbgTimer t = new DbgTimer();
+			t.Start();
+
 			FileInfo fi = new FileInfo(searchForPath);
 			AudioFeature seedAudioFeature = null;
 			AudioFeature[] audioFeatures = null;
@@ -91,9 +94,6 @@ namespace Mirage
 			int read = 1;
 			double dcur;
 			
-			DbgTimer t = new DbgTimer();
-			t.Start();
-			
 			while (read > 0) {
 				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100, analysisMethod);
 				for (int i = 0; i < read; i++) {
@@ -111,12 +111,15 @@ namespace Mirage
 				.Take(numToTake)
 				.ToDictionary(pair => pair.Key, pair => pair.Value);
 			
-			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", seedAudioFeature.Name, t.Stop()));
+			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", seedAudioFeature.Name, t.Stop().Milliseconds));
 			return sortedDict;
 		}
 
 		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence)
 		{
+			DbgTimer t = new DbgTimer();
+			t.Start();
+			
 			AudioFeature[] seedAudioFeatures = null;
 			AudioFeature[] audioFeatures = null;
 			switch (analysisMethod) {
@@ -146,9 +149,6 @@ namespace Mirage
 			double dcur;
 			float count;
 			
-			DbgTimer t = new DbgTimer();
-			t.Start();
-			
 			while (read > 0) {
 				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100, analysisMethod);
 				for (int i = 0; i < read; i++) {
@@ -174,8 +174,8 @@ namespace Mirage
 			var sortedDict = (from entry in NameDictionary orderby entry.Value ascending select entry)
 				.Take(numToTake)
 				.ToDictionary(pair => pair.Key, pair => pair.Value);
-			
-			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", String.Join(",", seedAudioFeatures.Select(p=>p.Name)), t.Stop()));
+
+			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", String.Join(",", seedAudioFeatures.Select(p=>p.Name)), t.Stop().Milliseconds));
 			return sortedDict;
 		}
 		#endregion
@@ -261,7 +261,46 @@ namespace Mirage
 		}
 
 		#region Testing
-		private static Aquila.Extractor ReadIntoExtractor(string filename)
+		private static void TestSpeechRecognitionHMM() {
+			
+			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+			
+			int SAMPLERATE = 22050;
+			//int SAMPLESPERFRAME = 44100 * 20 / 1000;
+			int SAMPLEPERFRAME = 30;
+			float[] audiodata = AudioFileReader.Decode(path1, SAMPLERATE, 120);
+			SpeechRecognitionHMM.PreProcess pre = new SpeechRecognitionHMM.PreProcess(audiodata, SAMPLEPERFRAME, SAMPLERATE);
+			float[][] framedSignal = pre.framedSignal;
+			SpeechRecognitionHMM.MFCC mfcc = new SpeechRecognitionHMM.MFCC(SAMPLEPERFRAME, SAMPLERATE, 40);
+			
+			double[][] mfccFeature = new double[pre.noOfFrames][];
+			for (int i = 0; i < pre.noOfFrames; i++) {
+				// for each frame i, make mfcc from current framed signal
+				mfccFeature[i] = mfcc.doMFCC(framedSignal[i]);// 2D data
+				SpeechRecognitionHMM.ArrayWriter.PrintDoubleArrayToConsole(mfccFeature[i]);
+			}
+			return;
+		}
+		
+		private static void TestDCTandMelfilters() {
+			
+			Comirva.Audio.Util.Maths.Matrix dct = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\dct2.filter");
+			#if DEBUG
+			dct.DrawMatrixImage("dct-matlab.png");
+			#endif
+
+			Comirva.Audio.Util.Maths.Matrix melfilter = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\filterweights2.filter");
+			#if DEBUG
+			melfilter.DrawMatrixImage("melfilters-matlab.png");
+			#endif
+			
+			Comirva.Audio.Util.Maths.Matrix melfilter2 = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true).Matrix;
+			#if DEBUG
+			melfilter2.DrawMatrixImage("melfilters-matchbox.png");
+			#endif
+		}
+		
+		private static Aquila.Extractor ReadIntoAquilaExtractor(string filename)
 		{
 			Aquila.WaveFile wav = new Aquila.WaveFile(20, 0.66);
 			wav.Load(filename);
@@ -280,6 +319,48 @@ namespace Mirage
 			return extractor;
 		}
 
+		private static void TestAquila() {
+			
+			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+			string path1 = @"aquila\examples\test.wav";
+			string path2 = @"aquila\examples\test2.wav";
+			
+			Aquila.Extractor from = ReadIntoAquilaExtractor(path1);
+			from.Save(new Aquila.TextFeatureWriter("from.txt"));
+			Aquila.Extractor to = ReadIntoAquilaExtractor(path2);
+			to.Save(new Aquila.TextFeatureWriter("to.txt"));
+
+			Console.WriteLine("Calculating DTW distance...");
+			Aquila.Dtw dtw = new Aquila.Dtw(from);
+			double distance = dtw.GetDistance(to);
+			Console.WriteLine("Finished, distance = {0}", distance);
+			
+			System.Console.ReadLine();
+			return;
+		}
+		
+		private static void TestNDtw() {
+			
+			bool UseBoundaryConstraintStart = true;
+			bool UseBoundaryConstraintEnd = true;
+			Dtw dtw = new Dtw(
+				new[] { 4.0, 4.0, 4.5, 4.5, 5.0, 5.0, 5.0, 4.5, 4.5, 4.0, 4.0, 3.5 },
+				new[] { 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 3.0, 2.5, 2.0, 2.0, 2.0, 1.5 },
+				DistanceMeasure.Euclidean,
+				UseBoundaryConstraintStart,
+				UseBoundaryConstraintEnd,
+				null,
+				null,
+				null);
+			
+			double cost = dtw.GetCost();
+			Console.Out.WriteLine(String.Format("DTW: {0}", cost));
+
+			System.Console.ReadLine();
+			return;
+		}
+		
 		private static void TestComirvaMatrix() {
 
 			// http://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
@@ -426,105 +507,14 @@ namespace Mirage
 		
 		public static void Main(string[] args) {
 			
-			/*
-			Comirva.Audio.Util.Maths.Matrix dct = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\dct2.filter");
-			#if DEBUG
-			dct.DrawMatrixImage("dct-matlab.png");
-			#endif
-
-			Comirva.Audio.Util.Maths.Matrix melfilter = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\filterweights2.filter");
-			#if DEBUG
-			melfilter.DrawMatrixImage("melfilters-matlab.png");
-			#endif
-			
-			Comirva.Audio.Util.Maths.Matrix melfilter2 = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true).Matrix;
-			#if DEBUG
-			melfilter2.DrawMatrixImage("melfilters-matchbox.png");
-			#endif
-
-			TestMirageMatrix();
-			TestComirvaMatrix();
-			return;
-			 */
-			
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
-			
-			/*
-			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
-			string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
-			
-			int SAMPLERATE = 22050;
-			//int SAMPLESPERFRAME = 44100 * 20 / 1000;
-			int SAMPLEPERFRAME = 30;
-			float[] audiodata = AudioFileReader.Decode(path1, SAMPLERATE, 120);
-			SpeechRecognitionHMM.PreProcess pre = new SpeechRecognitionHMM.PreProcess(audiodata, SAMPLEPERFRAME, SAMPLERATE);
-			float[][] framedSignal = pre.framedSignal;
-			SpeechRecognitionHMM.MFCC mfcc = new SpeechRecognitionHMM.MFCC(SAMPLEPERFRAME, SAMPLERATE, 40);
-			
-			double[][] mfccFeature = new double[pre.noOfFrames][];
-			for (int i = 0; i < pre.noOfFrames; i++) {
-				// for each frame i, make mfcc from current framed signal
-				mfccFeature[i] = mfcc.doMFCC(framedSignal[i]);// 2D data
-				//SpeechRecognitionHMM.ArrayWriter.PrintDoubleArrayToConsole(features);
-			}
-			return;
-			 */
-			
-			/*
-			Compare(path1, path2, analysisMethod);
-			System.Console.ReadLine();
-			return;
-			 */
-			
-			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
-			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
-			/*
-			string path1 = @"aquila\examples\test.wav";
-			string path2 = @"aquila\examples\test2.wav";
-			
-			Aquila.Extractor from = ReadIntoExtractor(path1);
-			from.Save(new Aquila.TextFeatureWriter("from.txt"));
-			Aquila.Extractor to = ReadIntoExtractor(path2);
-			to.Save(new Aquila.TextFeatureWriter("to.txt"));
-
-			Console.WriteLine("Calculating DTW distance...");
-			Aquila.Dtw dtw = new Aquila.Dtw(from);
-			double distance = dtw.GetDistance(to);
-			Console.WriteLine("Finished, distance = {0}", distance);
-			
-			System.Console.ReadLine();
-			return;
-			
-			//Imghash.Program.DCTTester();
-
-			DbgTimer t = new DbgTimer();
-			t.Start();
-			
-			bool UseBoundaryConstraintStart = true;
-			bool UseBoundaryConstraintEnd = true;
-			Dtw dtw = new Dtw(
-				new[] { 4.0, 4.0, 4.5, 4.5, 5.0, 5.0, 5.0, 4.5, 4.5, 4.0, 4.0, 3.5 },
-				new[] { 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 3.0, 2.5, 2.0, 2.0, 2.0, 1.5 },
-				DistanceMeasure.Euclidean,
-				UseBoundaryConstraintStart,
-				UseBoundaryConstraintEnd,
-				null,
-				null,
-				null);
-			
-			double cost = dtw.GetCost();
-			Console.Out.WriteLine(String.Format("DTW: {0} in {1} ms", cost, t.Stop()));
-
-			System.Console.ReadLine();
-			return;
-			 */
 			
 			string scanPath = "";
 			string queryPath = "";
 			int queryId = -1;
-			int numToTake = 25;
-			double percentage = 0.2;
+			int numToTake = 20;
+			double percentage = 0.3;
 			AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 			
 			// Command line parsing
@@ -563,6 +553,21 @@ namespace Mirage
 						distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
 					}
 				}
+			}
+			if(CommandLine["dtw"] != null || CommandLine["dtwe"] != null) {
+				distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
+			}
+			if(CommandLine["dtwe2"] != null) {
+				distanceType = AudioFeature.DistanceType.Dtw_SquaredEuclidean;
+			}
+			if(CommandLine["dtwman"] != null) {
+				distanceType = AudioFeature.DistanceType.Dtw_Manhattan;
+			}
+			if(CommandLine["dtwmax"] != null) {
+				distanceType = AudioFeature.DistanceType.Dtw_Maximum;
+			}
+			if(CommandLine["kl"] != null) {
+				distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 			}
 			if(CommandLine["?"] != null) {
 				PrintUsage();
@@ -603,45 +608,6 @@ namespace Mirage
 				FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake, percentage, distanceType);
 			}
 			
-			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
-			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon";
-			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\David Guetta - Who's That Chick FL Studio Remake";
-			//string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked";
-			//ScanDirectory(path, db, analysisMethod);
-			
-			//TestReadWriteDB(@"C:\Users\perivar.nerseth\Music\Sleep Away.mp3", db);
-
-			//string path1 = @"C:\Users\perivar.nerseth\Music\Sleep Away.mp3";
-			//string path2 = @"C:\Users\perivar.nerseth\Music\Climb Every Mountain - Bryllup.wav";
-			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Uplifting Tutorial by Phil Doon\Uplifting Tutorial by Phil Doon.mp3";
-			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)\Changes (Acapella).mp3";
-			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
-			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
-			
-			//AudioFeature feature = Analyzer.AnalyzeScms(@"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\SHM - Greyhound\MISC2_2.wav");
-			
-			//Compare(path1, path2);
-			//Compare(0, 1, db);
-
-			/*
-			Scms m1 = Analyzer.Analyze(path1);
-			Console.Out.WriteLine(m1);
-			db.AddTrack(1000, m1, new FileInfo(path1).Name);
-			Scms m2 = Analyzer.Analyze(path2);
-			db.AddTrack(1001, m2, new FileInfo(path2).Name);
-			
-			System.Console.Out.WriteLine("Similarity between m1 and m2 is: "
-			                             + Scms.Distance(m1, m2, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS)));
-						
-			 */
-			//Compare(89, 109, db, Analyzer.AnalysisMethod.SCMS);
-			
-			//Scms m11 = db.GetTrack(1);
-			//Console.Out.WriteLine(m11);
-			
-			//FindSimilar(new int[] { 97, 0, 234 }, db, analysisMethod);
-			//FindSimilar(path2, db, analysisMethod);
-			
 			// HASH creation
 			// https://github.com/viat/YapHash/blob/master/sources/YapHash/src/YapHash.cpp
 
@@ -669,6 +635,14 @@ namespace Mirage
 			Console.WriteLine("\t\tdtwe2\t=Dynamic Time Warping - Squared Euclidean");
 			Console.WriteLine("\t\tdtwman\t=Dynamic Time Warping - Manhattan");
 			Console.WriteLine("\t\tdtwmax\t=Dynamic Time Warping - Maximum");
+			Console.WriteLine("\t\tOr use the distance method directly:");
+			Console.WriteLine("\t-kl\t<Use Kullback Leibler Divergence/ Distance (default)>");
+			Console.WriteLine("\t-dtw\t<Use Dynamic Time Warping - Euclidean>");
+			Console.WriteLine("\t-dtwe\t<Use Dynamic Time Warping - Euclidean>");
+			Console.WriteLine("\t-dtwe2\t<Use Dynamic Time Warping - Squared Euclidean>");
+			Console.WriteLine("\t-dtwman\t<Use Dynamic Time Warping - Manhattan>");
+			Console.WriteLine("\t-dtwmax\t<Use Dynamic Time Warping - Maximum>");
+			Console.WriteLine();
 			Console.WriteLine("\t-? or -help=show this usage help>");
 		}
 	}
