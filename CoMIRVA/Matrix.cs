@@ -903,8 +903,11 @@ namespace Comirva.Audio.Util.Maths
 					matrixData[i][j] = Math.Log(matrixData[i][j]);
 		}
 
-		/// X.powEquals() calculates the power of each element of the matrix. The
-		/// result is stored in this matrix object again.
+		/// <summary>
+		/// X.powEquals() calculates the power of each element of the matrix.
+		/// The result is stored in this matrix object again.
+		/// </summary>
+		/// <param name="exp"></param>
 		public void PowEquals(double exp)
 		{
 			for(int i = 0; i < matrixData.Length; i++)
@@ -912,7 +915,10 @@ namespace Comirva.Audio.Util.Maths
 					matrixData[i][j] = Math.Pow(matrixData[i][j], exp);
 		}
 
+		/// <summary>
 		/// X.powEquals() calculates the power of each element of the matrix.
+		/// </summary>
+		/// <param name="exp"></param>
 		/// <returns>Matrix</returns>
 		public Matrix Pow(double exp)
 		{
@@ -1162,7 +1168,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <summary>
 		/// Gauss-Jordan routine to invert a matrix, decimal precision
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>Matrix</returns>
 		public Matrix InverseGausJordan()
 		{
 			decimal[,] e = new decimal[rowCount+1, columnCount+1];
@@ -1187,109 +1193,6 @@ namespace Comirva.Audio.Util.Maths
 			}
 
 			return inv;
-		}
-
-		public static void Invert(double[][] A)
-		{
-			int n = A.Length;
-			int[] row = new int[n];
-			int[] col = new int[n];
-			double[] temp = new double[n];
-			int hold, I_pivot, J_pivot;
-			double pivot, abs_pivot;
-
-			if(A[0].Length!=n)
-			{
-				Console.WriteLine("Error in Matrix.invert, inconsistent array sizes.");
-			}
-			// set up row and column interchange vectors
-			for(int k=0; k<n; k++)
-			{
-				row[k] = k ;
-				col[k] = k ;
-			}
-			// begin main reduction loop
-			for(int k=0; k<n; k++)
-			{
-				// find largest element for pivot
-				pivot = A[row[k]][col[k]] ;
-				I_pivot = k;
-				J_pivot = k;
-				for(int i=k; i<n; i++)
-				{
-					for(int j=k; j<n; j++)
-					{
-						abs_pivot = Math.Abs(pivot) ;
-						if(Math.Abs(A[row[i]][col[j]]) > abs_pivot)
-						{
-							I_pivot = i ;
-							J_pivot = j ;
-							pivot = A[row[i]][col[j]] ;
-						}
-					}
-				}
-				if(Math.Abs(pivot) < 1.0E-10)
-				{
-					Console.WriteLine("Matrix is singular !");
-					return;
-				}
-				hold = row[k];
-				row[k]= row[I_pivot];
-				row[I_pivot] = hold ;
-				hold = col[k];
-				col[k]= col[J_pivot];
-				col[J_pivot] = hold ;
-				// reduce about pivot
-				A[row[k]][col[k]] = 1.0 / pivot ;
-				for(int j=0; j<n; j++)
-				{
-					if(j != k)
-					{
-						A[row[k]][col[j]] = A[row[k]][col[j]] * A[row[k]][col[k]];
-					}
-				}
-				// inner reduction loop
-				for(int i=0; i<n; i++)
-				{
-					if(k != i)
-					{
-						for(int j=0; j<n; j++)
-						{
-							if(k != j)
-							{
-								A[row[i]][col[j]] = A[row[i]][col[j]] - A[row[i]][col[k]] * A[row[k]][col[j]] ;
-							}
-						}
-						A[row[i]][col [k]] = - A[row[i]][col[k]] * A[row[k]][col[k]] ;
-					}
-				}
-			}
-			// end main reduction loop
-
-			// unscramble rows
-			for(int j=0; j<n; j++)
-			{
-				for(int i=0; i<n; i++)
-				{
-					temp[col[i]] = A[row[i]][j];
-				}
-				for(int i=0; i<n; i++)
-				{
-					A[i][j] = temp[i] ;
-				}
-			}
-			// unscramble columns
-			for(int i=0; i<n; i++)
-			{
-				for(int j=0; j<n; j++)
-				{
-					temp[row[j]] = A[i][col[j]] ;
-				}
-				for(int j=0; j<n; j++)
-				{
-					A[i][j] = temp[j] ;
-				}
-			}
 		}
 		
 		/// <summary>
@@ -1865,6 +1768,43 @@ namespace Comirva.Audio.Util.Maths
 			}
 			Image img = ImageUtils.ByteArrayToImage(rgb.ToArray(), columnCount, rowCount, PixelFormat.Format32bppArgb);
 			img = ImageUtils.Resize(img, 450, 350, false);
+			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
+			img.Save(fileName, ImageFormat.Png);
+		}
+
+		/// <summary>
+		/// Draw a spectrogram of the signal
+		/// </summary>
+		/// <remarks>
+		///   X axis - time
+		///   Y axis - frequency
+		///   Color - magnitude level of corresponding band value of the signal
+		/// </remarks>
+		/// <remarks>This uses code from GetSpectrogramImage method from
+		/// Soundfingerprinting.SoundTools.Imaging.cs in
+		/// https://code.google.com/p/soundfingerprinting/
+		/// </remarks>
+		public void DrawMatrixImage(string fileName, int width, int height)
+		{
+			// Find maximum number when all numbers are made positive.
+			double maxValue = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
+			maxValue = Math.Log(maxValue);
+
+			Bitmap img = new Bitmap(Columns, Rows);
+			Graphics graphics = Graphics.FromImage(img);
+			
+			for(int i = 0; i < rowCount; i++)
+			{
+				for(int j = 0; j < columnCount; j++)
+				{
+					double val = this.MatrixData[i][j];
+					val = Math.Log(val);
+					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
+					img.SetPixel(j, i, color);
+				}
+			}
+			
+			img = (Bitmap) ImageUtils.Resize(img, 450, 350, false);
 			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
 			img.Save(fileName, ImageFormat.Png);
 		}

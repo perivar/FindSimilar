@@ -33,6 +33,11 @@ using Comirva.Audio.Feature;
 
 using CommonUtils;
 
+// For drawing graph
+using ZedGraph;
+using System.Drawing;
+using System.Drawing.Imaging;
+
 namespace Mirage
 {
 	public class Analyzer
@@ -70,17 +75,12 @@ namespace Mirage
 				return null;
 			}
 			
+			#if DEBUG
+			DrawWaveGraph(MathUtils.FloatToDouble(audiodata), "waveform.png");
+			#endif
+			
 			// Calculate duration in ms
 			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
-
-			/*
-			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
-			                      new float[1][] { audiodata },
-			                      1,
-			                      audiodata.Length,
-			                      SAMPLING_RATE,
-			                      32);
-			 */
 			
 			// Normalize
 			//MathUtils.NormalizeInPlace(audiodata);
@@ -89,15 +89,6 @@ namespace Mirage
 			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
 			// if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
 			MathUtils.Multiply(ref audiodata, 32768); // 65536
-			
-			/*
-			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-normalized.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
-			                      new float[1][] { audiodata },
-			                      1,
-			                      audiodata.Length,
-			                      SAMPLING_RATE,
-			                      32);
-			 */
 			
 			MandelEllisExtractor extractor = new MandelEllisExtractor(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, MEL_COEFFICIENTS);
 			AudioFeature audioFeature = extractor.Calculate(MathUtils.FloatToDouble(audiodata));
@@ -126,17 +117,12 @@ namespace Mirage
 				return null;
 			}
 			
+			#if DEBUG
+			DrawWaveGraph(MathUtils.FloatToDouble(audiodata), "waveform.png");
+			#endif
+			
 			// Calculate duration in ms
 			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
-			
-			/*
-			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
-			                      new float[1][] { audiodata },
-			                      1,
-			                      audiodata.Length,
-			                      SAMPLING_RATE,
-			                      32);
-			 */
 			
 			// Normalize
 			//MathUtils.NormalizeInPlace(audiodata);
@@ -145,15 +131,6 @@ namespace Mirage
 			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
 			// if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
 			MathUtils.Multiply(ref audiodata, 32768); // 65536
-			
-			/*
-			SoundIO.WriteWaveFile(new CommonUtils.BinaryFile("audiodata-normalized.wav", CommonUtils.BinaryFile.ByteOrder.LittleEndian, true),
-			                      new float[1][] { audiodata },
-			                      1,
-			                      audiodata.Length,
-			                      SAMPLING_RATE,
-			                      32);
-			 */
 			
 			// 2. Windowing
 			// 3. FFT
@@ -190,6 +167,8 @@ namespace Mirage
 			stftdata.WriteText("stftdata.txt");
 			stftdata.WriteAscii("stftdata.ascii.txt");
 			stftdata.DrawMatrixGraph("stftdata.png");
+			stftdata.DrawMatrixImage("stftdataimage.png");
+			stftdata.DrawMatrixImage("stftdataimage2.png", 1200, 600);
 			#endif
 			
 			// 4. Mel Scale Filterbank
@@ -211,6 +190,7 @@ namespace Mirage
 			mfccdata.WriteText("mfccdata.txt");
 			mfccdata.WriteAscii("mfccdata.ascii.txt");
 			mfccdata.DrawMatrixGraph("mfccdata.png");
+			mfccdata.DrawMatrixImage("mfccdataimage.png");
 			#endif
 			
 			// Store in a Statistical Cluster Model Similarity class.
@@ -233,5 +213,45 @@ namespace Mirage
 			return audioFeature;
 		}
 		
+		/// <summary>
+		/// Graphs an array of doubles varying between -1 and 1
+		/// </summary>
+		/// <param name="audioData">audio data</param>
+		/// <param name="fileName">filename to save png to</param>
+		/// <param name="onlyCanvas">true if no borders should be printed</param>
+		private static void DrawWaveGraph(double[] audioData, string fileName, bool onlyCanvas=false)
+		{
+			GraphPane myPane = new GraphPane( new RectangleF( 0, 0, 1200, 600 ), "Waveform", "Samples", "Magnitude" );
+			
+			if (onlyCanvas) {
+				myPane.Chart.Border.IsVisible = false;
+				myPane.Chart.Fill.IsVisible = false;
+				myPane.Fill.Color = Color.Black;
+				myPane.Margin.All = 0;
+				myPane.Title.IsVisible = false;
+				myPane.XAxis.IsVisible = false;
+				myPane.YAxis.IsVisible = false;
+			}
+			myPane.XAxis.Scale.Max = audioData.Length - 1;
+			myPane.XAxis.Scale.Min = 0;
+			myPane.YAxis.Scale.Max = 1;
+			myPane.YAxis.Scale.Min = -1;
+			
+			// add pretty stuff
+			myPane.Fill = new Fill( Color.WhiteSmoke, Color.Lavender, 0F );
+			myPane.Chart.Fill = new Fill( Color.FromArgb( 255, 255, 245 ),
+			                             Color.FromArgb( 255, 255, 190 ), 90F );
+			
+			var timeData = Enumerable.Range(0, audioData.Length)
+				.Select(i => (double) i)
+				.ToArray();
+			myPane.AddCurve(null, timeData, audioData, Color.Blue, SymbolType.None);
+			
+			Bitmap bm = new Bitmap( 1, 1 );
+			using ( Graphics g = Graphics.FromImage( bm ) )
+				myPane.AxisChange( g );
+			
+			myPane.GetImage().Save(fileName, ImageFormat.Png);
+		}
 	}
 }
