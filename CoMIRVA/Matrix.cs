@@ -1772,20 +1772,16 @@ namespace Comirva.Audio.Util.Maths
 			img.Save(fileName, ImageFormat.Png);
 		}
 
-		/// <summary>
-		/// Draw a spectrogram of the signal
-		/// </summary>
-		/// <remarks>
-		///   X axis - time
-		///   Y axis - frequency
-		///   Color - magnitude level of corresponding band value of the signal
-		/// </remarks>
-		/// <remarks>This uses code from GetSpectrogramImage method from
-		/// Soundfingerprinting.SoundTools.Imaging.cs in
-		/// https://code.google.com/p/soundfingerprinting/
-		/// </remarks>
-		public void DrawMatrixImage(string fileName, int width, int height)
+		public void DrawMatrixImageLog(string fileName, bool flipYscale=false)
 		{
+			// this method can be used to plot a spectrogram
+			// like the octave method:
+			// specgram (audio*32768, 2048, 44100, hanning(2048), 1024);
+			//
+			// this is the same as:
+			// C = load ('stftdata.ascii.txt', '-ascii');
+			// imagesc (flipud(log10(C)));
+
 			// Find maximum number when all numbers are made positive.
 			double maxValue = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
 			maxValue = Math.Log(maxValue);
@@ -1799,8 +1795,12 @@ namespace Comirva.Audio.Util.Maths
 				{
 					double val = this.MatrixData[i][j];
 					val = Math.Log(val);
-					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
-					img.SetPixel(j, i, color);
+					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue*0.8);
+					if (flipYscale) {
+						img.SetPixel(j, rowCount-i-1, color);
+					} else {
+						img.SetPixel(j, i, color);
+					}
 				}
 			}
 			

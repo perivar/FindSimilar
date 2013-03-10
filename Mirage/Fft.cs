@@ -25,6 +25,10 @@ using System.Runtime.InteropServices;
 
 namespace Mirage
 {
+	/// <summary>
+	/// This class applies windowing (e.g HammingWindow, HannWindow) and then performs a Fast Fourier Transform
+	/// Float precision
+	/// </summary>
 	public class Fft
 	{
 		const uint FFTW_R2HC = 0;
@@ -72,6 +76,7 @@ namespace Mirage
 		
 		public void ComputeMirageMatrix(ref Matrix m, int j, float[] audiodata, int pos)
 		{
+			// apply the window method (e.g HammingWindow, HannWindow etc)
 			win.Apply(ref data, audiodata, pos);
 
 			Marshal.Copy(data, 0, fftwData, fftsize);
@@ -80,6 +85,11 @@ namespace Mirage
 			
 			m.d[0, j] = fft[0]*fft[0];
 			for (int i = 1; i < winsize/2; i++) {
+				// amplitude (or magnitude) is the square root of the power spectrum
+				// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
+				// use 20*log10(Y) to get dB from amplitude
+				// the power spectrum is the magnitude spectrum squared
+				// use 10*log10(Y) to get dB from power spectrum
 				m.d[i, j] = (fft[i*2]*fft[i*2] +
 				             fft[fftsize-i*2]*fft[fftsize-i*2]);
 			}
@@ -88,6 +98,7 @@ namespace Mirage
 		
 		public void ComputeComirvaMatrix(ref Comirva.Audio.Util.Maths.Matrix m, int j, float[] audiodata, int pos)
 		{
+			// apply the window method (e.g HammingWindow, HannWindow etc)
 			win.Apply(ref data, audiodata, pos);
 
 			Marshal.Copy(data, 0, fftwData, fftsize);
@@ -96,6 +107,11 @@ namespace Mirage
 			
 			m.MatrixData[0][j] = fft[0]*fft[0];
 			for (int i = 1; i < winsize/2; i++) {
+				// amplitude (or magnitude) is the square root of the power spectrum
+				// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
+				// use 20*log10(Y) to get dB from amplitude
+				// the power spectrum is the magnitude spectrum squared
+				// use 10*log10(Y) to get dB from power spectrum
 				m.MatrixData[i][j] = (fft[i*2]*fft[i*2] +
 				                      fft[fftsize-i*2]*fft[fftsize-i*2]);
 			}

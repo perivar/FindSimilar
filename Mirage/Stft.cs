@@ -39,9 +39,8 @@ namespace Mirage
 		/// Instantiate a new Stft Class
 		/// </summary>
 		/// <param name="winsize">FFT window size</param>
-		/// <param name="hopsize">Value to hop on to the next window</param>
-		/// <param name="window">Window function to apply to every window
-		///     processed</param>
+		/// <param name="hopsize">Value to hop on to the next window (50% overlap is when hopsize is half of the window size)</param>
+		/// <param name="window">Window function to apply to every window processed</param>
 		public Stft(int winsize, int hopsize, IWindowFunction window)
 		{
 			this.winsize = winsize;
@@ -59,6 +58,7 @@ namespace Mirage
 			DbgTimer t = new DbgTimer();
 			t.Start();
 			
+			// calculate how many hops (bands) we have using the current overlap (hopsize)
 			int hops = (audiodata.Length - winsize)/ hopsize;
 			
 			// Create a Matrix with "winsize" Rows and "hops" Columns

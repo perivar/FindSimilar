@@ -73,22 +73,22 @@ namespace Mirage
 		/// </summary>
 		/// <param name="mfcc">Comirva.Audio.Util.Maths.Matrix mfcc</param>
 		/// <returns></returns>
-		public static Scms GetScms(Comirva.Audio.Util.Maths.Matrix mfccs)
+		public static Scms GetScms(Comirva.Audio.Util.Maths.Matrix mfccs, string name)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start();
 			
 			Comirva.Audio.Util.Maths.Matrix mean = mfccs.Mean(2);
 			#if DEBUG
-			mean.WriteText("mean.txt");
-			mean.DrawMatrixGraph("mean.png");
+			mean.WriteText(name + "_mean.txt");
+			mean.DrawMatrixGraph(name + "_mean.png");
 			#endif
 
 			// Covariance
 			Comirva.Audio.Util.Maths.Matrix covarMatrix = mfccs.Cov(mean);
 			#if DEBUG
-			covarMatrix.WriteText("covariance.txt");
-			covarMatrix.DrawMatrixGraph("covariance.png");
+			covarMatrix.WriteText(name + "_covariance.txt");
+			covarMatrix.DrawMatrixGraph(name + "_covariance.png");
 			#endif
 
 			// Inverse Covariance
@@ -100,8 +100,8 @@ namespace Mirage
 				return null;
 			}
 			#if DEBUG
-			covarMatrixInv.WriteAscii("inverse_covariance.txt");
-			covarMatrixInv.DrawMatrixGraph("inverse_covariance.png");
+			covarMatrixInv.WriteAscii(name + "_inverse_covariance.txt");
+			covarMatrixInv.DrawMatrixGraph(name + "_inverse_covariance.png");
 			#endif
 			
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
@@ -127,7 +127,7 @@ namespace Mirage
 		/// </summary>
 		/// <param name="mfcc">Mirage.Matrix mfcc</param>
 		/// <returns></returns>
-		public static Scms GetScms(Matrix mfcc)
+		public static Scms GetScms(Matrix mfcc, string name)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start();
@@ -135,15 +135,15 @@ namespace Mirage
 			// Mean
 			Vector m = mfcc.Mean();
 			#if DEBUG
-			m.WriteText("mean_orig.txt");
-			m.DrawMatrixGraph("mean_orig.png");
+			m.WriteText(name + "_mean_orig.txt");
+			m.DrawMatrixGraph(name + "_mean_orig.png");
 			#endif
 			
 			// Covariance
 			Matrix c = mfcc.Covariance(m);
 			#if DEBUG
-			c.WriteText("covariance_orig.txt");
-			c.DrawMatrixGraph("covariance_orig.png");
+			c.WriteText(name + "_covariance_orig.txt");
+			c.DrawMatrixGraph(name + "_covariance_orig.png");
 			#endif
 
 			// Inverse Covariance
@@ -156,8 +156,8 @@ namespace Mirage
 				return null;
 			}
 			#if DEBUG
-			ic.WriteAscii("inverse_covariance_orig.txt");
-			ic.DrawMatrixGraph("inverse_covariance_orig.png");
+			ic.WriteAscii(name + "_inverse_covariance_orig.txt");
+			ic.DrawMatrixGraph(name + "_inverse_covariance_orig.png");
 			#endif
 
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.

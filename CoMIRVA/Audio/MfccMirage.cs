@@ -79,7 +79,7 @@ namespace Comirva.Audio
 				}
 			}
 			#if DEBUG
-			filterWeights.DrawMatrixGraph("melfilters-mirage-orig.png");
+			//filterWeights.DrawMatrixGraph("melfilters-mirage-orig.png");
 			#endif
 			
 			// Compute the DCT
@@ -95,7 +95,7 @@ namespace Comirva.Audio
 				}
 			}
 			#if DEBUG
-			dct.DrawMatrixGraph("dct-mirage-orig.png");
+			//dct.DrawMatrixGraph("dct-mirage-orig.png");
 			#endif
 		}
 		
