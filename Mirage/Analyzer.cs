@@ -124,6 +124,10 @@ namespace Mirage
 
 			// name of file being processed
 			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
+
+			#if DEBUG
+			SAVE_IMAGES = true;
+			#endif
 			
 			if (SAVE_IMAGES) {
 				DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
@@ -238,7 +242,7 @@ namespace Mirage
 		/// <param name="data">data</param>
 		/// <param name="fileName">filename to save png to</param>
 		/// <param name="onlyCanvas">true if no borders should be printed</param>
-		private static void DrawGraph(double[] data, string fileName, bool onlyCanvas=false)
+		public static void DrawGraph(double[] data, string fileName, bool onlyCanvas=false)
 		{
 			GraphPane myPane = new GraphPane( new RectangleF( 0, 0, 1200, 600 ), "", "", "" );
 			
@@ -276,7 +280,7 @@ namespace Mirage
 		/// <summary>Writes the float array to an ascii-textfile that can be read by Matlab.
 		/// Usage in Matlab: load('filename', '-ascii');</summary>
 		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\data.ascii"</param>
-		private static void WriteAscii(float[] data, string filename)
+		public static void WriteAscii(float[] data, string filename)
 		{
 			TextWriter pw = File.CreateText(filename);
 			for(int i = 0; i < data.Length; i++)
@@ -285,5 +289,19 @@ namespace Mirage
 			}
 			pw.Close();
 		}
+
+		/// <summary>Writes the double array to an ascii-textfile that can be read by Matlab.
+		/// Usage in Matlab: load('filename', '-ascii');</summary>
+		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\data.ascii"</param>
+		public static void WriteAscii(double[] data, string filename)
+		{
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i < data.Length; i++)
+			{
+				pw.Write(" {0}\r", data[i].ToString("#.00000000e+000", CultureInfo.InvariantCulture));
+			}
+			pw.Close();
+		}
+
 	}
 }

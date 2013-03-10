@@ -31,6 +31,10 @@ using Comirva.Audio.Feature;
 
 namespace Mirage
 {
+	
+	// SQL Lite database class
+	// Originally a part of the Mirage project
+	// Heavily modified by perivar@nerseth.com
 	public class Db
 	{
 		IDbConnection dbcon;
@@ -67,6 +71,31 @@ namespace Mirage
 			dbcon.Close();
 		}
 
+		public bool HasTrack(string name, out int trackid) {
+			
+			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
+			dbNameParam.Value = name;
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			dbcmd.CommandText = "SELECT trackid FROM mirage WHERE name=@name";
+			dbcmd.Parameters.Add(dbNameParam);
+			
+			IDataReader reader = dbcmd.ExecuteReader();
+			if (!reader.Read()) {
+				trackid = -1;
+				return false;
+			}
+			
+			trackid = reader.GetInt32(0);
+			
+			reader.Close();
+			return true;
+		}
+		
 		public int AddTrack(int trackid, AudioFeature audioFeature)
 		{
 			IDbDataParameter dbAudioFeatureParam = new SQLiteParameter("@audioFeature", DbType.Binary);

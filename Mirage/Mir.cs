@@ -44,7 +44,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		static string _version = "1.0.0";
+		static string _version = "1.0.1";
 		
 		#region Similarity Search
 		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
@@ -229,6 +229,15 @@ namespace Mirage
 				foreach (var f in files)
 				{
 					FileInfo fileInfo = new FileInfo(f);
+					
+					// check if the file is already added
+					int trackid = -1;
+					if (db.HasTrack(fileInfo.FullName, out trackid)) {
+						fileCounter++;
+						Console.Out.WriteLine("[{1}/{2}] Skipping {0}. Already exist with id: {3}!", fileInfo.Name, fileCounter, files.Count(), trackid);
+						continue;
+					}
+
 					AudioFeature feature = null;
 					switch (analysisMethod) {
 						case Analyzer.AnalysisMethod.MandelEllis:
@@ -515,6 +524,7 @@ namespace Mirage
 			int queryId = -1;
 			int numToTake = 20;
 			double percentage = 0.3;
+			bool resetdb = false;
 			AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 			
 			// Command line parsing
@@ -569,6 +579,9 @@ namespace Mirage
 			if(CommandLine["kl"] != null) {
 				distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 			}
+			if(CommandLine["resetdb"] != null) {
+				resetdb = true;
+			}
 			if(CommandLine["?"] != null) {
 				PrintUsage();
 				return;
@@ -587,8 +600,10 @@ namespace Mirage
 
 			if (scanPath != "") {
 				if (IOUtils.IsDirectory(scanPath)) {
-					db.RemoveTable();
-					db.AddTable();
+					if (resetdb) {
+						db.RemoveTable();
+						db.AddTable();
+					}
 					ScanDirectory(scanPath, db, analysisMethod);
 				} else {
 					Console.Out.WriteLine("No directory found {0}!", scanPath);
@@ -621,11 +636,12 @@ namespace Mirage
 			Console.WriteLine("Usage: FindSimilar.exe <Arguments>");
 			Console.WriteLine();
 			Console.WriteLine("Arguments:");
-			Console.WriteLine("\t-scandir=<rescan directory path and create audio fingerprints>");
+			Console.WriteLine("\t-scandir=<scan directory path and create audio fingerprints - ignore existing files>");
 			Console.WriteLine("\t-match=<path to the wave file to find matches for>");
 			Console.WriteLine("\t-matchid=<database id to the wave file to find matches for>");
 			Console.WriteLine();
 			Console.WriteLine("Optional Arguments:");
+			Console.WriteLine("\t-resetdb\t<clean database, used together with scandir>");
 			Console.WriteLine("\t-num=<number of matches to return when querying>");
 			Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
 			Console.WriteLine("\t-type=<distance method to use when querying. Choose between:>");

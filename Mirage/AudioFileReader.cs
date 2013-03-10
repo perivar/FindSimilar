@@ -3,7 +3,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+
 using CommonUtils;
+using CommonUtils.Audio.NAudio;
+using NAudio;
 
 namespace Mirage
 {
@@ -11,8 +14,15 @@ namespace Mirage
 	{
 		public static float[] Decode(string fileIn, int srate, int secondsToAnalyze)
 		{
-			fileIn = Regex.Replace(fileIn, "%20", " ");
 			float[] floatBuffer = null;
+
+			// try first to use Naudio to read the file
+			floatBuffer = AudioUtilsNAudio.ReadMonoFromFile(fileIn, srate, secondsToAnalyze*1000, 0);
+			if (floatBuffer != null && floatBuffer.Length != 0) {
+				return floatBuffer;
+			}
+			
+			fileIn = Regex.Replace(fileIn, "%20", " ");
 			
 			// check if sox can read it
 			using (Process checkSoxReadable = new Process())
