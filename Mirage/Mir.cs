@@ -225,6 +225,10 @@ namespace Mirage
 				string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
 				var files = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
 				
+				// get all files stored in database, store in memoory
+				// TODO: will this work with huge volumes?
+				Dictionary<string, int> namesInDb = db.GetTracks();
+				
 				int fileCounter = 0;
 				foreach (var f in files)
 				{
@@ -232,7 +236,8 @@ namespace Mirage
 					
 					// check if the file is already added
 					int trackid = -1;
-					if (db.HasTrack(fileInfo.FullName, out trackid)) {
+					if (namesInDb.TryGetValue(fileInfo.FullName, out trackid))
+					{
 						fileCounter++;
 						Console.Out.WriteLine("[{1}/{2}] Skipping {0}. Already exist with id: {3}!", fileInfo.Name, fileCounter, files.Count(), trackid);
 						continue;

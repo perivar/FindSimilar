@@ -25,6 +25,7 @@ using System.Data.SQLite;
 using System.Data;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 using System.Xml;
 
 using Comirva.Audio.Feature;
@@ -94,6 +95,29 @@ namespace Mirage
 			
 			reader.Close();
 			return true;
+		}
+
+		public Dictionary<string, int> GetTracks() {
+
+			Dictionary<string, int> trackNames = new Dictionary<string, int>();
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			dbcmd.CommandText = "SELECT name, trackid FROM mirage";
+			IDataReader reader = dbcmd.ExecuteReader();
+			
+			while(reader.Read())
+			{
+				string name = reader.GetString(0);
+				int trackid = reader.GetInt32(1);
+				trackNames.Add(name, trackid);
+			}
+			
+			reader.Close();
+			return trackNames;
 		}
 		
 		public int AddTrack(int trackid, AudioFeature audioFeature)
