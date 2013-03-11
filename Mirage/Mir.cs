@@ -223,26 +223,27 @@ namespace Mirage
 			try
 			{
 				string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
-				var files = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
+				IEnumerable<string> filesAll = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
 				
-				// get all files stored in database, store in memoory
+				Console.Out.WriteLine("Found {0} files in scan directory.", filesAll.Count());
+				
+				// get all already processed files stored in the database
+				// store in memory
 				// TODO: will this work with huge volumes?
-				Dictionary<string, int> namesInDb = db.GetTracks();
+				Dictionary<string, int> filesProcessed = db.GetTracks();
 				
+				Console.Out.WriteLine("Database contains {0} already processed files.", filesProcessed.Count);
+
+				// find the files that has not already been added to the database
+				List<string> filesRemaining = filesAll.Except(filesProcessed.Keys).ToList();
+				
+				Console.Out.WriteLine("Found {0} files remaining in scan directory to be processed.", filesRemaining.Count);
+
 				int fileCounter = 0;
-				foreach (var f in files)
+				foreach (string f in filesRemaining)
 				{
 					FileInfo fileInfo = new FileInfo(f);
 					
-					// check if the file is already added
-					int trackid = -1;
-					if (namesInDb.TryGetValue(fileInfo.FullName, out trackid))
-					{
-						fileCounter++;
-						Console.Out.WriteLine("[{1}/{2}] Skipping {0}. Already exist with id: {3}!", fileInfo.Name, fileCounter, files.Count(), trackid);
-						continue;
-					}
-
 					AudioFeature feature = null;
 					switch (analysisMethod) {
 						case Analyzer.AnalysisMethod.MandelEllis:
@@ -256,13 +257,13 @@ namespace Mirage
 					if (feature != null) {
 						db.AddTrack(fileCounter, feature);
 						fileCounter++;
-						Console.Out.WriteLine("[{1}/{2}] Succesfully added fingerprint to database {0} ({3} ms)!", fileInfo.Name, fileCounter, files.Count(), feature.Duration);
+						Console.Out.WriteLine("[{1}/{2}] Succesfully added fingerprint to database {0} ({3} ms)!", fileInfo.Name, fileCounter, filesAll.Count(), feature.Duration);
 					} else {
 						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 						IOUtils.LogMessageToFile(failedFilesLog, fileInfo.FullName);
 					}
 				}
-				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, files.Count());
+				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, filesAll.Count());
 			}
 			catch (UnauthorizedAccessException UAEx)
 			{

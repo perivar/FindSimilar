@@ -14,12 +14,28 @@ namespace Mirage
 	{
 		public static float[] Decode(string fileIn, int srate, int secondsToAnalyze)
 		{
-			float[] floatBuffer = null;
+			DbgTimer t = new DbgTimer();
+			t.Start();
 
+			float[] floatBuffer = null;
+			
 			// try first to use Naudio to read the file
-			floatBuffer = AudioUtilsNAudio.ReadMonoFromFile(fileIn, srate, secondsToAnalyze*1000, 0);
+			floatBuffer = AudioUtilsNAudio.ReadMonoFromFile(fileIn, srate, 0, 0);
 			if (floatBuffer != null && floatBuffer.Length != 0) {
-				return floatBuffer;
+				// if the audio file is larger than seconds to analyze,
+				// find a proper section to exctract
+				int samples = -1;
+				if ((samples = floatBuffer.Length) > secondsToAnalyze*srate) {
+					int seekIndex = (samples/2-(secondsToAnalyze/2)*srate);
+					float[] floatBufferCropped = new float[secondsToAnalyze*srate];
+					Array.Copy(floatBuffer, seekIndex, floatBufferCropped, 0, secondsToAnalyze*srate);
+
+					Dbg.WriteLine("Decoding NAudio Execution Time: " + t.Stop().Milliseconds + " ms");
+					return floatBufferCropped;
+				} else {
+					Dbg.WriteLine("Decoding NAudio Execution Time: " + t.Stop().Milliseconds + " ms");
+					return floatBuffer;
+				}
 			}
 			
 			fileIn = Regex.Replace(fileIn, "%20", " ");
@@ -100,10 +116,11 @@ namespace Mirage
 					if ((samples*sizeof(float)) != bytes)
 						return null;
 
-					// If very long files, just use a part
-					if (bytes > (secondsToAnalyze+1)*srate*sizeof(float)) {
+					// if the audio file is larger than seconds to analyze,
+					// find a proper section to exctract
+					if (bytes > secondsToAnalyze*srate*sizeof(float)) {
 						int seekto = (bytes/2) - ((secondsToAnalyze/2)*sizeof(float)*srate);
-						Dbg.WriteLine("seekto="+seekto);
+						Dbg.WriteLine("Extracting section: seekto = " + seekto);
 						bytes = (secondsToAnalyze)*srate*sizeof(float);
 						fs.Seek((samples/2-(secondsToAnalyze/2)*srate)*sizeof(float), SeekOrigin.Begin);
 					}

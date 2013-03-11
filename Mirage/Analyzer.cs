@@ -51,11 +51,11 @@ namespace Mirage
 			MandelEllis = 2
 		}
 		
-		private const int SAMPLING_RATE = 44100; //22050;
+		public const int SAMPLING_RATE = 44100; //22050;
 		private const int WINDOW_SIZE = 2048; //2048 1024;
 		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
 		public const int MFCC_COEFFICIENTS = 20; //20
-		private const int SECONDS_TO_ANALYZE = 60;
+		public const int SECONDS_TO_ANALYZE = 60;
 		
 		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		// TODO: Remove these!!
@@ -149,9 +149,6 @@ namespace Mirage
 			// if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
 			MathUtils.Multiply(ref audiodata, 32768); // 65536
 			
-			// 2. Windowing
-			// 3. FFT
-			
 			// zero pad if the audio file is too short to perform a mfcc
 			if (audiodata.Length < WINDOW_SIZE * 8)
 			{
@@ -171,6 +168,9 @@ namespace Mirage
 			}
 			 */
 			
+			// 2. Windowing
+			// 3. FFT
+
 			#if DEBUG
 			Matrix stftdata_orig = stft.Apply(audiodata);
 			stftdata_orig.WriteText(name + "_stftdata_orig.txt");
@@ -204,6 +204,7 @@ namespace Mirage
 			mfccdata_orig.DrawMatrixGraph(name + "_mfccdata_orig.png");
 			#endif
 			
+			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
 			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 
 			#if DEBUG

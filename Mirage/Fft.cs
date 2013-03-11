@@ -87,6 +87,8 @@ namespace Mirage
 			fftwf_execute(fftwPlan);
 			Marshal.Copy(fftwData, fft, 0, fftsize);
 			
+			//Analyzer.WriteAscii(fft, "mirage_fft_orig.ascii.txt");
+
 			m.d[0, j] = fft[0]*fft[0];
 			for (int i = 1; i < winsize/2; i++) {
 				// amplitude (or magnitude) is the square root of the power spectrum
@@ -109,9 +111,7 @@ namespace Mirage
 			fftwf_execute(fftwPlan);
 			Marshal.Copy(fftwData, fft, 0, fftsize);
 			
-			#if DEBUG
-			Analyzer.WriteAscii(fft, "comirva_fft_orig.ascii.txt");
-			#endif
+			//Analyzer.WriteAscii(fft, "comirva_fft_orig.ascii.txt");
 			
 			// fft input will now contain the FFT values in a Half Complex format
 			/// r0, r1, r2, ..., rn/2, i(n+1)/2-1, ..., i2, i1
@@ -143,9 +143,7 @@ namespace Mirage
 			Array.Copy(data, fft, data.Length/2);
 			lomonFFT.RealFFT(fft, true);
 			
-			#if DEBUG
-			Analyzer.WriteAscii(fft, "comirva_fft_lomont.ascii.txt");
-			#endif
+			//Analyzer.WriteAscii(fft, "comirva_fft_lomont.ascii.txt");
 
 			// fft input will now contain the FFT values
 			// r0, r(n/2), r1, i1, r2, i2 ...
