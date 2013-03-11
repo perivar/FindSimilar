@@ -106,7 +106,7 @@ namespace Mirage
 				audioFeature.Name = filePath.Name;
 			}
 			
-			Dbg.WriteLine ("MandelEllisExtractor - Total Execution Time: {0} ms", t.Stop().Milliseconds);
+			Dbg.WriteLine ("MandelEllisExtractor - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 
 			return audioFeature;
 		}
@@ -232,7 +232,7 @@ namespace Mirage
 				audioFeature.Name = filePath.FullName;
 			}
 			
-			Dbg.WriteLine ("Mirage - Total Execution Time: {0} ms", t.Stop().Milliseconds);
+			Dbg.WriteLine ("Mirage - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 
 			return audioFeature;
 		}

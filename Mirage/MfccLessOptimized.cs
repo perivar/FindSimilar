@@ -146,7 +146,7 @@ namespace Mirage
 			
 			Matrix mfcc = dct.Multiply(mel);
 			
-			Dbg.WriteLine("mfcc (MfccLessOptimized) Execution Time: " + t.Stop().Milliseconds + " ms");
+			Dbg.WriteLine("mfcc (MfccLessOptimized) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			
 			return mfcc;
 		}

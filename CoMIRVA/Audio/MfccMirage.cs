@@ -150,7 +150,7 @@ namespace Comirva.Audio
 			
 			Matrix mfcc = dct.Multiply(mel);
 			
-			Mirage.Dbg.WriteLine("mfcc Execution Time: " + t.Stop().Milliseconds + "ms");
+			Mirage.Dbg.WriteLine("mfcc Execution Time: " + t.Stop().TotalMilliseconds + "ms");
 			return mfcc;
 		}
 		
@@ -205,7 +205,7 @@ namespace Comirva.Audio
 			
 			Matrix mfcc = dct.Multiply(mel);
 
-			Mirage.Dbg.WriteLine("mfcc (MfccMirage-MirageWay) Execution Time: " + t.Stop().Milliseconds + " ms");
+			Mirage.Dbg.WriteLine("mfcc (MfccMirage-MirageWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return mfcc;
 		}
 
@@ -233,7 +233,7 @@ namespace Comirva.Audio
 			//compute DCT
 			x = dct * x;
 			
-			Mirage.Dbg.WriteLine("mfcc (MfccMirage-ComirvaWay) Execution Time: " + t.Stop().Milliseconds + " ms");
+			Mirage.Dbg.WriteLine("mfcc (MfccMirage-ComirvaWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return x;
 		}
 	}

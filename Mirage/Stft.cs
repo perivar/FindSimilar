@@ -69,7 +69,7 @@ namespace Mirage
 				fft.ComputeMirageMatrix(ref stft, i, audiodata, i*hopsize);
 			}
 			
-			Dbg.WriteLine("Stft (ComputeMirageMatrix) Execution Time: " + t.Stop().Milliseconds + " ms");
+			Dbg.WriteLine("Stft (ComputeMirageMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			
 			return stft;
 		}

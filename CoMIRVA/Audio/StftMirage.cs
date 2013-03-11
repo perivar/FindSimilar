@@ -56,14 +56,14 @@ namespace Comirva.Audio {
 			
 			for (int i = 0; i < hops; i++) {
 				// use fftw for bigger files and lomont for smaller
-				if (audiodata.Length > Mirage.Analyzer.SAMPLING_RATE*Mirage.Analyzer.SECONDS_TO_ANALYZE/2) {
-					fft.ComputeComirvaMatrix(ref stft, i, audiodata, i*hopsize);
-				} else {
-					fft.ComputeComirvaMatrixUsingLomont(ref stft, i, audiodata, i*hopsize);
-				}
+				//if (audiodata.Length > Mirage.Analyzer.SAMPLING_RATE*Mirage.Analyzer.SECONDS_TO_ANALYZE/2) {
+				//	fft.ComputeComirvaMatrix(ref stft, i, audiodata, i*hopsize);
+				//} else {
+				fft.ComputeComirvaMatrixUsingLomont(ref stft, i, audiodata, i*hopsize);
+				//}
 			}
 			
-			Mirage.Dbg.WriteLine("Stft (ComputeComirvaMatrix) Execution Time: " + t.Stop().Milliseconds + " ms");
+			Mirage.Dbg.WriteLine("Stft (ComputeComirvaMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return stft;
 		}
 	}

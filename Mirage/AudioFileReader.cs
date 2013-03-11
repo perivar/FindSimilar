@@ -22,6 +22,8 @@ namespace Mirage
 			// try first to use Naudio to read the file
 			floatBuffer = AudioUtilsNAudio.ReadMonoFromFile(fileIn, srate, 0, 0);
 			if (floatBuffer != null && floatBuffer.Length != 0) {
+				Dbg.WriteLine("Using NAudio to decode the file ...");
+				
 				// if the audio file is larger than seconds to analyze,
 				// find a proper section to exctract
 				int samples = -1;
@@ -29,11 +31,11 @@ namespace Mirage
 					int seekIndex = (samples/2-(secondsToAnalyze/2)*srate);
 					float[] floatBufferCropped = new float[secondsToAnalyze*srate];
 					Array.Copy(floatBuffer, seekIndex, floatBufferCropped, 0, secondsToAnalyze*srate);
-
-					Dbg.WriteLine("Decoding NAudio Execution Time: " + t.Stop().Milliseconds + " ms");
+					
+					Dbg.WriteLine("Decoding Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 					return floatBufferCropped;
 				} else {
-					Dbg.WriteLine("Decoding NAudio Execution Time: " + t.Stop().Milliseconds + " ms");
+					Dbg.WriteLine("Decoding Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 					return floatBuffer;
 				}
 			}
@@ -153,7 +155,7 @@ namespace Mirage
 						Console.WriteLine(io);
 					}
 					
-					Dbg.WriteLine("Decoding Execution Time: " + t.Stop().Milliseconds + " ms");
+					Dbg.WriteLine("Decoding Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 				}
 				return floatBuffer;
 			}
@@ -208,7 +210,7 @@ namespace Mirage
 					Console.WriteLine(io);
 				}
 				
-				Dbg.WriteLine("Decoding Execution Time: " + t.Stop().Milliseconds + " ms");
+				Dbg.WriteLine("Decoding Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 				return floatBuffer;
 			}
 		}
@@ -263,7 +265,7 @@ namespace Mirage
 					Console.WriteLine(io);
 				}
 				
-				Dbg.WriteLine("Decoding Execution Time: " + t.Stop().Milliseconds + " ms");
+				Dbg.WriteLine("Decoding Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 				return floatBuffer;
 			}
 		}

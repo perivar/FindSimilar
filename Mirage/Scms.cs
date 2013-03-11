@@ -117,7 +117,7 @@ namespace Mirage
 				}
 			}
 
-			Dbg.WriteLine("Mirage - scms created in: {0} ms", t.Stop().Milliseconds);
+			Dbg.WriteLine("(Comirva) - scms created in: {0} ms", t.Stop().TotalMilliseconds);
 
 			return s;
 		}
@@ -173,7 +173,7 @@ namespace Mirage
 				}
 			}
 
-			Dbg.WriteLine("Mirage - scms created in: {0} ms", t.Stop().Milliseconds);
+			Dbg.WriteLine("(Mirage) - scms created in: {0} ms", t.Stop().TotalMilliseconds);
 
 			return s;
 		}

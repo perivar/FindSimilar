@@ -105,7 +105,7 @@ namespace Mirage
 			try {
 				Matrix mfcc = dct.Multiply(mel);
 
-				Dbg.WriteLine ("Mirage - mfcc Execution Time: {0} ms", t.Stop().Milliseconds);
+				Dbg.WriteLine ("Mirage - mfcc Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 
 				return mfcc;
 

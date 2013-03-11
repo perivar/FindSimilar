@@ -44,7 +44,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		static string _version = "1.0.1";
+		static string _version = "1.0.2";
 		
 		#region Similarity Search
 		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
@@ -111,7 +111,7 @@ namespace Mirage
 				.Take(numToTake)
 				.ToDictionary(pair => pair.Key, pair => pair.Value);
 			
-			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", seedAudioFeature.Name, t.Stop().Milliseconds));
+			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", seedAudioFeature.Name, t.Stop().TotalMilliseconds));
 			return sortedDict;
 		}
 
@@ -175,7 +175,7 @@ namespace Mirage
 				.Take(numToTake)
 				.ToDictionary(pair => pair.Key, pair => pair.Value);
 
-			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", String.Join(",", seedAudioFeatures.Select(p=>p.Name)), t.Stop().Milliseconds));
+			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", String.Join(",", seedAudioFeatures.Select(p=>p.Name)), t.Stop().TotalMilliseconds));
 			return sortedDict;
 		}
 		#endregion
@@ -257,7 +257,7 @@ namespace Mirage
 					if (feature != null) {
 						db.AddTrack(fileCounter, feature);
 						fileCounter++;
-						Console.Out.WriteLine("[{1}/{2}] Succesfully added fingerprint to database {0} ({3} ms)!", fileInfo.Name, fileCounter, filesAll.Count(), feature.Duration);
+						Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms)", fileInfo.Name, fileCounter, filesAll.Count(), feature.Duration);
 					} else {
 						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 						IOUtils.LogMessageToFile(failedFilesLog, fileInfo.FullName);
