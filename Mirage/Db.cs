@@ -32,7 +32,6 @@ using Comirva.Audio.Feature;
 
 namespace Mirage
 {
-	
 	// SQL Lite database class
 	// Originally a part of the Mirage project
 	// Heavily modified by perivar@nerseth.com

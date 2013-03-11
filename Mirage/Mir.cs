@@ -44,7 +44,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		static string _version = "1.0.2";
+		static string _version = "1.0.3";
 		
 		#region Similarity Search
 		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
@@ -521,7 +521,7 @@ namespace Mirage
 		#endregion
 		
 		public static void Main(string[] args) {
-			
+
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
@@ -529,7 +529,7 @@ namespace Mirage
 			string queryPath = "";
 			int queryId = -1;
 			int numToTake = 20;
-			double percentage = 0.3;
+			double percentage = 0.4; // percentage below and above when querying
 			bool resetdb = false;
 			AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 			
@@ -565,6 +565,8 @@ namespace Mirage
 						distanceType = AudioFeature.DistanceType.Dtw_Manhattan;
 					} else if (type.Equals("dtwmax", StringComparison.InvariantCultureIgnoreCase)) {
 						distanceType = AudioFeature.DistanceType.Dtw_Maximum;
+					} else if (type.Equals("ucrdtw", StringComparison.InvariantCultureIgnoreCase)) {
+						distanceType = AudioFeature.DistanceType.UCR_Dtw;
 					} else {
 						distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
 					}
@@ -584,6 +586,9 @@ namespace Mirage
 			}
 			if(CommandLine["kl"] != null) {
 				distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
+			}
+			if(CommandLine["ucrdtw"] != null) {
+				distanceType = AudioFeature.DistanceType.UCR_Dtw;
 			}
 			if(CommandLine["resetdb"] != null) {
 				resetdb = true;
@@ -629,9 +634,6 @@ namespace Mirage
 				FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake, percentage, distanceType);
 			}
 			
-			// HASH creation
-			// https://github.com/viat/YapHash/blob/master/sources/YapHash/src/YapHash.cpp
-
 			System.Console.ReadLine();
 		}
 		
@@ -657,6 +659,7 @@ namespace Mirage
 			Console.WriteLine("\t\tdtwe2\t=Dynamic Time Warping - Squared Euclidean");
 			Console.WriteLine("\t\tdtwman\t=Dynamic Time Warping - Manhattan");
 			Console.WriteLine("\t\tdtwmax\t=Dynamic Time Warping - Maximum");
+			Console.WriteLine("\t\tucrdtw\t=Dynamic Time Warping - UCR Suite (fast)");
 			Console.WriteLine("\t\tOr use the distance method directly:");
 			Console.WriteLine("\t-kl\t<Use Kullback Leibler Divergence/ Distance (default)>");
 			Console.WriteLine("\t-dtw\t<Use Dynamic Time Warping - Euclidean>");
@@ -664,6 +667,7 @@ namespace Mirage
 			Console.WriteLine("\t-dtwe2\t<Use Dynamic Time Warping - Squared Euclidean>");
 			Console.WriteLine("\t-dtwman\t<Use Dynamic Time Warping - Manhattan>");
 			Console.WriteLine("\t-dtwmax\t<Use Dynamic Time Warping - Maximum>");
+			Console.WriteLine("\t-ucrdtw\t<Use Dynamic Time Warping - UCR Suite (fast)>");
 			Console.WriteLine();
 			Console.WriteLine("\t-? or -help=show this usage help>");
 		}

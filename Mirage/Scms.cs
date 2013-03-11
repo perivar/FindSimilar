@@ -212,6 +212,8 @@ namespace Mirage
 				case AudioFeature.DistanceType.Dtw_Maximum:
 					distanceMeasure = DistanceMeasure.Maximum;
 					break;
+				case AudioFeature.DistanceType.UCR_Dtw:
+					return UCRCSharp.UCR.DTW(this.GetArray(), other.GetArray());
 				case AudioFeature.DistanceType.KullbackLeiblerDivergence:
 				default:
 					return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));

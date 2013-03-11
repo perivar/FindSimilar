@@ -24,7 +24,8 @@ namespace Comirva.Audio.Feature
 			Dtw_Euclidean = 2,
 			Dtw_Manhattan = 3,
 			Dtw_SquaredEuclidean = 4,
-			Dtw_Maximum = 5
+			Dtw_Maximum = 5,
+			UCR_Dtw = 6
 		}
 		
 		/// <summary>

@@ -34,7 +34,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\2Pac - Changes Remake (by BacardiProductions)" -resetdb</StartArguments>
+    <StartArguments>-matchid=0 -ucrdtw</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -183,6 +183,8 @@
     <Compile Include="SpeechRecognitionHMM\FFT.cs" />
     <Compile Include="SpeechRecognitionHMM\MFCC.cs" />
     <Compile Include="SpeechRecognitionHMM\PreProcess.cs" />
+    <Compile Include="UCRSuite\UCR_DTW.cs" />
+    <Compile Include="UCRSuite\UCR_ED.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="aquila" />
@@ -211,6 +213,7 @@
     <Folder Include="NDtw" />
     <Folder Include="NDtw\Preprocessing" />
     <Folder Include="SpeechRecognitionHMM" />
+    <Folder Include="UCRSuite" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NativeLibraries\faad\faad.exe">

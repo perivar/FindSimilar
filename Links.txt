@@ -14,3 +14,6 @@ http://yaafe.sourceforge.net/features.html#mfcc
 
 Matlab Tricks (e.g. framing and windowing without loops)
 http://www.ee.columbia.edu/~marios/matlab/matlab_tricks.html
+
+HASH creation
+https://github.com/viat/YapHash/blob/master/sources/YapHash/src/YapHash.cpp
