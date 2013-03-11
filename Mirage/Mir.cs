@@ -239,7 +239,7 @@ namespace Mirage
 				
 				Console.Out.WriteLine("Found {0} files remaining in scan directory to be processed.", filesRemaining.Count);
 
-				int fileCounter = 0;
+				int fileCounter = filesProcessed.Count;
 				foreach (string f in filesRemaining)
 				{
 					FileInfo fileInfo = new FileInfo(f);
