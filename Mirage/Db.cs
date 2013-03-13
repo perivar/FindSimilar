@@ -41,12 +41,10 @@ namespace Mirage
 
 		public Db()
 		{
-			//Console.WriteLine("Start");
 			string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 			string dbdir = Path.Combine(homedir,".mirage");
 			string dbfile = Path.Combine(dbdir, "mirage.db");
 			string sqlite = string.Format("Data Source={0};Version=3", dbfile);
-			//Console.WriteLine(sqlite);
 			
 			if (!Directory.Exists(dbdir)) {
 				Directory.CreateDirectory(dbdir);
@@ -54,16 +52,6 @@ namespace Mirage
 			
 			dbcon = (IDbConnection) new SQLiteConnection(sqlite);
 			dbcon.Open();
-			
-			//AddTable();
-			
-			/*
-			IDbCommand dbcmd = dbcon.CreateCommand();
-			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
-				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER)";
-			dbcmd.ExecuteNonQuery();
-			dbcmd.Dispose();
-			 */
 		}
 		
 		~Db()
@@ -71,6 +59,40 @@ namespace Mirage
 			dbcon.Close();
 		}
 
+		public bool RemoveTable()
+		{
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "DROP TABLE IF EXISTS mirage";
+			
+			try {
+				dbcmd.ExecuteNonQuery();
+			} catch (SQLiteException){
+				return false;
+			}
+			
+			return true;
+		}
+		
+		public bool AddTable() {
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
+				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER)";
+			
+			try {
+				dbcmd.ExecuteNonQuery();
+			} catch (SQLiteException){
+				return false;
+			}
+			
+			return true;
+		}
+		
 		public bool HasTrack(string name, out int trackid) {
 			
 			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
@@ -141,48 +163,11 @@ namespace Mirage
 			
 			try {
 				dbcmd.ExecuteNonQuery();
-				//dbcmd.Dispose();
 			} catch (SQLiteException) {
 				return -1;
 			}
 			
 			return trackid;
-		}
-
-		public bool RemoveTable()
-		{
-			IDbCommand dbcmd;
-			lock (dbcon) {
-				dbcmd = dbcon.CreateCommand();
-			}
-			dbcmd.CommandText = "DROP TABLE IF EXISTS mirage";
-			
-			try {
-				dbcmd.ExecuteNonQuery();
-				//dbcmd.Dispose();
-			} catch (SQLiteException){
-				return false;
-			}
-			
-			return true;
-		}
-		
-		public bool AddTable() {
-			IDbCommand dbcmd;
-			lock (dbcon) {
-				dbcmd = dbcon.CreateCommand();
-			}
-			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
-				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER)";
-			
-			try {
-				dbcmd.ExecuteNonQuery();
-				//dbcmd.Dispose();
-			} catch (SQLiteException){
-				return false;
-			}
-			
-			return true;
 		}
 
 		public int RemoveTrack(int trackid)
@@ -195,7 +180,6 @@ namespace Mirage
 			
 			try {
 				dbcmd.ExecuteNonQuery();
-				//dbcmd.Dispose();
 			} catch (SQLiteException){
 				return -1;
 			}
@@ -259,7 +243,6 @@ namespace Mirage
 			if (duration > 0) {
 				dbcmd.CommandText += " AND duration > " + (int)(duration * (1.0 - percentage)) + " AND duration < " + (int)(duration * (1.0 + percentage));
 			}
-			//Console.Out.WriteLine(dbcmd.CommandText);
 			
 			return dbcmd.ExecuteReader();
 		}

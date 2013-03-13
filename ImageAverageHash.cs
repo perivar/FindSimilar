@@ -13,9 +13,6 @@ namespace Imghash
 	// https://github.com/jforshee/ImageHashing/blob/master/ImageHashing/ImageHashing.cs
 	public class ImageAverageHash
 	{
-
-		private const bool doSaveimages = false;
-		
 		private static BitCounter bitCounter = new BitCounter(8);
 		
 		/// <summary>
@@ -27,22 +24,28 @@ namespace Imghash
 		public static ulong AverageHash(Image image)
 		{
 			int smallerSize = 8;
-			string fileSavePrefix = @"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\" + StringUtils.GetCurrentTimestamp();
+			string fileSavePrefix = "AverageHash (" + StringUtils.GetCurrentTimestamp() + ") ";
 			
-			if (doSaveimages) image.Save(fileSavePrefix + "1-orig.png");
+			#if DEBUG
+			image.Save(fileSavePrefix + "1-orig.png");
+			#endif
 			
 			Bitmap squeezedImage = CommonUtils.ImageUtils.Resize(image, smallerSize, smallerSize);
-			if (doSaveimages) squeezedImage.Save(fileSavePrefix + "2-squeezed.png");
+			
+			#if DEBUG
+			squeezedImage.Save(fileSavePrefix + "2-squeezed.png");
+			#endif
 
 			uint averageValue = 0;
 			byte[] grayscaleByteArray = CommonUtils.ImageUtils.ImageToByteArray8BitGrayscale(squeezedImage, out averageValue);
-			if (doSaveimages) {
-				Image fromBinary = CommonUtils.ImageUtils.ByteArray8BitGrayscaleToImage(grayscaleByteArray, smallerSize, smallerSize);
-				fromBinary.Save(fileSavePrefix + "3-grayFromArray.png");
 
-				Bitmap grayscaleImage = CommonUtils.ImageUtils.MakeGrayscaleFastest(squeezedImage);
-				grayscaleImage.Save(fileSavePrefix + "4-grayscale.png");
-			}
+			#if DEBUG
+			Image fromBinary = CommonUtils.ImageUtils.ByteArray8BitGrayscaleToImage(grayscaleByteArray, smallerSize, smallerSize);
+			fromBinary.Save(fileSavePrefix + "3-grayFromArray.png");
+
+			Bitmap grayscaleImage = CommonUtils.ImageUtils.MakeGrayscaleFastest(squeezedImage);
+			grayscaleImage.Save(fileSavePrefix + "4-grayscale.png");
+			#endif
 			
 			// Compute the hash: each bit is a pixel
 			// 1 = higher than average, 0 = lower than average

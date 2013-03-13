@@ -16,8 +16,6 @@ namespace Imghash
 		private int size = 32;			// 32
 		private int smallerSize = 8; 	// 8
 		
-		private const bool doSaveimages = false;
-
 		public ImagePHash()
 		{
 		}
@@ -49,14 +47,20 @@ namespace Imghash
 			// However, the image is larger than 8x8; 32x32 is a good size.
 			// This is really done to simplify the DCT computation and not
 			// because it is needed to reduce the high frequencies.
-			img = Resize(img, size, size);
-			if (doSaveimages) img.Save(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\1-reduced.png");
+			img = CommonUtils.ImageUtils.Resize(img, size, size);
+			
+			#if DEBUG
+			img.Save("ImagePHash 1-reduced.png");
+			#endif
 			
 			// 2. Reduce color.
 			// The image is reduced to a grayscale just to further simplify
 			// the number of computations.
-			img = Grayscale(img);
-			if (doSaveimages) img.Save(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\2-grayscale.png");
+			img = CommonUtils.ImageUtils.MakeGrayscale(img);
+			
+			#if DEBUG
+			img.Save("ImagePHash 2-grayscale.png");
+			#endif
 
 			double[,] vals = new double[size,size];
 			for (int x = 0; x < img.Width; x++)
@@ -68,20 +72,20 @@ namespace Imghash
 				}
 			}
 
-			if (doSaveimages) {
-				// create byte array to be able to save the image
-				byte[] grayByteArray = new byte[size*size];
-				for (int x = 0; x < size; x++)
+			#if DEBUG
+			// create byte array to be able to save the image
+			byte[] grayByteArray = new byte[size*size];
+			for (int x = 0; x < size; x++)
+			{
+				for (int y = 0; y < size; y++)
 				{
-					for (int y = 0; y < size; y++)
-					{
-						// add to byte array
-						grayByteArray[x + (y * size)] = Convert.ToByte(vals[x,y]);
-					}
+					// add to byte array
+					grayByteArray[x + (y * size)] = Convert.ToByte(vals[x,y]);
 				}
-				Image grayscale = CommonUtils.ImageUtils.ByteArrayGrayscaleToImage(grayByteArray,size,size);
-				grayscale.Save(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\3-grayscale-array.png");
 			}
+			Image grayscale = CommonUtils.ImageUtils.ByteArrayGrayscaleToImage(grayByteArray,size,size);
+			grayscale.Save("ImagePHash 3-grayscale-array.png");
+			#endif
 			
 			//  3. Compute the DCT.
 			//	The DCT separates the image into a collection of frequencies
@@ -90,34 +94,28 @@ namespace Imghash
 			DCT dct = new DCT(size);
 			double[,] dctVals = dct.ApplyDCT(vals);
 			
-			if (doSaveimages) {
-				// create byte array to be able to save the image
-				double dctMin = 0;
-				double dctMax = 0;
-				CommonUtils.MathUtils.ComputeMinAndMax(dctVals, out dctMin, out dctMax);
-				byte[] dctByteArray = new byte[size*size];
-				for (int x = 0; x < size; x++)
+			#if DEBUG
+			// create byte array to be able to save the image
+			double dctMin = 0;
+			double dctMax = 0;
+			CommonUtils.MathUtils.ComputeMinAndMax(dctVals, out dctMin, out dctMax);
+			byte[] dctByteArray = new byte[size*size];
+			for (int x = 0; x < size; x++)
+			{
+				for (int y = 0; y < size; y++)
 				{
-					for (int y = 0; y < size; y++)
-					{
-						// add to byte array
-						dctByteArray[x + (y * size)] = Convert.ToByte(CommonUtils.MathUtils.ConvertAndMainainRatio(dctVals[x,y], dctMin, dctMax, 0, 255));
-					}
+					// add to byte array
+					dctByteArray[x + (y * size)] = Convert.ToByte(CommonUtils.MathUtils.ConvertAndMainainRatio(dctVals[x,y], dctMin, dctMax, 0, 255));
 				}
-				Image dctImage = CommonUtils.ImageUtils.ByteArrayGrayscaleToImage(dctByteArray,size,size);
-				dctImage.Save(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\4-dct.png");
 			}
+			Image dctImage = CommonUtils.ImageUtils.ByteArrayGrayscaleToImage(dctByteArray,size,size);
+			dctImage.Save("ImagePHash 4-dct.png");
+			#endif
 			
 			// 4. Reduce the DCT.
 			// This is the magic step. While the DCT is 32x32, just keep the
 			// top-left 8x8. Those represent the lowest frequencies in the
 			// picture.
-			//
-			// 5. Compute the average value.
-			// Like the Average Hash, compute the mean DCT value (using only
-			// the 8x8 DCT low-frequency values and excluding the first term
-			// since the DC coefficient can be significantly different from
-			// the other values and will throw off the average).
 			double total = 0;
 			for (int x = 0; x < smallerSize; x++)
 			{
@@ -128,6 +126,11 @@ namespace Imghash
 			}
 			total -= dctVals[0,0];
 
+			// 5. Compute the average value.
+			// Like the Average Hash, compute the mean DCT value (using only
+			// the 8x8 DCT low-frequency values and excluding the first term
+			// since the DC coefficient can be significantly different from
+			// the other values and will throw off the average).
 			double avg = total / (double)((smallerSize * smallerSize) - 1);
 
 			// 6. Further reduce the DCT.
@@ -163,16 +166,6 @@ namespace Imghash
 		public ulong PHash(Bitmap img)
 		{
 			return StringUtils.BinaryStringToLong(GetHash(img));
-		}
-		
-		private Bitmap Resize(Image image, int width, int height)
-		{
-			return CommonUtils.ImageUtils.Resize(image, width, height);
-		}
-
-		private Bitmap Grayscale(Bitmap img)
-		{
-			return CommonUtils.ImageUtils.MakeGrayscaleFastest(img);
 		}
 	}
 }

@@ -241,9 +241,8 @@ namespace UCRCSharp
 			{
 				error_ed(2);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
-
 				Environment.Exit(2);
 			}
 		}

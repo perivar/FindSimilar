@@ -358,8 +358,8 @@ namespace Comirva.Audio
 		{
 			//compute constants
 			double k = Math.PI/numberFilters;
-			double w1 = 1.0/(Math.Sqrt(numberFilters));//1.0/(Math.Sqrt(numberFilters/2));
-			double w2 = Math.Sqrt(2.0/numberFilters);//Math.Sqrt(2.0/numberFilters)///(Math.Sqrt(2.0)/2.0);
+			double w1 = 1.0/(Math.Sqrt(numberFilters));
+			double w2 = Math.Sqrt(2.0/numberFilters);
 
 			//create new matrix
 			Matrix matrix = new Matrix(numberCoefficients, numberFilters);

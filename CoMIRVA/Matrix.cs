@@ -321,6 +321,30 @@ namespace Comirva.Audio.Util.Maths
 			return matrixData[i][j];
 		}
 
+		/// <summary>
+		/// Return a Column from the matrix
+		/// </summary>
+		/// <param name="column">column number</param>
+		/// <returns></returns>
+		public double[] GetColumn(int column) {
+			if (column > -1 && column < columnCount) {
+				return this.MatrixData.Select(row => row[column]).ToArray();
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Return a Row from the matrix
+		/// </summary>
+		/// <param name="column">column number</param>
+		/// <returns></returns>
+		public double[] GetRow(int row) {
+			if (row > -1 && row < rowCount) {
+				return this.MatrixData[row];
+			}
+			return null;
+		}
+		
 		/// <summary>Get matrixData submatrix.</summary>
 		/// <param name="i0">Initial row index</param>
 		/// <param name="i1">Final row index</param>
@@ -1786,25 +1810,178 @@ namespace Comirva.Audio.Util.Maths
 			double maxValue = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
 			maxValue = Math.Log(maxValue);
 
-			Bitmap img = new Bitmap(Columns, Rows);
+			int blockSizeX = 10;
+			int blockSizeY = 10;
+
+			Bitmap img = new Bitmap(Columns*blockSizeX, Rows*blockSizeY);
 			Graphics graphics = Graphics.FromImage(img);
 			
-			for(int i = 0; i < rowCount; i++)
+			for(int row = 0; row < rowCount; row++)
 			{
-				for(int j = 0; j < columnCount; j++)
+				for(int column = 0; column < columnCount; column++)
 				{
-					double val = this.MatrixData[i][j];
+					double val = this.MatrixData[row][column];
 					val = Math.Log(val);
 					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue*0.8);
+					Brush brush = new SolidBrush(color);
+					
 					if (flipYscale) {
-						img.SetPixel(j, rowCount-i-1, color);
+						//img.SetPixel(column, rowCount-row-1, color);
+						graphics.FillRectangle(brush, column*blockSizeX, (rowCount-row)*blockSizeY, blockSizeX, blockSizeY);
 					} else {
-						img.SetPixel(j, i, color);
+						//img.SetPixel(column, row, color);
+						graphics.FillRectangle(brush, column*blockSizeX, row*blockSizeY, blockSizeX, blockSizeY);
 					}
 				}
 			}
 			
 			img = (Bitmap) ImageUtils.Resize(img, 450, 350, false);
+			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
+			img.Save(fileName, ImageFormat.Png);
+		}
+		
+
+		/// <summary>
+		/// Get logarithmically spaced indices
+		/// </summary>
+		/// <param name = "sampleRate">Signal's sample rate</param>
+		/// <param name = "minFreq">Min frequency</param>
+		/// <param name = "maxFreq">Max frequency</param>
+		/// <param name = "logBins">Number of logarithmically spaced bins</param>
+		/// <param name = "fftSize">FFT Size</param>
+		/// <param name = "logarithmicBase">Logarithm base</param>
+		/// <remarks>Copied from Sound Fingerprinting framework FingerprintManager
+		/// git://github.com/AddictedCS/soundfingerprinting.git
+		/// Code license: CPOL v.1.02
+		/// ciumac.sergiu@gmail.com</remarks>
+		private static void GenerateLogFrequencies(double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize, double logarithmicBase, out int[] indexes, out float[] frequencies)
+		{
+			double logMin = Math.Log(minFreq, logarithmicBase);
+			double logMax = Math.Log(maxFreq, logarithmicBase);
+			double delta = (logMax - logMin)/ logBins;
+
+			indexes = new int[logBins + 1];
+			frequencies = new float[logBins + 1];
+			double accDelta = 0;
+			for (int i = 0; i <= logBins; ++i)
+			{
+				float freq = (float) Math.Pow(logarithmicBase, logMin + accDelta);
+				frequencies[i] = freq;
+
+				accDelta += delta; // accDelta = delta * i;
+				indexes[i] = MathUtils.FreqToIndex(freq, sampleRate, fftSize);
+			}
+		}
+		
+		public static float GetBandWidth(double sampleRate, int fftDataSize)
+		{
+			return (float) ((2f/(float)fftDataSize) * (sampleRate / 2f));
+		}
+
+		public static int FreqToIndex(double sampleRate, int fftDataSize, int freq)
+		{
+			// special case: freq is lower than the bandwidth of spectrum[0]
+			if ( freq < GetBandWidth(sampleRate, fftDataSize)/2 ) return 0;
+			
+			// special case: freq is within the bandwidth of spectrum[1024]
+			if ( freq > sampleRate/2 - GetBandWidth(sampleRate, fftDataSize)/2 ) return 1024;
+			
+			// all other cases
+			float fraction = (float)freq/(float) sampleRate;
+			int i = (int) Math.Round(fftDataSize * fraction);
+			return i;
+		}
+		
+		// http://code.compartmental.net/2007/03/21/fft-averages/
+		private static double[] ComputeAverages(double[] spectrum, double sampleRate, int fftDataSize, int numberOfBands) {
+			
+			double[] averages = new double[numberOfBands];
+			
+			for (int i = 0; i < numberOfBands; i++)
+			{
+				double avg = 0;
+				
+				int lowFreq;
+				if ( i == 0 ) {
+					lowFreq = 0;
+				} else {
+					double d = (sampleRate/2) / Math.Pow(2, numberOfBands - i);
+					lowFreq = (int) d;
+				}
+				
+				int hiFreq = (int)((sampleRate/2) / (float)Math.Pow(2, (numberOfBands-1) - i));
+				
+				int lowBound = FreqToIndex(sampleRate, fftDataSize, lowFreq);
+				int hiBound = FreqToIndex(sampleRate, fftDataSize, hiFreq);
+				
+				for (int j = lowBound; j <= hiBound; j++)
+				{
+					avg += spectrum[j];
+				}
+
+				avg /= (hiBound - lowBound + 1);
+				averages[i] = avg;
+			}
+			return averages;
+		}
+
+		private static double[] ComputeAverages(double[] spectrum, double sampleRate, int fftDataSize, int numberOfBands, int[] logFrequenciesIndex) {
+			
+			double[] averages = new double[numberOfBands];
+			
+			for (int i = 0; i < numberOfBands; i++)
+			{
+				double avg = 0;
+				
+				int lowBound = logFrequenciesIndex[i];
+				int hiBound = logFrequenciesIndex[i + 1];
+
+				for (int j = lowBound; j <= hiBound; j++)
+				{
+					avg += spectrum[j];
+				}
+
+				avg /= (hiBound - lowBound + 1);
+				averages[i] = avg;
+			}
+			return averages;
+		}
+		
+		public void DrawMatrixImageLogarithmic(string fileName, bool logModeEnabled, double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize) {
+			
+			int blockSizeX = 20;
+			int blockSizeY = 5;
+			int bands = 100;
+			
+			Bitmap img = new Bitmap(Columns*blockSizeX, bands*blockSizeY);
+			Graphics graphics = Graphics.FromImage(img);
+			
+			// Find maximum number when all numbers are made positive.
+			double maxValue = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
+			maxValue = Math.Log(maxValue);
+
+			int[] indexes;
+			float[] frequencies;
+			GenerateLogFrequencies(sampleRate, minFreq, maxFreq, bands, fftSize, Math.E, out indexes, out frequencies);
+			
+			for(int column = 0; column < columnCount; column++)
+			{
+				double[] col = GetColumn(column);
+				double[] avg = ComputeAverages(col, sampleRate, rowCount, bands, indexes);
+				
+				for(int band = 0; band < bands; band++)
+				{
+					//double val = this.MatrixData[row][column];
+					double val = avg[band];
+					val = Math.Log(val);
+					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue*0.8);
+					Brush brush = new SolidBrush(color);
+					
+					// Fill
+					graphics.FillRectangle(brush, column*blockSizeX, (bands-band)*blockSizeY, blockSizeX, blockSizeY);
+				}
+			}
+
 			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
 			img.Save(fileName, ImageFormat.Png);
 		}
