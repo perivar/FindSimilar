@@ -531,6 +531,24 @@ namespace Comirva.Audio.Util.Maths
 			return X;
 		}
 
+		/// <summary>
+		/// Find maximum number when all numbers are made positive.
+		/// </summary>
+		/// <returns>max value</returns>
+		public double Max() {
+			double max = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
+			return max;
+		}
+
+		/// <summary>
+		/// Find minimum number when all numbers are made positive.
+		/// </summary>
+		/// <returns>min value</returns>
+		public double Min() {
+			double min = this.MatrixData.Min((b) => b.Min((v) => Math.Abs(v)));
+			return min;
+		}
+		
 		/// <summary>One norm</summary>
 		/// <returns>maximum column sum.</returns>
 		public double Norm1()
@@ -1762,9 +1780,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="fileName">filename</param>
 		public void DrawMatrixImage(string fileName) {
 			
-			// Find maximum number when all numbers are made positive.
-			double maxValue = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
-			
+			double maxValue = Max();
 			if (maxValue == 0.0f)
 				return;
 			
@@ -1796,22 +1812,27 @@ namespace Comirva.Audio.Util.Maths
 			img.Save(fileName, ImageFormat.Png);
 		}
 
-		public void DrawMatrixImageLog(string fileName, bool flipYscale=false)
+		/// <summary>
+		/// Draw the matrix as an image
+		/// </summary>
+		/// <param name="fileName">filename</param>
+		/// <param name="flipYscale">bool whether to flip the y scale</param>
+		/// <example>
+		/// This method can be used to plot a spectrogram
+		/// like the octave method:
+		/// audio = load ('audiodata.ascii.txt', '-ascii');
+		/// specgram (audio*32768, 2048, 44100, hanning(2048), 1024);
+		///
+		/// This is the same as:
+		/// stft = load ('stftdata.ascii.txt', '-ascii');
+		/// imagesc (flipud(log(stft)));
+		/// </example>
+		public void DrawMatrixImageLogValues(string fileName, bool flipYscale=false)
 		{
-			// this method can be used to plot a spectrogram
-			// like the octave method:
-			// specgram (audio*32768, 2048, 44100, hanning(2048), 1024);
-			//
-			// this is the same as:
-			// C = load ('stftdata.ascii.txt', '-ascii');
-			// imagesc (flipud(log10(C)));
+			int blockSizeX = 20;
+			int blockSizeY = 1;
 
-			// Find maximum number when all numbers are made positive.
-			double maxValue = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
-			maxValue = Math.Log(maxValue);
-
-			int blockSizeX = 10;
-			int blockSizeY = 10;
+			double maxValue = Math.Log(Max());
 
 			Bitmap img = new Bitmap(Columns*blockSizeX, Rows*blockSizeY);
 			Graphics graphics = Graphics.FromImage(img);
@@ -1827,161 +1848,63 @@ namespace Comirva.Audio.Util.Maths
 					
 					if (flipYscale) {
 						//img.SetPixel(column, rowCount-row-1, color);
+						// draw a small square
 						graphics.FillRectangle(brush, column*blockSizeX, (rowCount-row)*blockSizeY, blockSizeX, blockSizeY);
 					} else {
 						//img.SetPixel(column, row, color);
+						// draw a small square
 						graphics.FillRectangle(brush, column*blockSizeX, row*blockSizeY, blockSizeX, blockSizeY);
 					}
 				}
 			}
 			
-			img = (Bitmap) ImageUtils.Resize(img, 450, 350, false);
+			//img = (Bitmap) ImageUtils.Resize(img, 450, 350, false);
 			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
 			img.Save(fileName, ImageFormat.Png);
 		}
 		
-
 		/// <summary>
-		/// Get logarithmically spaced indices
+		/// Draw the matrix as an image where the Y scale is Logarithmic (e.g. a spectrogram)
 		/// </summary>
-		/// <param name = "sampleRate">Signal's sample rate</param>
-		/// <param name = "minFreq">Min frequency</param>
-		/// <param name = "maxFreq">Max frequency</param>
-		/// <param name = "logBins">Number of logarithmically spaced bins</param>
-		/// <param name = "fftSize">FFT Size</param>
-		/// <param name = "logarithmicBase">Logarithm base</param>
-		/// <remarks>Copied from Sound Fingerprinting framework FingerprintManager
-		/// git://github.com/AddictedCS/soundfingerprinting.git
-		/// Code license: CPOL v.1.02
-		/// ciumac.sergiu@gmail.com</remarks>
-		private static void GenerateLogFrequencies(double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize, double logarithmicBase, out int[] indexes, out float[] frequencies)
+		/// <param name="fileName">filename</param>
+		/// <param name="logModeEnabled"></param>
+		/// <param name="sampleRate"></param>
+		/// <param name="minFreq"></param>
+		/// <param name="maxFreq"></param>
+		/// <param name="logBins"></param>
+		/// <param name="fftSize"></param>
+		public void DrawMatrixImageLogY(string fileName, double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize)
 		{
-			double logMin = Math.Log(minFreq, logarithmicBase);
-			double logMax = Math.Log(maxFreq, logarithmicBase);
-			double delta = (logMax - logMin)/ logBins;
-
-			indexes = new int[logBins + 1];
-			frequencies = new float[logBins + 1];
-			double accDelta = 0;
-			for (int i = 0; i <= logBins; ++i)
-			{
-				float freq = (float) Math.Pow(logarithmicBase, logMin + accDelta);
-				frequencies[i] = freq;
-
-				accDelta += delta; // accDelta = delta * i;
-				indexes[i] = MathUtils.FreqToIndex(freq, sampleRate, fftSize);
-			}
-		}
-		
-		public static float GetBandWidth(double sampleRate, int fftDataSize)
-		{
-			return (float) ((2f/(float)fftDataSize) * (sampleRate / 2f));
-		}
-
-		public static int FreqToIndex(double sampleRate, int fftDataSize, int freq)
-		{
-			// special case: freq is lower than the bandwidth of spectrum[0]
-			if ( freq < GetBandWidth(sampleRate, fftDataSize)/2 ) return 0;
-			
-			// special case: freq is within the bandwidth of spectrum[1024]
-			if ( freq > sampleRate/2 - GetBandWidth(sampleRate, fftDataSize)/2 ) return 1024;
-			
-			// all other cases
-			float fraction = (float)freq/(float) sampleRate;
-			int i = (int) Math.Round(fftDataSize * fraction);
-			return i;
-		}
-		
-		// http://code.compartmental.net/2007/03/21/fft-averages/
-		private static double[] ComputeAverages(double[] spectrum, double sampleRate, int fftDataSize, int numberOfBands) {
-			
-			double[] averages = new double[numberOfBands];
-			
-			for (int i = 0; i < numberOfBands; i++)
-			{
-				double avg = 0;
-				
-				int lowFreq;
-				if ( i == 0 ) {
-					lowFreq = 0;
-				} else {
-					double d = (sampleRate/2) / Math.Pow(2, numberOfBands - i);
-					lowFreq = (int) d;
-				}
-				
-				int hiFreq = (int)((sampleRate/2) / (float)Math.Pow(2, (numberOfBands-1) - i));
-				
-				int lowBound = FreqToIndex(sampleRate, fftDataSize, lowFreq);
-				int hiBound = FreqToIndex(sampleRate, fftDataSize, hiFreq);
-				
-				for (int j = lowBound; j <= hiBound; j++)
-				{
-					avg += spectrum[j];
-				}
-
-				avg /= (hiBound - lowBound + 1);
-				averages[i] = avg;
-			}
-			return averages;
-		}
-
-		private static double[] ComputeAverages(double[] spectrum, double sampleRate, int fftDataSize, int numberOfBands, int[] logFrequenciesIndex) {
-			
-			double[] averages = new double[numberOfBands];
-			
-			for (int i = 0; i < numberOfBands; i++)
-			{
-				double avg = 0;
-				
-				int lowBound = logFrequenciesIndex[i];
-				int hiBound = logFrequenciesIndex[i + 1];
-
-				for (int j = lowBound; j <= hiBound; j++)
-				{
-					avg += spectrum[j];
-				}
-
-				avg /= (hiBound - lowBound + 1);
-				averages[i] = avg;
-			}
-			return averages;
-		}
-		
-		public void DrawMatrixImageLogarithmic(string fileName, bool logModeEnabled, double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize) {
-			
 			int blockSizeX = 20;
-			int blockSizeY = 5;
-			int bands = 100;
+			int blockSizeY = 4;
 			
-			Bitmap img = new Bitmap(Columns*blockSizeX, bands*blockSizeY);
+			double maxValue = Math.Log(Max());
+			
+			Bitmap img = new Bitmap(Columns*blockSizeX, logBins*blockSizeY);
 			Graphics graphics = Graphics.FromImage(img);
-			
-			// Find maximum number when all numbers are made positive.
-			double maxValue = this.MatrixData.Max((b) => b.Max((v) => Math.Abs(v)));
-			maxValue = Math.Log(maxValue);
 
 			int[] indexes;
 			float[] frequencies;
-			GenerateLogFrequencies(sampleRate, minFreq, maxFreq, bands, fftSize, Math.E, out indexes, out frequencies);
+			GenerateLogFrequencies(sampleRate, minFreq, maxFreq, logBins, fftSize, Math.E, out indexes, out frequencies);
 			
 			for(int column = 0; column < columnCount; column++)
 			{
 				double[] col = GetColumn(column);
-				double[] avg = ComputeAverages(col, sampleRate, rowCount, bands, indexes);
+				double[] avg = ComputeLogAverages(col, sampleRate, rowCount, logBins, indexes);
 				
-				for(int band = 0; band < bands; band++)
+				for(int logBin = 0; logBin < logBins; logBin++)
 				{
-					//double val = this.MatrixData[row][column];
-					double val = avg[band];
+					double val = avg[logBin];
 					val = Math.Log(val);
 					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue*0.8);
 					Brush brush = new SolidBrush(color);
 					
-					// Fill
-					graphics.FillRectangle(brush, column*blockSizeX, (bands-band)*blockSizeY, blockSizeX, blockSizeY);
+					// draw a small square
+					graphics.FillRectangle(brush, column*blockSizeX, (logBins-logBin)*blockSizeY, blockSizeX, blockSizeY);
 				}
 			}
 
+			//img = (Bitmap) ImageUtils.Resize(img, 450, 350, false);
 			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
 			img.Save(fileName, ImageFormat.Png);
 		}
@@ -2068,6 +1991,7 @@ namespace Comirva.Audio.Util.Maths
 		}
 		#endregion
 		
+		#region Private Methods
 		// ------------------------
 		//   Private Methods
 		// ------------------------
@@ -2083,5 +2007,72 @@ namespace Comirva.Audio.Util.Maths
 				throw new ArgumentException("Matrix dimensions must agree.");
 			}
 		}
+		
+		/// <summary>
+		/// Get logarithmically spaced indexes
+		/// </summary>
+		/// <param name="sampleRate">Signal's sample rate</param>
+		/// <param name="minFreq">Min frequency</param>
+		/// <param name="maxFreq">Max frequency</param>
+		/// <param name="logBins">Number of logarithmically spaced bins</param>
+		/// <param name="fftSize">FFT Size</param>
+		/// <param name="logarithmicBase">Logarithm base</param>
+		/// <param name="logFrequenciesIndex">Indexes output array</param>
+		/// <param name="logFrequencies">Frequency output array</param>
+		/// <remarks>
+		/// Copied from Sound Fingerprinting framework FingerprintManager
+		/// git://github.com/AddictedCS/soundfingerprinting.git
+		/// Code license: CPOL v.1.02
+		/// ciumac.sergiu@gmail.com
+		/// </remarks>
+		private static void GenerateLogFrequencies(double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize, double logarithmicBase, out int[] logFrequenciesIndex, out float[] logFrequencies)
+		{
+			double logMin = Math.Log(minFreq, logarithmicBase);
+			double logMax = Math.Log(maxFreq, logarithmicBase);
+			double delta = (logMax - logMin)/ logBins;
+
+			logFrequenciesIndex = new int[logBins + 1];
+			logFrequencies = new float[logBins + 1];
+			double accDelta = 0;
+			for (int i = 0; i <= logBins; ++i)
+			{
+				float freq = (float) Math.Pow(logarithmicBase, logMin + accDelta);
+				logFrequencies[i] = freq;
+
+				accDelta += delta; // accDelta = delta * i;
+				logFrequenciesIndex[i] = MathUtils.FreqToIndex(freq, sampleRate, fftSize);
+			}
+		}
+		
+		/// <summary>
+		/// Compute log bin averages for a passed spectrum
+		/// </summary>
+		/// <param name="spectrum">spectrum array (i.e. one column in a FFT matrix)</param>
+		/// <param name="sampleRate">Signal's sample rate</param>
+		/// <param name="fftSize">FFT Size</param>
+		/// <param name="logBins">Number of logarithmically spaced bins</param>
+		/// <param name="logFrequenciesIndex">logarithmically spaced indexes</param>
+		/// <returns>array averages for each of the logBins</returns>
+		private static double[] ComputeLogAverages(double[] spectrum, double sampleRate, int fftDataSize, int logBins, int[] logFrequenciesIndex) {
+			
+			double[] averages = new double[logBins];
+			
+			for (int i = 0; i < logBins; i++) {
+				double avg = 0;
+				
+				int lowBound = logFrequenciesIndex[i];
+				int hiBound = logFrequenciesIndex[i + 1];
+
+				for (int j = lowBound; j <= hiBound; j++)
+				{
+					avg += spectrum[j];
+				}
+
+				avg /= (hiBound - lowBound + 1);
+				averages[i] = avg;
+			}
+			return averages;
+		}
+		#endregion
 	}
 }

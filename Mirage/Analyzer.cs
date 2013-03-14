@@ -192,9 +192,9 @@ namespace Mirage
 
 			if (SAVE_IMAGES) {
 				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
-				stftdata.DrawMatrixImageLog(name + "_specgram.png", true);
+				stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
 				
-				stftdata.DrawMatrixImageLogarithmic(name + "_specgramlog.png", true, SAMPLING_RATE, 20, SAMPLING_RATE/2, 100, WINDOW_SIZE);
+				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 100, WINDOW_SIZE);
 			}
 			
 			// 4. Mel Scale Filterbank
