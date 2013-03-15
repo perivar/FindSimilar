@@ -28,8 +28,17 @@ namespace Mirage
 	{
 		Matrix filterWeights;
 		Matrix dct;
-		
-		public MfccLessOptimized(int winsize, int srate, int filters, int cc)
+
+		/// <summary>
+		/// Create a Mfcc object
+		/// This method is not optimized in the sense that the Mel Filter Bands
+		/// and the DCT is created here (and not read in)
+		/// </summary>
+		/// <param name="winsize">window size</param>
+		/// <param name="srate">sample rate</param>
+		/// <param name="filters">number of filters (MEL COEFFICIENTS). E.g. 36 (SPHINX-III uses 40)</param>
+		/// <param name="cc">number of MFCC COEFFICIENTS</param>
+		public MfccLessOptimized(int winsize, int srate, int numberFilters, int numberCoefficients)
 		{
 			double[] mel = new double[srate/2 - 19];
 			double[] freq = new double[srate/2 - 19];
@@ -42,7 +51,7 @@ namespace Mirage
 			}
 			
 			// Prepare filters
-			double[] freqs = new double[filters + 2];
+			double[] freqs = new double[numberFilters + 2];
 			
 			for (int f = 0; f < freqs.Length; f++) {
 				double melIndex = 1.0 + ((mel[mel.Length - 1] - 1.0) /
@@ -59,7 +68,7 @@ namespace Mirage
 				}
 			}
 			
-			double[] triangleh = new double[filters];
+			double[] triangleh = new double[numberFilters];
 			for (int j = 0; j < triangleh.Length; j++) {
 				triangleh[j] = 2.0/(freqs[j+2] - freqs[j]);
 			}
@@ -70,8 +79,8 @@ namespace Mirage
 			}
 			
 			// Compute the MFCC filter Weights
-			filterWeights = new Matrix(filters, winsize/2 + 1);
-			for (int j = 0; j < filters; j++) {
+			filterWeights = new Matrix(numberFilters, winsize/2 + 1);
+			for (int j = 0; j < numberFilters; j++) {
 				for (int k = 0; k < fftFreq.Length; k++) {
 					if ((fftFreq[k] > freqs[j]) && (fftFreq[k] <= freqs[j+1])) {
 						
@@ -86,19 +95,33 @@ namespace Mirage
 					}
 				}
 			}
+			#if DEBUG
+			filterWeights.DrawMatrixGraph("melfilters-mirage-lessoptimized.png");
+			#endif
 			
 			// Compute the DCT
-			dct = new Matrix(cc, filters);
-			double scalefac = 1.0 / Math.Sqrt(filters/2.0);
+			// This whole section is copied from GetDCTMatrix() from CoMirva package
+			dct = new Matrix(numberCoefficients, numberFilters);
 			
-			for (int j = 0; j < cc; j++) {
-				for (int k = 0; k < filters; k++) {
-					dct.d[j, k] = (float)(scalefac * Math.Cos((j+1) * (2*k + 1.0) *
-					                                          Math.PI/2.0/filters));
-					if (j == 0)
-						dct.d[j, k] = (float)(dct.d[j, k] * (Math.Sqrt(2.0)/2.0));
+			// compute constants
+			double k1 = Math.PI/numberFilters;
+			double w1 = 1.0/(Math.Sqrt(numberFilters));
+			double w2 = Math.Sqrt(2.0/numberFilters);
+
+			//generate dct matrix
+			for(int i = 0; i < numberCoefficients; i++)
+			{
+				for(int j = 0; j < numberFilters; j++)
+				{
+					if(i == 0)
+						dct.d[i, j] = (float)(w1 * Math.Cos(k1*i*(j + 0.5d)));
+					else
+						dct.d[i, j] = (float)(w2 * Math.Cos(k1*i*(j + 0.5d)));
 				}
 			}
+			#if DEBUG
+			dct.DrawMatrixGraph("dct-mirage-lessoptimized.png");
+			#endif
 		}
 		
 		public Matrix Apply(ref Matrix m)

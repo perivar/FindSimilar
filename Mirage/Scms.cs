@@ -48,7 +48,7 @@ namespace Mirage
 		private float [] icov;
 		private int dim;
 
-		private string name; // the name
+		private string name;
 		public override string Name {
 			get {
 				return name;
@@ -420,6 +420,5 @@ namespace Mirage
 			return ret;
 		}
 		#endregion
-		
 	}
 }

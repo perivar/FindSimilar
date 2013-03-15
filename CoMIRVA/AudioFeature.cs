@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 
 namespace Comirva.Audio.Feature
 {
@@ -26,6 +27,20 @@ namespace Comirva.Audio.Feature
 			Dtw_SquaredEuclidean = 4,
 			Dtw_Maximum = 5,
 			UCR_Dtw = 6
+		}
+		
+		private Image image;
+		
+		/// <summary>
+		/// Image that represents the audio feature
+		/// </summary>
+		public Image Image {
+			get {
+				return image;
+			}
+			set {
+				image = value;
+			}
 		}
 		
 		/// <summary>
