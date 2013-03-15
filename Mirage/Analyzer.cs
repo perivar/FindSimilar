@@ -44,7 +44,7 @@ namespace Mirage
 {
 	public class Analyzer
 	{
-		private static bool SAVE_IMAGES = false;
+		private static bool SAVE_IMAGES = true;
 		
 		public enum AnalysisMethod {
 			SCMS = 1,
@@ -136,7 +136,6 @@ namespace Mirage
 			}
 			
 			#if DEBUG
-			// audio = load ('audiodata.ascii.txt', '-ascii');
 			WriteAscii(audiodata, name + "_audiodata.ascii.txt");
 			#endif
 			
@@ -176,7 +175,6 @@ namespace Mirage
 			/*
 			#if DEBUG
 			Matrix stftdata_orig = stft.Apply(audiodata);
-			stftdata_orig.WriteText(name + "_stftdata_orig.txt");
 			stftdata_orig.WriteAscii(name + "_stftdata_orig.ascii.txt");
 			stftdata_orig.DrawMatrixGraph(name + "_stftdata_orig.png");
 			#endif
@@ -185,16 +183,15 @@ namespace Mirage
 			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audiodata);
 
 			#if DEBUG
-			stftdata.WriteText(name + "_stftdata.txt");
 			stftdata.WriteAscii(name + "_stftdata.ascii.txt");
 			stftdata.DrawMatrixGraph(name + "_stftdata.png");
+
+			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
+			stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
 			#endif
 
 			if (SAVE_IMAGES) {
-				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
-				stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
-				
-				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 100, WINDOW_SIZE);
+				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			}
 			
 			// 4. Mel Scale Filterbank
@@ -207,7 +204,7 @@ namespace Mirage
 			/*
 			#if DEBUG
 			Matrix mfccdata_orig = mfcc.Apply(ref stftdata_orig);
-			mfccdata_orig.WriteText(name + "_mfccdata_orig.txt");
+			mfccdata_orig.WriteAscii(name + "_mfccdata_orig.ascii.txt");
 			mfccdata_orig.DrawMatrixGraph(name + "_mfccdata_orig.png");
 			#endif
 			 */
@@ -216,13 +213,13 @@ namespace Mirage
 			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 
 			#if DEBUG
-			mfccdata.WriteText(name + "_mfccdata.txt");
 			mfccdata.WriteAscii(name + "_mfccdata.ascii.txt");
 			mfccdata.DrawMatrixGraph(name + "_mfccdata.png");
 			#endif
 
+			Image mfccImage = null;
 			if (SAVE_IMAGES) {
-				mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
+				mfccImage = mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
 			}
 			
 			// Store in a Statistical Cluster Model Similarity class.
@@ -240,6 +237,9 @@ namespace Mirage
 				
 				// Store file name
 				audioFeature.Name = filePath.FullName;
+				
+				// Store image
+				audioFeature.Image = mfccImage;
 			}
 			
 			Dbg.WriteLine ("Mirage - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);

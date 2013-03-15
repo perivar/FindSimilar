@@ -1778,11 +1778,11 @@ namespace Comirva.Audio.Util.Maths
 		/// Imitating Matlabs imagesc(M), where M is the matrix
 		/// </summary>
 		/// <param name="fileName">filename</param>
-		public void DrawMatrixImage(string fileName) {
+		public Image DrawMatrixImage(string fileName) {
 			
 			double maxValue = Max();
 			if (maxValue == 0.0f)
-				return;
+				return null;
 			
 			// map matrix values to colormap
 			List<byte> rgb = new List<byte>();
@@ -1792,7 +1792,9 @@ namespace Comirva.Audio.Util.Maths
 				{
 					double val = this.MatrixData[i][j];
 					val /= maxValue;
-					byte color = (byte) MathUtils.ConvertAndMainainRatio(val, -1, 1, 0, 255);
+
+					//byte color = (byte) MathUtils.ConvertAndMainainRatio(Math.Abs(val), 0, 1, 0, 255);
+					byte color = (byte) (Math.Abs(val) * 255);
 					
 					// Pixel data is ARGB, 1 byte for alpha, 1 for red, 1 for green, 1 for blue.
 					// On a little-endian machine, like yours and many others,
@@ -1807,13 +1809,15 @@ namespace Comirva.Audio.Util.Maths
 				}
 			}
 			Image img = ImageUtils.ByteArrayToImage(rgb.ToArray(), columnCount, rowCount, PixelFormat.Format32bppArgb);
-			img = ImageUtils.Resize(img, 450, 350, false);
-			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
+			img = ImageUtils.Resize(img, 600, 400, false);
+			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
 			img.Save(fileName, ImageFormat.Png);
+			return img;
 		}
 
 		/// <summary>
-		/// Draw the matrix as an image
+		/// Draw the matrix as an image doing a log() on each of the values
+		/// For STFT matrixes this is the linear spectrogram
 		/// </summary>
 		/// <param name="fileName">filename</param>
 		/// <param name="flipYscale">bool whether to flip the y scale</param>
@@ -1827,13 +1831,16 @@ namespace Comirva.Audio.Util.Maths
 		/// stft = load ('stftdata.ascii.txt', '-ascii');
 		/// imagesc (flipud(log(stft)));
 		/// </example>
-		public void DrawMatrixImageLogValues(string fileName, bool flipYscale=false)
+		public Image DrawMatrixImageLogValues(string fileName, bool flipYscale=false)
 		{
+			double maxValue = Max();
+			maxValue = 10 * Math.Log10(maxValue);
+			if (maxValue == 0.0f)
+				return null;
+
 			int blockSizeX = 20;
-			int blockSizeY = 1;
-
-			double maxValue = Math.Log(Max());
-
+			int blockSizeY = 20;
+			
 			Bitmap img = new Bitmap(Columns*blockSizeX, Rows*blockSizeY);
 			Graphics graphics = Graphics.FromImage(img);
 			
@@ -1842,8 +1849,8 @@ namespace Comirva.Audio.Util.Maths
 				for(int column = 0; column < columnCount; column++)
 				{
 					double val = this.MatrixData[row][column];
-					val = Math.Log(val);
-					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue*0.8);
+					val = 10 * Math.Log10(val);
+					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
 					Brush brush = new SolidBrush(color);
 					
 					if (flipYscale) {
@@ -1858,28 +1865,32 @@ namespace Comirva.Audio.Util.Maths
 				}
 			}
 			
-			//img = (Bitmap) ImageUtils.Resize(img, 450, 350, false);
-			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
+			img = (Bitmap) ImageUtils.Resize(img, 600, 400, false);
+			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
 			img.Save(fileName, ImageFormat.Png);
+			return img;
 		}
 		
 		/// <summary>
-		/// Draw the matrix as an image where the Y scale is Logarithmic (e.g. a spectrogram)
+		/// Draw the matrix as an image where the Y scale and the values are logarithmic
+		/// For STFT matrixes this is the logarithmic spectrogram
 		/// </summary>
 		/// <param name="fileName">filename</param>
-		/// <param name="logModeEnabled"></param>
-		/// <param name="sampleRate"></param>
-		/// <param name="minFreq"></param>
-		/// <param name="maxFreq"></param>
-		/// <param name="logBins"></param>
-		/// <param name="fftSize"></param>
-		public void DrawMatrixImageLogY(string fileName, double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize)
+		/// <param name="sampleRate">Signal's sample rate</param>
+		/// <param name="minFreq">Min frequency</param>
+		/// <param name="maxFreq">Max frequency</param>
+		/// <param name="logBins">Number of logarithmically spaced bins</param>
+		/// <param name="fftSize">FFT Size</param>
+		public Image DrawMatrixImageLogY(string fileName, double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize)
 		{
+			double maxValue = Max();
+			maxValue = 10 * Math.Log10(maxValue);
+			if (maxValue == 0.0f)
+				return null;
+			
 			int blockSizeX = 20;
-			int blockSizeY = 4;
-			
-			double maxValue = Math.Log(Max());
-			
+			int blockSizeY = 20;
+
 			Bitmap img = new Bitmap(Columns*blockSizeX, logBins*blockSizeY);
 			Graphics graphics = Graphics.FromImage(img);
 
@@ -1895,8 +1906,8 @@ namespace Comirva.Audio.Util.Maths
 				for(int logBin = 0; logBin < logBins; logBin++)
 				{
 					double val = avg[logBin];
-					val = Math.Log(val);
-					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue*0.8);
+					val = 10 * Math.Log10(val);
+					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
 					Brush brush = new SolidBrush(color);
 					
 					// draw a small square
@@ -1904,9 +1915,10 @@ namespace Comirva.Audio.Util.Maths
 				}
 			}
 
-			//img = (Bitmap) ImageUtils.Resize(img, 450, 350, false);
-			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.REW);
+			img = (Bitmap) ImageUtils.Resize(img, 600, 400, false);
+			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
 			img.Save(fileName, ImageFormat.Png);
+			return img;
 		}
 		#endregion
 		
@@ -2016,7 +2028,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="maxFreq">Max frequency</param>
 		/// <param name="logBins">Number of logarithmically spaced bins</param>
 		/// <param name="fftSize">FFT Size</param>
-		/// <param name="logarithmicBase">Logarithm base</param>
+		/// <param name="logarithmicBase">Logarithm base, like Math.E</param>
 		/// <param name="logFrequenciesIndex">Indexes output array</param>
 		/// <param name="logFrequencies">Frequency output array</param>
 		/// <remarks>
