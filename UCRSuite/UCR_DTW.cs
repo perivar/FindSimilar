@@ -8,7 +8,6 @@ using System.Text;
 // http://www.cs.ucr.edu/~eamonn/UCRsuite.html
 // Ported to C# by Erez Robinson
 // Modified and enhanced by perivar@nerseth.com
-
 namespace UCRCSharp
 {
 	public partial class UCR
