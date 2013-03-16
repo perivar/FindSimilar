@@ -44,7 +44,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		static string _version = "1.0.3";
+		static string _version = "1.0.4";
 		
 		#region Similarity Search
 		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {

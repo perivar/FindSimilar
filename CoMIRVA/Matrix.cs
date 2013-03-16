@@ -1722,7 +1722,7 @@ namespace Comirva.Audio.Util.Maths
 		/// Imitating Matlabs plot(M), where M is the matrix
 		/// </summary>
 		/// <param name="fileName">filename</param>
-		public void DrawMatrixGraph(string fileName) {
+		public void DrawMatrixGraph(string fileName, bool forceUseRows=false) {
 			
 			GraphPane myPane;
 			RectangleF rect = new RectangleF( 0, 0, 1200, 600 );
@@ -1740,7 +1740,7 @@ namespace Comirva.Audio.Util.Maths
 					ppl.Add(i, matrixData[0][i]);
 				}
 				LineItem myCurve = myPane.AddCurve("", ppl.Clone(), Color.Black, SymbolType.None);
-			} else if (columnCount > rowCount) {
+			} else if (!forceUseRows && columnCount > rowCount) {
 				myPane = new GraphPane( rect, "Matrix", "Columns", "Value" );
 				for(int i = 0; i < rowCount; i++)
 				{
@@ -1838,8 +1838,8 @@ namespace Comirva.Audio.Util.Maths
 			if (maxValue == 0.0f)
 				return null;
 
-			int blockSizeX = 20;
-			int blockSizeY = 20;
+			int blockSizeX = 1;
+			int blockSizeY = 1;
 			
 			Bitmap img = new Bitmap(Columns*blockSizeX, Rows*blockSizeY);
 			Graphics graphics = Graphics.FromImage(img);
@@ -1888,8 +1888,8 @@ namespace Comirva.Audio.Util.Maths
 			if (maxValue == 0.0f)
 				return null;
 			
-			int blockSizeX = 20;
-			int blockSizeY = 20;
+			int blockSizeX = 1;
+			int blockSizeY = 1;
 
 			Bitmap img = new Bitmap(Columns*blockSizeX, logBins*blockSizeY);
 			Graphics graphics = Graphics.FromImage(img);

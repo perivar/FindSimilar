@@ -8,6 +8,7 @@ using System.Text;
 // http://www.cs.ucr.edu/~eamonn/UCRsuite.html
 // Ported to C# by Erez Robinson
 // Modified and enhanced by perivar@nerseth.com
+
 namespace UCRCSharp
 {
 	public partial class UCR
@@ -754,7 +755,7 @@ namespace UCRCSharp
 			double ex, ex2, mean, std;
 			int m = -1, r = -1;
 			long loc = 0;
-			double t1;
+			double t1, t2;
 			int kim = 0, keogh = 0, keogh2 = 0;
 			double dist = 0, lb_kim = 0, lb_k = 0, lb_k2 = 0;
 			double[] buffer, u_buff, l_buff;
@@ -1024,6 +1025,7 @@ namespace UCRCSharp
 
 			i = (it)*(EPOCH - m + 1) + ep;
 
+			/*
 			#if DEBUG
 			t2 = DateTime.Now.Ticks;
 			Console.WriteLine();
@@ -1041,7 +1043,9 @@ namespace UCRCSharp
 			Console.WriteLine("Pruned by LB_Keogh2 : {0:P2}", ((double) keogh2/i));
 			Console.WriteLine("DTW Calculation     : {0:P2}", 1 - (((double) kim + keogh + keogh2)/i));
 			#endif
+			 */
 			
+			// return Distance
 			return Math.Sqrt(bsf);
 		}
 	}

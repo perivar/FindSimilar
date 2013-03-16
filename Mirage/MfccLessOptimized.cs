@@ -96,7 +96,7 @@ namespace Mirage
 				}
 			}
 			#if DEBUG
-			filterWeights.DrawMatrixGraph("melfilters-mirage-lessoptimized.png");
+			//filterWeights.DrawMatrixGraph("melfilters-mirage-lessoptimized.png");
 			#endif
 			
 			// Compute the DCT
@@ -120,7 +120,7 @@ namespace Mirage
 				}
 			}
 			#if DEBUG
-			dct.DrawMatrixGraph("dct-mirage-lessoptimized.png");
+			//dct.DrawMatrixGraph("dct-mirage-lessoptimized.png");
 			#endif
 		}
 		

@@ -44,8 +44,6 @@ namespace Mirage
 {
 	public class Analyzer
 	{
-		private static bool SAVE_IMAGES = true;
-		
 		public enum AnalysisMethod {
 			SCMS = 1,
 			MandelEllis = 2
@@ -126,16 +124,9 @@ namespace Mirage
 
 			// name of file being processed
 			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
-
-			#if DEBUG
-			SAVE_IMAGES = true;
-			#endif
-			
-			if (SAVE_IMAGES) {
-				DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
-			}
 			
 			#if DEBUG
+			DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
 			WriteAscii(audiodata, name + "_audiodata.ascii.txt");
 			#endif
 			
@@ -171,15 +162,6 @@ namespace Mirage
 			
 			// 2. Windowing
 			// 3. FFT
-
-			/*
-			#if DEBUG
-			Matrix stftdata_orig = stft.Apply(audiodata);
-			stftdata_orig.WriteAscii(name + "_stftdata_orig.ascii.txt");
-			stftdata_orig.DrawMatrixGraph(name + "_stftdata_orig.png");
-			#endif
-			 */
-
 			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audiodata);
 
 			#if DEBUG
@@ -188,11 +170,8 @@ namespace Mirage
 
 			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
 			stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
+			stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			#endif
-
-			if (SAVE_IMAGES) {
-				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
-			}
 			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
@@ -200,35 +179,17 @@ namespace Mirage
 			
 			// 5. Take Logarithm
 			// 6. DCT (Discrete cosine transform)
-			
-			/*
-			#if DEBUG
-			Matrix mfccdata_orig = mfcc.Apply(ref stftdata_orig);
-			mfccdata_orig.WriteAscii(name + "_mfccdata_orig.ascii.txt");
-			mfccdata_orig.DrawMatrixGraph(name + "_mfccdata_orig.png");
-			#endif
-			 */
-			
 			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
 			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 
 			#if DEBUG
 			mfccdata.WriteAscii(name + "_mfccdata.ascii.txt");
-			mfccdata.DrawMatrixGraph(name + "_mfccdata.png");
+			mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
+			mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
 			#endif
-
-			Image mfccImage = null;
-			if (SAVE_IMAGES) {
-				mfccImage = mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
-			}
 			
 			// Store in a Statistical Cluster Model Similarity class.
 			// A Gaussian representation of a song
-			/*
-			#if DEBUG
-			Scms audioFeature_orig = Scms.GetScms(new Matrix(mfccdata.MatrixData), name);
-			#endif
-			 */
 			Scms audioFeature = Scms.GetScms(mfccdata, name);
 
 			if (audioFeature != null) {
@@ -237,9 +198,6 @@ namespace Mirage
 				
 				// Store file name
 				audioFeature.Name = filePath.FullName;
-				
-				// Store image
-				audioFeature.Image = mfccImage;
 			}
 			
 			Dbg.WriteLine ("Mirage - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);

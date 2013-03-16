@@ -20,7 +20,6 @@ namespace Comirva.Audio
 	{
 		public Matrix filterWeights;
 		public Matrix dct;
-		int[,] fwFT;
 		
 		/// <summary>
 		/// Create a Mfcc object
@@ -89,7 +88,7 @@ namespace Comirva.Audio
 				}
 			}
 			#if DEBUG
-			filterWeights.DrawMatrixGraph("melfilters-mirage-orig.png");
+			//filterWeights.DrawMatrixGraph("melfilters-mirage-orig.png");
 			#endif
 			
 			// Compute the DCT
@@ -114,25 +113,8 @@ namespace Comirva.Audio
 			}
 
 			#if DEBUG
-			dct.DrawMatrixGraph("dct-mirage-orig.png");
+			//dct.DrawMatrixGraph("dct-mirage-orig.png");
 			#endif
-			
-			fwFT = new int[filterWeights.Rows, 2];
-			for (int i = 0; i < filterWeights.Rows; i++) {
-				double last = 0;
-				for (int j = 0; j < filterWeights.Columns; j++) {
-					if ((filterWeights.MatrixData[i][j] != 0) && (last == 0)) {
-						fwFT[i, 0] = j;
-					} else if ((filterWeights.MatrixData[i][j] == 0) && (last != 0)) {
-						fwFT[i, 1] = j;
-					}
-					last = filterWeights.MatrixData[i][j];
-				}
-
-				if (last != 0) {
-					fwFT[i, 1] = filterWeights.Columns;
-				}
-			}
 		}
 		
 		/// <summary>
