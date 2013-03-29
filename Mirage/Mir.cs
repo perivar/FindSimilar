@@ -22,6 +22,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 using System.IO;
 using System.Globalization;
@@ -35,16 +36,15 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 using Comirva.Audio.Feature;
-
 using NDtw;
-
 using CommonUtils;
+using FindSimilar;
 
 namespace Mirage
 {
 	public class Mir
 	{
-		static string _version = "1.0.4";
+		static string _version = "1.0.5";
 		
 		#region Similarity Search
 		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
@@ -520,6 +520,12 @@ namespace Mirage
 		}
 		#endregion
 		
+		private static void StartGUI() {
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault(false);
+			Application.Run(new MainForm());
+		}
+		
 		public static void Main(string[] args) {
 
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
@@ -601,7 +607,10 @@ namespace Mirage
 				PrintUsage();
 				return;
 			}
-			
+			if(CommandLine["gui"] != null) {
+				StartGUI();
+				return;
+			}
 			if (queryPath == "" && queryId == -1 && scanPath == "") {
 				PrintUsage();
 				return;
@@ -649,6 +658,7 @@ namespace Mirage
 			Console.WriteLine("\t-matchid=<database id to the wave file to find matches for>");
 			Console.WriteLine();
 			Console.WriteLine("Optional Arguments:");
+			Console.WriteLine("\t-gui\t<open up the Find Similar Client GUI>");
 			Console.WriteLine("\t-resetdb\t<clean database, used together with scandir>");
 			Console.WriteLine("\t-num=<number of matches to return when querying>");
 			Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
