@@ -39,6 +39,7 @@ namespace Mirage
 	{
 		IDbConnection dbcon;
 
+		#region Constructor and Destructor
 		public Db()
 		{
 			string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
@@ -58,7 +59,9 @@ namespace Mirage
 		{
 			dbcon.Close();
 		}
-
+		#endregion
+		
+		#region Add and Remove the table
 		public bool RemoveTable()
 		{
 			IDbCommand dbcmd;
@@ -92,7 +95,15 @@ namespace Mirage
 			
 			return true;
 		}
+		#endregion
 		
+		#region Has, Add and Remove Track
+		/// <summary>
+		/// Check whether we have a given filename already stored in the database
+		/// </summary>
+		/// <param name="name">filename</param>
+		/// <param name="trackid">id returned if found</param>
+		/// <returns>true if track was found</returns>
 		public bool HasTrack(string name, out int trackid) {
 			
 			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
@@ -117,30 +128,13 @@ namespace Mirage
 			reader.Close();
 			return true;
 		}
-
-		public Dictionary<string, int> GetTracks() {
-
-			Dictionary<string, int> trackNames = new Dictionary<string, int>();
-			
-			IDbCommand dbcmd;
-			lock (dbcon) {
-				dbcmd = dbcon.CreateCommand();
-			}
-
-			dbcmd.CommandText = "SELECT name, trackid FROM mirage";
-			IDataReader reader = dbcmd.ExecuteReader();
-			
-			while(reader.Read())
-			{
-				string name = reader.GetString(0);
-				int trackid = reader.GetInt32(1);
-				trackNames.Add(name, trackid);
-			}
-			
-			reader.Close();
-			return trackNames;
-		}
 		
+		/// <summary>
+		/// Add a track to the database using the given track-id
+		/// </summary>
+		/// <param name="trackid">track-id to use</param>
+		/// <param name="audioFeature">the audiofeature object</param>
+		/// <returns>-1 if failed otherwise the track-id passed</returns>
 		public int AddTrack(int trackid, AudioFeature audioFeature)
 		{
 			IDbDataParameter dbAudioFeatureParam = new SQLiteParameter("@audioFeature", DbType.Binary);
@@ -170,6 +164,11 @@ namespace Mirage
 			return trackid;
 		}
 
+		/// <summary>
+		/// Remove a track from the database using the given track-id
+		/// </summary>
+		/// <param name="trackid">track-id to delete</param>
+		/// <returns>-1 if failed otherwise the track-id passed</returns>
 		public int RemoveTrack(int trackid)
 		{
 			IDbCommand dbcmd;
@@ -186,7 +185,45 @@ namespace Mirage
 			
 			return trackid;
 		}
+		#endregion
 
+		/// <summary>
+		/// Return all trackids from the database
+		/// </summary>
+		/// <returns>and int array of the database tracks</returns>
+		public int[] GetTrackIds()
+		{
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			dbcmd.CommandText = "SELECT trackid FROM mirage";
+			IDataReader reader = dbcmd.ExecuteReader();
+			
+			ArrayList tracks = new ArrayList();
+			
+			while (reader.Read()) {
+				tracks.Add(reader.GetInt32(0));
+			}
+			reader.Close();
+			
+			int[] tracksInt = new int[tracks.Count];
+			IEnumerator e = tracks.GetEnumerator();
+			int i = 0;
+			while (e.MoveNext()) {
+				tracksInt[i] = (int)e.Current;
+				i++;
+			}
+			return tracksInt;
+		}
+		
+		/// <summary>
+		/// Get a track from the database using its id
+		/// </summary>
+		/// <param name="trackid">id</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
+		/// <returns>an AudioFeature object</returns>
 		public AudioFeature GetTrack(int trackid, Analyzer.AnalysisMethod analysisMethod)
 		{
 			IDbCommand dbcmd;
@@ -221,6 +258,43 @@ namespace Mirage
 			return audioFeature;
 		}
 		
+		/// <summary>
+		/// Return all tracks from the database
+		/// </summary>
+		/// <returns>a dictionary of filenames as Key. The Values are keyvaluepairs with the track-id as Key and duration as Value.</returns>
+		public Dictionary<string, KeyValuePair<int, long>> GetTracks() {
+
+			Dictionary<string, KeyValuePair<int, long>> trackNames = new Dictionary<string, KeyValuePair<int, long>>();
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			dbcmd.CommandText = "SELECT trackid, name, duration FROM mirage";
+			IDataReader reader = dbcmd.ExecuteReader();
+			
+			while(reader.Read())
+			{
+				int trackid = reader.GetInt32(0);
+				string filename = reader.GetString(1);
+				long duration = reader.GetInt64(2);
+				trackNames.Add(filename, new KeyValuePair<int, long>(trackid, duration));
+			}
+			
+			reader.Close();
+			return trackNames;
+		}
+
+		/// <summary>
+		/// Return all tracks from the database except the trackids
+		/// If duration is more than 0 and percentage is less than 1.0
+		/// the tracks duration must not be more or less than the percentage given
+		/// </summary>
+		/// <param name="trackId">tracks ids to exclude</param>
+		/// <param name="duration">duration (used if more than 0)</param>
+		/// <param name="percentage">percentage below and above the duration in ms when querying</param>
+		/// <returns>a datareader pointer</returns>
 		public IDataReader GetTracks(int[] trackId, long duration, double percentage)
 		{
 			IDbCommand dbcmd;
@@ -240,40 +314,22 @@ namespace Mirage
 			dbcmd.CommandText = "SELECT audioFeature, trackid, name, duration FROM mirage " +
 				"WHERE trackid NOT in (" + trackSql + ")";
 
-			if (duration > 0) {
+			if (duration > 0 && percentage < 1.0) {
 				dbcmd.CommandText += " AND duration > " + (int)(duration * (1.0 - percentage)) + " AND duration < " + (int)(duration * (1.0 + percentage));
 			}
 			
 			return dbcmd.ExecuteReader();
 		}
 		
-		public int[] GetTrackIds()
-		{
-			IDbCommand dbcmd;
-			lock (dbcon) {
-				dbcmd = dbcon.CreateCommand();
-			}
-
-			dbcmd.CommandText = "SELECT trackid FROM mirage";
-			IDataReader reader = dbcmd.ExecuteReader();
-			
-			ArrayList tracks = new ArrayList();
-			
-			while (reader.Read()) {
-				tracks.Add(reader.GetInt32(0));
-			}
-			reader.Close();
-			
-			int[] tracksInt = new int[tracks.Count];
-			IEnumerator e = tracks.GetEnumerator();
-			int i = 0;
-			while (e.MoveNext()) {
-				tracksInt[i] = (int)e.Current;
-				i++;
-			}
-			return tracksInt;
-		}
-		
+		/// <summary>
+		/// Using the passed datareader pointer, fill the audio feature tracks array with content
+		/// </summary>
+		/// <param name="tracksIterator">datareader pointer</param>
+		/// <param name="tracks">AudioFeature array</param>
+		/// <param name="mapping">array of trackids</param>
+		/// <param name="len">number of tracks to return</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
+		/// <returns>number of tracks returned</returns>
 		public int GetNextTracks(ref IDataReader tracksIterator, ref AudioFeature[] tracks,
 		                         ref int[] mapping, int len, Analyzer.AnalysisMethod analysisMethod)
 		{

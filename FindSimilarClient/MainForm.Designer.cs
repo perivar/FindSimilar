@@ -28,8 +28,13 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			this.dataGridView1 = new System.Windows.Forms.DataGridView();
+			this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.findSimilarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.ResetBtn = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+			this.contextMenuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// dataGridView1
@@ -38,6 +43,7 @@
 									| System.Windows.Forms.AnchorStyles.Left) 
 									| System.Windows.Forms.AnchorStyles.Right)));
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+			this.dataGridView1.ContextMenuStrip = this.contextMenuStrip1;
 			this.dataGridView1.Location = new System.Drawing.Point(12, 41);
 			this.dataGridView1.MultiSelect = false;
 			this.dataGridView1.Name = "dataGridView1";
@@ -45,19 +51,49 @@
 			this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
 			this.dataGridView1.Size = new System.Drawing.Size(654, 278);
 			this.dataGridView1.TabIndex = 1;
+			this.dataGridView1.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridView1CellMouseDown);
 			this.dataGridView1.SelectionChanged += new System.EventHandler(this.DataGridView1_SelectionChanged);
+			// 
+			// contextMenuStrip1
+			// 
+			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.findSimilarToolStripMenuItem});
+			this.contextMenuStrip1.Name = "contextMenuStrip1";
+			this.contextMenuStrip1.Size = new System.Drawing.Size(153, 48);
+			// 
+			// findSimilarToolStripMenuItem
+			// 
+			this.findSimilarToolStripMenuItem.Name = "findSimilarToolStripMenuItem";
+			this.findSimilarToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.findSimilarToolStripMenuItem.Text = "Find Similar";
+			this.findSimilarToolStripMenuItem.Click += new System.EventHandler(this.FindSimilarToolStripMenuItemClick);
+			// 
+			// ResetBtn
+			// 
+			this.ResetBtn.Location = new System.Drawing.Point(12, 12);
+			this.ResetBtn.Name = "ResetBtn";
+			this.ResetBtn.Size = new System.Drawing.Size(75, 23);
+			this.ResetBtn.TabIndex = 2;
+			this.ResetBtn.Text = "Reset";
+			this.ResetBtn.UseVisualStyleBackColor = true;
+			this.ResetBtn.Click += new System.EventHandler(this.ResetBtnClick);
 			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(678, 331);
+			this.Controls.Add(this.ResetBtn);
 			this.Controls.Add(this.dataGridView1);
 			this.Name = "MainForm";
 			this.Text = "FindSimilarClient";
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
 		}
+		private System.Windows.Forms.Button ResetBtn;
+		private System.Windows.Forms.ToolStripMenuItem findSimilarToolStripMenuItem;
+		private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
 		private System.Windows.Forms.DataGridView dataGridView1;
 	}
 }

@@ -15,6 +15,7 @@ using CommonUtils;
 using CommonUtils.Audio.NAudio;
 
 using Mirage;
+using Comirva.Audio.Feature;
 
 namespace FindSimilar
 {
@@ -25,6 +26,7 @@ namespace FindSimilar
 	{
 		IEnumerable<string> filesAll;
 		bool rowSelected = false;
+		Db db = null;
 		
 		public MainForm()
 		{
@@ -33,20 +35,18 @@ namespace FindSimilar
 			//
 			InitializeComponent();
 			
-			Db db = new Db();
-			Dictionary<string, int> filesProcessed = db.GetTracks();
-			Console.Out.WriteLine("Database contains {0} processed files.", filesProcessed.Count);
-			
 			this.dataGridView1.Columns.Add("Id", "Id");
 			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
 			this.dataGridView1.Columns.Add("Path", "Path");
-			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;			
+			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 			
-			foreach (string filePath in filesProcessed.Keys) {
-				this.dataGridView1.Rows.Add(filesProcessed[filePath], filePath);
-			}
+			this.dataGridView1.Columns.Add("Duration", "Duration");
+			this.dataGridView1.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
+			db = new Db();
+			ResetView();
+			
 			/*
 			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
 			string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
@@ -62,24 +62,33 @@ namespace FindSimilar
 			foreach (string filePath in filesAll) {
 				this.dataGridView1.Rows.Add(filePath);
 			}
-			 */		
+			 */
+		}
+
+		private void ResetView() {
+			
+			// Clear all rows
+			this.dataGridView1.Rows.Clear();
+			
+			Dictionary<string, KeyValuePair<int, long>> filesProcessed = db.GetTracks();
+			Console.Out.WriteLine("Database contains {0} processed files.", filesProcessed.Count);
+			
+			foreach (string filePath in filesProcessed.Keys) {
+				this.dataGridView1.Rows.Add(filesProcessed[filePath].Key, filePath, filesProcessed[filePath].Value);
+			}
 		}
 		
 		private void Play(string filePath) {
-			//MessageBox.Show(filePath);
-
 			//string[] asioDevices = SoundPlayer.GetAsioDriverNames();
 			//SoundPlayer player = SoundPlayer.GetAsioInstance(asioDevices[0], 250);
 			SoundPlayer player = SoundPlayer.GetWaveOutInstance();
 			
-			//float[] audioData = AudioUtilsNAudio.ReadMonoFromFile(filePath, 44100, 0, 0);
 			float[] audioData = Mirage.AudioFileReader.Decode(filePath, Analyzer.SAMPLING_RATE, Analyzer.SECONDS_TO_ANALYZE);
 			if (audioData == null || audioData.Length == 0)  {
 				Dbg.WriteLine("Error! - No Audio Found");
 				return;
 			}
 			
-			//SoundProvider provicer = new SoundProvider(44100, audioData, 2);
 			SoundProvider provicer = new SoundProvider(Analyzer.SAMPLING_RATE, audioData, 2);
 			
 			//player.OpenFile(filePath);
@@ -99,11 +108,51 @@ namespace FindSimilar
 				// User selected WHOLE ROW (by clicking in the margin)
 				// or if SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 				if (dgv.SelectedRows.Count> 0) {
-					string filePath = dgv.SelectedRows[0].Cells[1].Value.ToString();
-					Play(filePath);
+					if (dgv.SelectedRows[0].Cells[1].Value != null) {
+						string filePath = dgv.SelectedRows[0].Cells[1].Value.ToString();
+						Play(filePath);
+					}
 				}
 			}
 			rowSelected = true;
+		}
+		
+		void FindSimilarToolStripMenuItemClick(object sender, EventArgs e)
+		{
+			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+			
+			AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
+
+			int numToTake = 100;
+			double percentage = 0.5;
+			
+			if (dataGridView1.SelectedRows[0].Cells[0].Value != null) {
+				int queryId = (int) dataGridView1.SelectedRows[0].Cells[0].Value;
+				int[] seedTrackIds = new int[] { queryId };
+				
+				// Clear all rows
+				this.dataGridView1.Rows.Clear();
+
+				var similarTracks = Mir.SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake, percentage, distanceType);
+				foreach (var entry in similarTracks)
+				{
+					this.dataGridView1.Rows.Add(entry.Key.Key, entry.Key.Value, entry.Value);
+				}
+			}
+		}
+		
+		void DataGridView1CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+		{
+			if (e.Button == MouseButtons.Right)
+			{
+				dataGridView1.CurrentCell = dataGridView1[e.ColumnIndex, e.RowIndex];
+			}
+		}
+		
+		void ResetBtnClick(object sender, EventArgs e)
+		{
+			ResetView();
 		}
 	}
 }

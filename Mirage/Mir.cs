@@ -46,8 +46,8 @@ namespace Mirage
 	{
 		static string _version = "1.0.5";
 		
-		#region Similarity Search
-		public static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
+		#region Find Similar Methods
+		private static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
 			
 			var similarTracks = SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake, percentage, distanceType);
 			foreach (var entry in similarTracks)
@@ -56,7 +56,7 @@ namespace Mirage
 			}
 		}
 		
-		public static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
+		private static void FindSimilar(string path, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
 			
 			var similarTracks = SimilarTracks(path, db, analysisMethod, numToTake, percentage, distanceType);
 			foreach (var entry in similarTracks)
@@ -65,6 +65,16 @@ namespace Mirage
 			}
 		}
 		
+		/// <summary>
+		/// Find Similar Tracks to an audio file using its file path
+		/// </summary>
+		/// <param name="searchForPath">audio file path</param>
+		/// <param name="db">database</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
+		/// <param name="numToTake">max number of entries to return</param>
+		/// <param name="percentage">percentage below and above the duration in ms when querying</param>
+		/// <param name="distanceType">distance method to use (KullbackLeiblerDivergence is default)</param>
+		/// <returns>a dictinary list of key value pairs (filepath and distance)</returns>
 		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence)
 		{
 			DbgTimer t = new DbgTimer();
@@ -85,7 +95,7 @@ namespace Mirage
 			}
 			
 			// Get all tracks from the DB except the seedSongs
-			IDataReader r = db.GetTracks(null, 0, percentage);
+			IDataReader r = db.GetTracks(null, seedAudioFeature.Duration, percentage);
 			
 			// store results in a dictionary
 			var NameDictionary = new Dictionary<KeyValuePair<int, string>, double>();
@@ -115,6 +125,17 @@ namespace Mirage
 			return sortedDict;
 		}
 
+		/// <summary>
+		/// Find Similar Tracks to one or many audio files using their unique database id(s)
+		/// </summary>
+		/// <param name="id">an array of unique database ids for the audio files to search for similar matches</param>
+		/// <param name="exclude">an array of unique database ids to ignore (normally the same as the id array)</param>
+		/// <param name="db">database</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
+		/// <param name="numToTake">max number of entries to return</param>
+		/// <param name="percentage">percentage below and above the duration in ms when querying</param>
+		/// <param name="distanceType">distance method to use (KullbackLeiblerDivergence is default)</param>
+		/// <returns>a dictinary list of key value pairs (filepath and distance)</returns>
 		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence)
 		{
 			DbgTimer t = new DbgTimer();
@@ -165,7 +186,8 @@ namespace Mirage
 						count++;
 					}
 					if (d > 0) {
-						NameDictionary.Add(new KeyValuePair<int,string>(mapping[i], String.Format("{0} ({1} ms)", audioFeatures[i].Name, audioFeatures[i].Duration)), d/count);
+						NameDictionary.Add(new KeyValuePair<int,string>(mapping[i], audioFeatures[i].Name), d/count);
+						//NameDictionary.Add(new KeyValuePair<int,string>(mapping[i], String.Format("{0} ({1} ms)", audioFeatures[i].Name, audioFeatures[i].Duration)), d/count);
 					}
 				}
 			}
@@ -181,6 +203,12 @@ namespace Mirage
 		#endregion
 		
 		#region Compare Methods
+		/// <summary>
+		/// Compare to audio files and print the distance between them
+		/// </summary>
+		/// <param name="path1">audio 1 file path</param>
+		/// <param name="path2">audio 2 file path</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
 		public static void Compare(string path1, string path2, Analyzer.AnalysisMethod analysisMethod) {
 			
 			AudioFeature m1 = null;
@@ -204,6 +232,13 @@ namespace Mirage
 			                             + m1.GetDistance(m2));
 		}
 		
+		/// <summary>
+		/// Compare to audio files using their audio ids and print the distance between them
+		/// </summary>
+		/// <param name="trackId1">audio 1 id</param>
+		/// <param name="trackId2">audio 2 id</param>
+		/// <param name="db">database</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
 		public static void Compare(int trackId1, int trackId2, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
 			AudioFeature m1 = db.GetTrack(trackId1, analysisMethod);
@@ -214,6 +249,12 @@ namespace Mirage
 		}
 		#endregion
 		
+		/// <summary>
+		/// Scan a directory recursively and add all the audio files found to the database
+		/// </summary>
+		/// <param name="path">path to directory</param>
+		/// <param name="db">database</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
 		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
 			FileInfo failedFilesLog = new FileInfo("failed_files_log.txt");
@@ -230,7 +271,7 @@ namespace Mirage
 				// get all already processed files stored in the database
 				// store in memory
 				// TODO: will this work with huge volumes?
-				Dictionary<string, int> filesProcessed = db.GetTracks();
+				Dictionary<string, KeyValuePair<int, long>> filesProcessed = db.GetTracks();
 				
 				Console.Out.WriteLine("Database contains {0} already processed files.", filesProcessed.Count);
 
@@ -275,7 +316,7 @@ namespace Mirage
 			}
 		}
 
-		#region Testing
+		#region Testing Methods
 		private static void TestSpeechRecognitionHMM() {
 			
 			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
@@ -646,7 +687,7 @@ namespace Mirage
 			System.Console.ReadLine();
 		}
 		
-		public static void PrintUsage() {
+		private static void PrintUsage() {
 			Console.WriteLine("FindSimilar. Version {0}.", _version);
 			Console.WriteLine("Copyright (C) 2012-2013 Per Ivar Nerseth.");
 			Console.WriteLine();
