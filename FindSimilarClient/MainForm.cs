@@ -20,13 +20,15 @@ using Comirva.Audio.Feature;
 namespace FindSimilar
 {
 	/// <summary>
-	/// Description of MainForm.
+	/// Description of FindSimilar GUI Client.
 	/// </summary>
 	public partial class MainForm : Form
 	{
-		IEnumerable<string> filesAll;
-		bool rowSelected = false;
-		Db db = null;
+		//IEnumerable<string> filesAll;
+		private AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
+		private Db db = null;
+		private SoundPlayer player;
+		private string selectedFilePath = null;
 		
 		public MainForm()
 		{
@@ -34,6 +36,10 @@ namespace FindSimilar
 			// The InitializeComponent() call is required for Windows Forms designer support.
 			//
 			InitializeComponent();
+			
+			player = GetSoundPlayer();
+			
+			this.DistanceTypeCombo.DataSource = Enum.GetValues(typeof(AudioFeature.DistanceType));
 			
 			this.dataGridView1.Columns.Add("Id", "Id");
 			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
@@ -45,7 +51,8 @@ namespace FindSimilar
 			this.dataGridView1.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
 			db = new Db();
-			ResetView();
+			
+			ReadAllTracks();
 			
 			/*
 			string path = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects";
@@ -65,7 +72,14 @@ namespace FindSimilar
 			 */
 		}
 
-		private void ResetView() {
+		private SoundPlayer GetSoundPlayer() {
+			
+			//string[] asioDevices = SoundPlayer.GetAsioDriverNames();
+			//return SoundPlayer.GetAsioInstance(asioDevices[0], 250);
+			return SoundPlayer.GetWaveOutInstance();
+		}
+		
+		private void ReadAllTracks() {
 			
 			// Clear all rows
 			this.dataGridView1.Rows.Clear();
@@ -79,9 +93,6 @@ namespace FindSimilar
 		}
 		
 		private void Play(string filePath) {
-			//string[] asioDevices = SoundPlayer.GetAsioDriverNames();
-			//SoundPlayer player = SoundPlayer.GetAsioInstance(asioDevices[0], 250);
-			SoundPlayer player = SoundPlayer.GetWaveOutInstance();
 			
 			float[] audioData = Mirage.AudioFileReader.Decode(filePath, Analyzer.SAMPLING_RATE, Analyzer.SECONDS_TO_ANALYZE);
 			if (audioData == null || audioData.Length == 0)  {
@@ -89,8 +100,8 @@ namespace FindSimilar
 				return;
 			}
 			
+			player = GetSoundPlayer();
 			SoundProvider provicer = new SoundProvider(Analyzer.SAMPLING_RATE, audioData, 2);
-			
 			//player.OpenFile(filePath);
 			player.OpenSampleProvider(provicer);
 			if (player.CanPlay) {
@@ -99,22 +110,12 @@ namespace FindSimilar
 				Debug.WriteLine("Failed playing ...");
 			}
 		}
-		
-		private void DataGridView1_SelectionChanged(object sender, EventArgs e)
-		{
-			if (rowSelected) {
-				DataGridView dgv = (DataGridView)sender;
 
-				// User selected WHOLE ROW (by clicking in the margin)
-				// or if SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-				if (dgv.SelectedRows.Count> 0) {
-					if (dgv.SelectedRows[0].Cells[1].Value != null) {
-						string filePath = dgv.SelectedRows[0].Cells[1].Value.ToString();
-						Play(filePath);
-					}
-				}
+		private void PlaySelected() {
+			if (player != null) {
+				player.Stop();
+				Play(selectedFilePath);
 			}
-			rowSelected = true;
 		}
 		
 		void FindSimilarToolStripMenuItemClick(object sender, EventArgs e)
@@ -122,18 +123,23 @@ namespace FindSimilar
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			
-			AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
+			//AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 
 			int numToTake = 100;
 			double percentage = 0.5;
 			
 			if (dataGridView1.SelectedRows[0].Cells[0].Value != null) {
+				string queryPath = (string) dataGridView1.SelectedRows[0].Cells[1].Value;
 				int queryId = (int) dataGridView1.SelectedRows[0].Cells[0].Value;
 				int[] seedTrackIds = new int[] { queryId };
 				
 				// Clear all rows
 				this.dataGridView1.Rows.Clear();
 
+				// Add the one we are querying with
+				this.dataGridView1.Rows.Add(queryId, queryPath, 0);
+				
+				// Add the found similar tracks
 				var similarTracks = Mir.SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake, percentage, distanceType);
 				foreach (var entry in similarTracks)
 				{
@@ -142,17 +148,59 @@ namespace FindSimilar
 			}
 		}
 		
+		private void DataGridView1_SelectionChanged(object sender, EventArgs e)
+		{
+			// on first load the selectedfilepath is null
+			bool doPlay = true;
+			if (selectedFilePath == null) {
+				doPlay = false;
+			}
+
+			DataGridView dgv = (DataGridView)sender;
+
+			// User selected WHOLE ROW (by clicking in the margin)
+			// or if SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+			if (dgv.SelectedRows.Count> 0) {
+				if (dgv.SelectedRows[0].Cells[1].Value != null) {
+					selectedFilePath = dgv.SelectedRows[0].Cells[1].Value.ToString();
+					if (doPlay) Play(selectedFilePath);
+				}
+			}
+		}
+		
 		void DataGridView1CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
 		{
-			if (e.Button == MouseButtons.Right)
-			{
+			if (e.Button == MouseButtons.Right) {
 				dataGridView1.CurrentCell = dataGridView1[e.ColumnIndex, e.RowIndex];
+			} else if (e.Button == MouseButtons.Left) {
+				if (e.ColumnIndex >= 0) {
+					dataGridView1.CurrentCell = null;
+					dataGridView1.CurrentCell = dataGridView1[e.ColumnIndex, e.RowIndex];
+				}
 			}
 		}
 		
 		void ResetBtnClick(object sender, EventArgs e)
 		{
-			ResetView();
+			ReadAllTracks();
 		}
+		
+		void DistanceTypeComboSelectedIndexChanged(object sender, EventArgs e)
+		{
+			Enum.TryParse<AudioFeature.DistanceType>(DistanceTypeCombo.SelectedValue.ToString(), out distanceType);
+		}
+		
+		void DataGridView1KeyPress(object sender, KeyPressEventArgs e)
+		{
+			if (e.KeyChar == (char) Keys.Space) {
+				PlaySelected();
+			}
+		}
+		
+		void MainFormFormClosing(object sender, FormClosingEventArgs e)
+		{
+			if (player != null) player.Dispose();
+		}
+		
 	}
 }

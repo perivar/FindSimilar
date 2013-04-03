@@ -28,7 +28,7 @@ namespace FindSimilar
 		private bool canPlay;
 		private bool canPause;
 		private bool canStop;
-		private bool isPlaying;
+		private bool isPlayingState;
 		private IWavePlayer waveOutDevice;
 		private IWaveProvider waveProvider;
 
@@ -39,7 +39,7 @@ namespace FindSimilar
 		
 		// NAudio setup variables
 		/// <summary>
-		/// Asio Driver name, needed to use Asio rendering
+		/// Asio Driver name, for use with Asio rendering
 		/// </summary>
 		public string AsioDriverName { get; set; }
 
@@ -54,7 +54,12 @@ namespace FindSimilar
 		/// </summary>
 		public int Latency { get; set; }
 
-		#region Singleton Pattern
+		#region Singleton Patterns
+		
+		/// <summary>
+		/// Return a WaveOut Instance
+		/// </summary>
+		/// <returns>A WaveOut Instance</returns>
 		public static SoundPlayer GetWaveOutInstance()
 		{
 			if (instance == null)
@@ -62,10 +67,59 @@ namespace FindSimilar
 			return instance;
 		}
 
+		/// <summary>
+		/// Return an Asio Instance
+		/// </summary>
+		/// <returns>An Asio Instance</returns>
+		public static SoundPlayer GetAsioInstance()
+		{
+			if (instance == null) {
+				instance = new SoundPlayer(Output.Asio, false, null, 250);
+			}
+			return instance;
+		}
+
+		/// <summary>
+		/// Return an Asio Instance
+		/// </summary>
+		/// <param name="asioDriverName">Asio Driver Name, can be null to use default asio driver</param>
+		/// <param name="latency">Latency in ms</param>
+		/// <returns>An Asio Instance</returns>
+		/// <example>
+		//	string[] asioDevices = SoundPlayer.GetAsioDriverNames();
+		//	return SoundPlayer.GetAsioInstance(asioDevices[0], 250);
+		/// </example>
 		public static SoundPlayer GetAsioInstance(string asioDriverName, int latency)
 		{
 			if (instance == null) {
-				instance = new SoundPlayer(asioDriverName, latency);
+				instance = new SoundPlayer(Output.Asio, false, asioDriverName, latency);
+			}
+			return instance;
+		}
+		
+		/// <summary>
+		/// Return a DirectSound Instance
+		/// </summary>
+		/// <param name="latency">Latency in ms</param>
+		/// <returns>A DirectSound Instance</returns>
+		public static SoundPlayer GetDirectSoundInstance(int latency)
+		{
+			if (instance == null) {
+				instance = new SoundPlayer(Output.DirectSound, false, null, latency);
+			}
+			return instance;
+		}
+
+		/// <summary>
+		/// Return a Wasapi Instance
+		/// </summary>
+		/// <param name="wasapiExclusiveMode">Wasapi audio client driver Mode, shared if false, exclusive if true</param>
+		/// <param name="latency">Latency in ms</param>
+		/// <returns>A Wasapi Instance</returns>
+		public static SoundPlayer GetWasapiInstance(bool wasapiExclusiveMode, int latency)
+		{
+			if (instance == null) {
+				instance = new SoundPlayer(Output.Wasapi, wasapiExclusiveMode, null, latency);
 			}
 			return instance;
 		}
@@ -76,40 +130,22 @@ namespace FindSimilar
 		/// <summary>
 		/// Create a SoundPlayer object using WaveOut and 250 ms latency
 		/// </summary>
-		private SoundPlayer() : this(Output.WaveOut, 250)
+		private SoundPlayer() : this(Output.WaveOut, false, null, 250)
 		{
 		}
 		
 		/// <summary>
-		/// Create a SoundPlayer object using passed output type and 250 ms latency
-		/// </summary>
-		/// <param name="outputType">Output type (WaveOut, Asio etc)</param>
-		private SoundPlayer(Output outputType) : this(outputType, 250)
-		{
-		}
-
-		/// <summary>
-		/// Create a SoundPlayer object using asio driver name
-		/// </summary>
-		/// <param name="asioDriverName"></param>
-		/// <param name="latency"></param>
-		private SoundPlayer(string asioDriverName, int latency)
-		{
-			OutputType = Output.Asio;
-			AsioDriverName = asioDriverName;
-			Latency = latency;
-			
-			Init();
-		}
-
-		/// <summary>
 		/// Create a SoundPlayer object
 		/// </summary>
 		/// <param name="outputType">Output type (WaveOut, Asio etc)</param>
-		/// <param name="latency">Latency</param>
-		private SoundPlayer(Output outputType, int latency)
+		/// <param name="wasapiExclusiveMode">If using Wasapi: Wasapi audio client driver Mode, shared if false, exclusive if true</param>
+		/// <param name="asioDriverName">If using Asio: Asio Driver Name, can be null to use default asio driver</param>
+		/// <param name="latency">Latency in ms if using WaveOut or DirectSound</param>
+		private SoundPlayer(Output outputType, bool wasapiExclusiveMode, string asioDriverName, int latency)
 		{
 			OutputType = outputType;
+			WasapiExclusiveMode = wasapiExclusiveMode;
+			AsioDriverName = asioDriverName;
 			Latency = latency;
 			
 			Init();
@@ -136,7 +172,7 @@ namespace FindSimilar
 		}
 		#endregion
 		
-		#region Static Methods
+		#region Public Static Methods
 		/// <summary>
 		/// Return an array of the installed Asio drivers
 		/// </summary>
@@ -168,7 +204,11 @@ namespace FindSimilar
 					waveOutDevice = new WasapiOut(WasapiExclusiveMode?AudioClientShareMode.Exclusive:AudioClientShareMode.Shared,Latency);
 					break;
 				case Output.Asio:
-					waveOutDevice = new AsioOut(AsioDriverName);
+					if (AsioDriverName != null) {
+						waveOutDevice = new AsioOut(AsioDriverName);
+					} else {
+						waveOutDevice = new AsioOut();
+					}
 					break;
 			}
 		}
@@ -264,7 +304,7 @@ namespace FindSimilar
 			if (CanPlay)
 			{
 				waveOutDevice.Play();
-				IsPlaying = true;
+				IsPlayingState = true;
 				CanPause = true;
 				CanPlay = false;
 				CanStop = true;
@@ -273,10 +313,10 @@ namespace FindSimilar
 
 		public void Pause()
 		{
-			if (IsPlaying && CanPause)
+			if (IsPlayingState && CanPause)
 			{
 				waveOutDevice.Pause();
-				IsPlaying = false;
+				IsPlayingState = false;
 				CanPlay = true;
 				CanPause = false;
 			}
@@ -288,7 +328,7 @@ namespace FindSimilar
 			{
 				waveOutDevice.Stop();
 			}
-			IsPlaying = false;
+			IsPlayingState = false;
 			CanStop = false;
 			CanPlay = true;
 			CanPause = false;
@@ -343,15 +383,15 @@ namespace FindSimilar
 			}
 		}
 
-		public bool IsPlaying
+		public bool IsPlayingState
 		{
-			get { return isPlaying; }
+			get { return isPlayingState; }
 			protected set
 			{
-				bool oldValue = isPlaying;
-				isPlaying = value;
-				if (oldValue != isPlaying)
-					NotifyPropertyChanged("IsPlaying");
+				bool oldValue = isPlayingState;
+				isPlayingState = value;
+				if (oldValue != isPlayingState)
+					NotifyPropertyChanged("IsPlayingState");
 			}
 		}
 		

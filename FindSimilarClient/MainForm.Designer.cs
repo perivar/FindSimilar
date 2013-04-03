@@ -33,6 +33,7 @@
 			this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.findSimilarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.ResetBtn = new System.Windows.Forms.Button();
+			this.DistanceTypeCombo = new System.Windows.Forms.ComboBox();
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
 			this.contextMenuStrip1.SuspendLayout();
 			this.SuspendLayout();
@@ -53,6 +54,7 @@
 			this.dataGridView1.TabIndex = 1;
 			this.dataGridView1.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridView1CellMouseDown);
 			this.dataGridView1.SelectionChanged += new System.EventHandler(this.DataGridView1_SelectionChanged);
+			this.dataGridView1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.DataGridView1KeyPress);
 			// 
 			// contextMenuStrip1
 			// 
@@ -78,19 +80,32 @@
 			this.ResetBtn.UseVisualStyleBackColor = true;
 			this.ResetBtn.Click += new System.EventHandler(this.ResetBtnClick);
 			// 
+			// DistanceTypeCombo
+			// 
+			this.DistanceTypeCombo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.DistanceTypeCombo.FormattingEnabled = true;
+			this.DistanceTypeCombo.Location = new System.Drawing.Point(516, 14);
+			this.DistanceTypeCombo.Name = "DistanceTypeCombo";
+			this.DistanceTypeCombo.Size = new System.Drawing.Size(150, 21);
+			this.DistanceTypeCombo.TabIndex = 3;
+			this.DistanceTypeCombo.SelectedIndexChanged += new System.EventHandler(this.DistanceTypeComboSelectedIndexChanged);
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(678, 331);
+			this.Controls.Add(this.DistanceTypeCombo);
 			this.Controls.Add(this.ResetBtn);
 			this.Controls.Add(this.dataGridView1);
 			this.Name = "MainForm";
 			this.Text = "FindSimilarClient";
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainFormFormClosing);
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
 		}
+		private System.Windows.Forms.ComboBox DistanceTypeCombo;
 		private System.Windows.Forms.Button ResetBtn;
 		private System.Windows.Forms.ToolStripMenuItem findSimilarToolStripMenuItem;
 		private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;

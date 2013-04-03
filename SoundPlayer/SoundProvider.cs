@@ -11,6 +11,15 @@ namespace FindSimilar
 	{
 		public long Length { get { return AudioData.Length; } }
 		public long Position { get; set; }
+
+		public bool HasReachedEndOfStream {
+			get {
+				if (Length > 0 && Position > 0) {
+					if (Length == Position) return true;
+				}
+				return false;
+			}
+		}
 		
 		public float[] AudioData {
 			get; set;
