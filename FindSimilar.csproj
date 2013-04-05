@@ -134,9 +134,9 @@
     <Compile Include="aquila\Transform.cs" />
     <Compile Include="aquila\WaveFile.cs" />
     <Compile Include="aquila\Window.cs" />
-    <Compile Include="FindSimilarClient\MainForm.cs" />
-    <Compile Include="FindSimilarClient\MainForm.Designer.cs">
-      <DependentUpon>MainForm.cs</DependentUpon>
+    <Compile Include="FindSimilarClient\FindSimilarClientForm.cs" />
+    <Compile Include="FindSimilarClient\FindSimilarClientForm.Designer.cs">
+      <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
     </Compile>
     <Compile Include="CoMIRVA\AudioFeature.cs" />
     <Compile Include="CoMIRVA\Audio\FFT.cs" />
@@ -347,7 +347,9 @@
     <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="FindSimilarClient\MainForm.resx" />
+    <EmbeddedResource Include="FindSimilarClient\FindSimilarClientForm.resx">
+      <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

@@ -23,18 +23,14 @@
 using System;
 using System.Diagnostics;
 using System.Windows.Forms;
-
 using System.IO;
 using System.Globalization;
 using System.Linq;
-
 using System.Data;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
-
 using System.Text.RegularExpressions;
-
 using Comirva.Audio.Feature;
 using NDtw;
 using CommonUtils;
@@ -45,6 +41,11 @@ namespace Mirage
 	public class Mir
 	{
 		static string _version = "1.0.5";
+		
+		// Supported audio files
+		// These two string arrays needs to be in sync
+		public static string[] extensionsWithStar = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg", "*.flac" };
+		public static string[] extensions = { ".mp3", ".wma", ".mp4", ".wav", ".ogg", ".flac" };
 		
 		#region Find Similar Methods
 		private static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
@@ -72,7 +73,7 @@ namespace Mirage
 		/// <param name="db">database</param>
 		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
 		/// <param name="numToTake">max number of entries to return</param>
-		/// <param name="percentage">percentage below and above the duration in ms when querying</param>
+		/// <param name="percentage">percentage below and above the duration in ms when querying (used if between 0.1 - 0.9)</param>
 		/// <param name="distanceType">distance method to use (KullbackLeiblerDivergence is default)</param>
 		/// <returns>a dictinary list of key value pairs (filepath and distance)</returns>
 		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence)
@@ -133,7 +134,7 @@ namespace Mirage
 		/// <param name="db">database</param>
 		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
 		/// <param name="numToTake">max number of entries to return</param>
-		/// <param name="percentage">percentage below and above the duration in ms when querying</param>
+		/// <param name="percentage">percentage below and above the duration in ms when querying (used if between 0.1 - 0.9)</param>
 		/// <param name="distanceType">distance method to use (KullbackLeiblerDivergence is default)</param>
 		/// <returns>a dictinary list of key value pairs (filepath and distance)</returns>
 		public static Dictionary<KeyValuePair<int, string>, double> SimilarTracks(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence)
@@ -263,8 +264,7 @@ namespace Mirage
 			// scan directory for audio files
 			try
 			{
-				string[] extensions = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg" };
-				IEnumerable<string> filesAll = IOUtils.GetFiles(path, extensions, SearchOption.AllDirectories);
+				IEnumerable<string> filesAll = IOUtils.GetFiles(path, extensionsWithStar, SearchOption.AllDirectories);
 				
 				Console.Out.WriteLine("Found {0} files in scan directory.", filesAll.Count());
 				
@@ -564,9 +564,11 @@ namespace Mirage
 		private static void StartGUI() {
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new MainForm());
+			//Application.Run(new MainForm());
+			Application.Run(new FindSimilarClientForm());
 		}
 		
+		[STAThread]
 		public static void Main(string[] args) {
 
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;

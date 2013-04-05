@@ -293,7 +293,7 @@ namespace Mirage
 		/// </summary>
 		/// <param name="trackId">tracks ids to exclude</param>
 		/// <param name="duration">duration (used if more than 0)</param>
-		/// <param name="percentage">percentage below and above the duration in ms when querying</param>
+		/// <param name="percentage">percentage below and above the duration in ms when querying (used if between 0.1 - 0.9)</param>
 		/// <returns>a datareader pointer</returns>
 		public IDataReader GetTracks(int[] trackId, long duration, double percentage)
 		{
