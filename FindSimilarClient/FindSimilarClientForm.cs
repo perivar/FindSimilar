@@ -24,14 +24,17 @@ namespace FindSimilar
 	/// </summary>
 	public partial class FindSimilarClientForm : Form
 	{
-		Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-		//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
-		private static int numToTake = 100;
-		private static double percentage = 0.8; // 1.0 = disabled
+		// Static Variables
+		private static Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+		//private static Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 		
+		private static int NUM_TO_TAKE = 100;
+		private static double PERCENTAGE = 0.8; // 1.0 = disabled
+		
+		// Instance Variables
 		private AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 		private Db db = null;
-		private IAudio player;
+		private IAudio player = null;
 		private string selectedFilePath = null;
 		
 		public FindSimilarClientForm()
@@ -78,8 +81,11 @@ namespace FindSimilar
 			Dictionary<string, KeyValuePair<int, long>> filesProcessed = db.GetTracks();
 			Console.Out.WriteLine("Database contains {0} processed files.", filesProcessed.Count);
 			
+			int counter = 0;
 			foreach (string filePath in filesProcessed.Keys) {
 				this.dataGridView1.Rows.Add(filesProcessed[filePath].Key, filePath, filesProcessed[filePath].Value);
+				if (counter == NUM_TO_TAKE) break;
+				counter++;
 			}
 		}
 		
@@ -246,7 +252,7 @@ namespace FindSimilar
 					this.dataGridView1.Rows.Add(-1, queryPath, 0);
 					
 					// Add the found similar tracks
-					var similarTracks = Mir.SimilarTracks(queryPath, db, analysisMethod, numToTake, percentage, distanceType);
+					var similarTracks = Mir.SimilarTracks(queryPath, db, analysisMethod, NUM_TO_TAKE, PERCENTAGE, distanceType);
 					foreach (var entry in similarTracks)
 					{
 						this.dataGridView1.Rows.Add(entry.Key.Key, entry.Key.Value, entry.Value);
@@ -256,7 +262,7 @@ namespace FindSimilar
 				}
 
 				// reset
-				selectedFilePath = null;
+				//selectedFilePath = null;
 			}
 		}
 		
@@ -274,7 +280,7 @@ namespace FindSimilar
 					this.dataGridView1.Rows.Add(queryId, m1.Name, 0);
 					
 					// Add the found similar tracks
-					var similarTracks = Mir.SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, numToTake, percentage, distanceType);
+					var similarTracks = Mir.SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, NUM_TO_TAKE, PERCENTAGE, distanceType);
 					foreach (var entry in similarTracks)
 					{
 						this.dataGridView1.Rows.Add(entry.Key.Key, entry.Key.Value, entry.Value);
@@ -285,7 +291,7 @@ namespace FindSimilar
 			}
 			
 			// reset
-			selectedFilePath = null;
+			//selectedFilePath = null;
 		}
 		
 		void QueryIdTextBoxKeyPress(object sender, KeyPressEventArgs e)

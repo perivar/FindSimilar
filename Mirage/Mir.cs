@@ -269,8 +269,12 @@ namespace Mirage
 			// scan directory for audio files
 			try
 			{
-				IEnumerable<string> filesAll = IOUtils.GetFiles(path, extensionsWithStar, SearchOption.AllDirectories);
+				// By some reason the IOUtils.GetFiles returns a higher count than what seams correct?!
+				IEnumerable<string> filesAll =
+					Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
+					.Where(f => extensions.Contains(Path.GetExtension(f).ToLower()));
 				
+				//IEnumerable<string> filesAll = IOUtils.GetFiles(path, extensionsWithStar, SearchOption.AllDirectories);
 				Console.Out.WriteLine("Found {0} files in scan directory.", filesAll.Count());
 				
 				// get all already processed files stored in the database
@@ -282,7 +286,6 @@ namespace Mirage
 
 				// find the files that has not already been added to the database
 				List<string> filesRemaining = filesAll.Except(filesProcessed.Keys).ToList();
-				
 				Console.Out.WriteLine("Found {0} files remaining in scan directory to be processed.", filesRemaining.Count);
 
 				int fileCounter = filesProcessed.Count;
@@ -303,7 +306,7 @@ namespace Mirage
 					if (feature != null) {
 						db.AddTrack(fileCounter, feature);
 						fileCounter++;
-						Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms)", fileInfo.Name, fileCounter, filesAll.Count(), feature.Duration);
+						Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms)", fileInfo.Name, fileCounter, filesRemaining.Count, feature.Duration);
 					} else {
 						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 						IOUtils.LogMessageToFile(failedFilesLog, fileInfo.FullName);
