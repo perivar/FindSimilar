@@ -9,10 +9,10 @@ using System.Linq;
 
 using System.Diagnostics;
 
-using NAudio.Wave;
-
 using CommonUtils;
-using CommonUtils.Audio.NAudio;
+
+using FindSimilar.AudioProxies;
+//using CommonUtils.Audio.NAudio;
 
 using Mirage;
 using Comirva.Audio.Feature;
@@ -31,7 +31,7 @@ namespace FindSimilar
 		
 		private AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 		private Db db = null;
-		private SoundPlayer player;
+		private IAudio player;
 		private string selectedFilePath = null;
 		
 		public FindSimilarClientForm()
@@ -62,11 +62,12 @@ namespace FindSimilar
 			ReadAllTracks();
 		}
 		
-		private SoundPlayer GetSoundPlayer() {
+		private IAudio GetSoundPlayer() {
 			
 			//string[] asioDevices = SoundPlayer.GetAsioDriverNames();
 			//return SoundPlayer.GetAsioInstance(asioDevices[0], 250);
-			return SoundPlayer.GetWaveOutInstance();
+			//return NAudioProxy.GetWaveOutInstance();
+			return BassProxy.Instance;
 		}
 		
 		private void ReadAllTracks() {
@@ -87,26 +88,37 @@ namespace FindSimilar
 			// return if play is auto play is disabled
 			if (!autoPlayCheckBox.Checked) return;
 			
+			/*
 			float[] audioData = Mirage.AudioFileReader.Decode(filePath, Analyzer.SAMPLING_RATE, Analyzer.SECONDS_TO_ANALYZE);
 			if (audioData == null || audioData.Length == 0)  {
 				Dbg.WriteLine("Error! - No Audio Found");
 				return;
 			}
 			
-			player = GetSoundPlayer();
-			SoundProvider provicer = new SoundProvider(Analyzer.SAMPLING_RATE, audioData, 2);
-			//player.OpenFile(filePath);
+			NAudioFloatArrayProvider provicer = new NAudioFloatArrayProvider(Analyzer.SAMPLING_RATE, audioData, 2);
 			player.OpenSampleProvider(provicer);
-			if (player.CanPlay) {
-				player.Play();
-			} else {
-				Debug.WriteLine("Failed playing ...");
+			 */
+			
+			player = GetSoundPlayer();
+			if (player != null) {
+				
+				if (player is BassProxy) {
+					Un4seen.Bass.AddOn.Tags.TAG_INFO tags = ((BassProxy)player).GetTagInfoFromFile(filePath);
+					Debug.WriteLine("Name: {0} Duration {1}", tags.title, tags.duration);
+				}
+				
+				player.Stop();
+				player.OpenFile(filePath);
+				if (player.CanPlay) {
+					player.Play();
+				} else {
+					Debug.WriteLine("Failed playing ...");
+				}
 			}
 		}
 
 		private void PlaySelected() {
 			if (player != null) {
-				player.Stop();
 				Play(selectedFilePath);
 			}
 		}

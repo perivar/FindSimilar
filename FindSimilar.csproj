@@ -18,6 +18,7 @@
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <RunCodeAnalysis>False</RunCodeAnalysis>
     <SourceAnalysisOverrideSettingsFile>C:\Users\perivar.nerseth\AppData\Roaming\ICSharpCode/SharpDevelop4\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
+    <RunSourceAnalysis>False</RunSourceAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -47,6 +48,9 @@
     <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects" -resetdb</StartArguments>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Bass.Net">
+      <HintPath>NativeLibraries\Bass\Bass.Net.dll</HintPath>
+    </Reference>
     <Reference Include="NAudio">
       <HintPath>..\..\AudioVSTToolbox\CommonUtils\Audio\NAudio\NAudio.dll</HintPath>
     </Reference>
@@ -182,8 +186,10 @@
     <Compile Include="NDtw\SeriesVariable.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SoundPlayer\SoundPlayer.cs" />
-    <Compile Include="SoundPlayer\SoundProvider.cs" />
+    <Compile Include="SoundPlayer\BassProxy.cs" />
+    <Compile Include="SoundPlayer\IAudio.cs" />
+    <Compile Include="SoundPlayer\NAudioProxy.cs" />
+    <Compile Include="SoundPlayer\NAudioFloatArrayProvider.cs" />
     <Compile Include="SpeechRecognitionHMM\ArrayWriter.cs" />
     <Compile Include="SpeechRecognitionHMM\DCT.cs" />
     <Compile Include="SpeechRecognitionHMM\EndPointDetection.cs" />
@@ -206,6 +212,7 @@
     <Folder Include="Mirage\Resources" />
     <Folder Include="NativeLibraries" />
     <Folder Include="NativeLibraries" />
+    <Folder Include="NativeLibraries\Bass" />
     <Folder Include="NativeLibraries\faad" />
     <Folder Include="NativeLibraries\faad" />
     <Folder Include="NativeLibraries\ffmpeg" />
@@ -231,9 +238,6 @@
     <Content Include="NativeLibraries\ffmpeg\ffmpeg.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="libfftw3f-3.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="app.config" />
     <Content Include="Mirage\Resources\dct.filter">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -247,19 +251,37 @@
     <Content Include="aquila\examples\test2.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="libfftw3-3.dll">
+    <None Include="Mirage\Resources\writefilters.m" />
+    <None Include="NativeLibraries\Bass\bass.dll">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="NativeLibraries\Bass\Bass.Net.dll" />
+    <None Include="NativeLibraries\Bass\bassflac.dll">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="NativeLibraries\Bass\bassmix.dll">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="NativeLibraries\Bass\bass_fx.dll">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="NativeLibraries\Bass\tags.dll">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <Content Include="NativeLibraries\faad\faad.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="Mirage\Resources\writefilters.m" />
-    <None Include="NativeLibraries\faad\faad.exe" />
-    <None Include="NativeLibraries\ffmpeg\ffmpeg.exe" />
+    <Content Include="NativeLibraries\ffmpeg\ffmpeg.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="NativeLibraries\ffmpeg\ffplay.exe" />
     <None Include="NativeLibraries\ffmpeg\ffplay.exe" />
-    <None Include="NativeLibraries\ffmpeg\pthreadGC2.dll" />
     <Content Include="NativeLibraries\lame\lame.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="NativeLibraries\lame\lame.exe" />
+    <Content Include="NativeLibraries\lame\lame.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="NativeLibraries\lame\lame_enc.dll" />
     <None Include="NativeLibraries\lame\lame_enc.dll" />
     <None Include="NativeLibraries\libfftw\bench.exe" />
@@ -314,24 +336,21 @@
     <None Include="NativeLibraries\mplayer\README.txt" />
     <None Include="NativeLibraries\sox\batch-example.bat" />
     <None Include="NativeLibraries\sox\ChangeLog.txt" />
-    <None Include="NativeLibraries\sox\LICENSE.GPL" />
     <None Include="NativeLibraries\sox\LICENSE.GPL.txt" />
     <Content Include="NativeLibraries\sox\pthreadgc2.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="NativeLibraries\sox\README" />
     <Content Include="NativeLibraries\sox\sox.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="NativeLibraries\sox\README.txt" />
     <None Include="NativeLibraries\sox\README.win32.txt" />
-    <None Include="NativeLibraries\sox\sox.exe" />
+    <Content Include="NativeLibraries\sox\sox.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="NativeLibraries\sox\sox.pdf" />
-    <None Include="NativeLibraries\sox\sox.txt" />
-    <None Include="NativeLibraries\sox\soxexam.txt" />
     <None Include="NativeLibraries\sox\soxformat.pdf" />
     <None Include="NativeLibraries\sox\soxi.pdf" />
-    <None Include="NativeLibraries\sox\soxmix.exe" />
     <Content Include="NativeLibraries\sox\wget.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -341,9 +360,9 @@
     <Content Include="NativeLibraries\sox\zlib1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="NativeLibraries\ZedGraph\ZedGraph.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <None Include="NativeLibraries\ZedGraph\ZedGraph.dll">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
     <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
   </ItemGroup>
   <ItemGroup>
@@ -352,4 +371,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <PropertyGroup>
+    <PreBuildEvent>copy "$(ProjectDir)NativeLibraries\Bass\*.dll" "$(TargetDir)"
+copy "$(ProjectDir)NativeLibraries\libfftw\*.dll" "$(TargetDir)"</PreBuildEvent>
+  </PropertyGroup>
 </Project>

@@ -8,6 +8,8 @@ using CommonUtils;
 using CommonUtils.Audio.NAudio;
 using NAudio;
 
+using FindSimilar.AudioProxies;
+
 namespace Mirage
 {
 	public class AudioFileReader
@@ -18,6 +20,22 @@ namespace Mirage
 			t.Start();
 
 			float[] floatBuffer = null;
+			
+			// try to use Bass
+			BassProxy bass = BassProxy.Instance;
+			Un4seen.Bass.AddOn.Tags.TAG_INFO tags = bass.GetTagInfoFromFile(fileIn);
+			double duration = -1;
+			if ((duration = tags.duration) > 0) {
+				// duration in seconds
+				if (duration > secondsToAnalyze) {
+					// find segment to extract
+					double seekIndex = (duration/2-(secondsToAnalyze/2));
+				} else {
+					// return whole file
+					floatBuffer = bass.ReadMonoFromFile(fileIn, srate, 0, 0);
+				}
+				return floatBuffer;
+			}
 			
 			// try first to use Naudio to read the file
 			floatBuffer = AudioUtilsNAudio.ReadMonoFromFile(fileIn, srate, 0, 0);
