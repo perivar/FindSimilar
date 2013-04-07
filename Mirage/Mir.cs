@@ -44,8 +44,13 @@ namespace Mirage
 		
 		// Supported audio files
 		// These two string arrays needs to be in sync
-		public static string[] extensionsWithStar = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg", "*.flac" };
-		public static string[] extensions = { ".mp3", ".wma", ".mp4", ".wav", ".ogg", ".flac" };
+		// Used Notepad+ and the following regexp to convert from Bass generated filterstring to these:
+		// (\*\.[^;]+);  => "\1",
+		//public static string[] extensionsWithStar = { "*.mp3", "*.wma", "*.mp4", "*.wav", "*.ogg", "*.flac" };
+		public static string[] extensionsWithStar = { "*.wav", "*.ogg", "*.mp1", "*.m1a", "*.mp2", "*.m2a", "*.mpa", "*.mus", "*.mp3", "*.mpg", "*.mpeg", "*.mp3pro", "*.aif", "*.aiff", "*.bwf", "*.wma", "*.wmv", "*.aac", "*.adts", "*.mp4", "*.m4a", "*.m4b", "*.mod", "*.mdz", "*.mo3", "*.s3m", "*.s3z", "*.xm", "*.xmz", "*.it", "*.itz", "*.umx", "*.mtm", "*.flac", "*.fla", "*.oga", "*.ogg", "*.aac", "*.m4a", "*.m4b", "*.mp4", "*.mpc", "*.mp+", "*.mpp", "*.ac3", "*.wma", "*.ape", "*.mac" };
+
+		//public static string[] extensions = { ".mp3", ".wma", ".mp4", ".wav", ".ogg", ".flac" };
+		public static string[] extensions = { ".wav", ".ogg", ".mp1", ".m1a", ".mp2", ".m2a", ".mpa", ".mus", ".mp3", ".mpg", ".mpeg", ".mp3pro", ".aif", ".aiff", ".bwf", ".wma", ".wmv", ".aac", ".adts", ".mp4", ".m4a", ".m4b", ".mod", ".mdz", ".mo3", ".s3m", ".s3z", ".xm", ".xmz", ".it", ".itz", ".umx", ".mtm", ".flac", ".fla", ".oga", ".ogg", ".aac", ".m4a", ".m4b", ".mp4", ".mpc", ".mp+", ".mpp", ".ac3", ".wma", ".ape", ".mac" };
 		
 		#region Find Similar Methods
 		private static void FindSimilar(int[] seedTrackIds, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {

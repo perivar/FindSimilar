@@ -44,6 +44,8 @@ namespace Mirage
 {
 	public class Analyzer
 	{
+		public static bool OUTPUT_DEBUG_INFO = false;
+		
 		public enum AnalysisMethod {
 			SCMS = 1,
 			MandelEllis = 2
@@ -126,8 +128,10 @@ namespace Mirage
 			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
 			
 			#if DEBUG
-			DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
-			WriteAscii(audiodata, name + "_audiodata.ascii.txt");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
+				WriteAscii(audiodata, name + "_audiodata.ascii.txt");
+			}
 			#endif
 			
 			// Calculate duration in ms
@@ -165,12 +169,14 @@ namespace Mirage
 			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audiodata);
 
 			#if DEBUG
-			stftdata.WriteAscii(name + "_stftdata.ascii.txt");
-			stftdata.DrawMatrixGraph(name + "_stftdata.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				stftdata.WriteAscii(name + "_stftdata.ascii.txt");
+				stftdata.DrawMatrixGraph(name + "_stftdata.png");
 
-			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
-			stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
-			stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
+				stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
+				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+			}
 			#endif
 			
 			// 4. Mel Scale Filterbank
@@ -183,9 +189,11 @@ namespace Mirage
 			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 
 			#if DEBUG
-			mfccdata.WriteAscii(name + "_mfccdata.ascii.txt");
-			mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
-			mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				mfccdata.WriteAscii(name + "_mfccdata.ascii.txt");
+				mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
+				mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
+			}
 			#endif
 			
 			// Store in a Statistical Cluster Model Similarity class.

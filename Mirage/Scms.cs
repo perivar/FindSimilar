@@ -80,15 +80,19 @@ namespace Mirage
 			
 			Comirva.Audio.Util.Maths.Matrix mean = mfccs.Mean(2);
 			#if DEBUG
-			mean.WriteText(name + "_mean.txt");
-			mean.DrawMatrixGraph(name + "_mean.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				mean.WriteText(name + "_mean.txt");
+				mean.DrawMatrixGraph(name + "_mean.png");
+			}
 			#endif
 
 			// Covariance
 			Comirva.Audio.Util.Maths.Matrix covarMatrix = mfccs.Cov(mean);
 			#if DEBUG
-			covarMatrix.WriteText(name + "_covariance.txt");
-			covarMatrix.DrawMatrixGraph(name + "_covariance.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				covarMatrix.WriteText(name + "_covariance.txt");
+				covarMatrix.DrawMatrixGraph(name + "_covariance.png");
+			}
 			#endif
 
 			// Inverse Covariance
@@ -100,8 +104,10 @@ namespace Mirage
 				return null;
 			}
 			#if DEBUG
-			covarMatrixInv.WriteAscii(name + "_inverse_covariance.txt");
-			covarMatrixInv.DrawMatrixGraph(name + "_inverse_covariance.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				covarMatrixInv.WriteAscii(name + "_inverse_covariance.txt");
+				covarMatrixInv.DrawMatrixGraph(name + "_inverse_covariance.png");
+			}
 			#endif
 			
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.

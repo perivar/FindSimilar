@@ -101,12 +101,14 @@ namespace FindSimilar
 			
 			player = GetSoundPlayer();
 			if (player != null) {
-				
+				/*
 				if (player is BassProxy) {
 					Un4seen.Bass.AddOn.Tags.TAG_INFO tags = ((BassProxy)player).GetTagInfoFromFile(filePath);
 					Debug.WriteLine("Name: {0} Duration {1}", tags.title, tags.duration);
+					
+					float[] audioData = Mirage.AudioFileReader.Decode(filePath, Analyzer.SAMPLING_RATE, Analyzer.SECONDS_TO_ANALYZE);
 				}
-				
+				 */
 				player.Stop();
 				player.OpenFile(filePath);
 				if (player.CanPlay) {
@@ -146,8 +148,10 @@ namespace FindSimilar
 		{
 			// convert extension string array to open file dialog filter
 			//openFileDialog.Filter = "Audio Files(*.wav;*.mp3)|*.wav;*.mp3|All files (*.*)|*.*";
-			string filter = string.Join(";", Mir.extensionsWithStar);
-			openFileDialog.Filter = String.Format("Audio Files({0})|{0}|All files (*.*)|*.*", filter);
+			//string filter = string.Join(";", Mir.extensionsWithStar);
+			//filter = String.Format("Audio Files({0})|{0}|All files (*.*)|*.*", filter);
+			string filter = "All supported Audio Files|*.wav;*.ogg;*.mp1;*.m1a;*.mp2;*.m2a;*.mpa;*.mus;*.mp3;*.mpg;*.mpeg;*.mp3pro;*.aif;*.aiff;*.bwf;*.wma;*.wmv;*.aac;*.adts;*.mp4;*.m4a;*.m4b;*.mod;*.mdz;*.mo3;*.s3m;*.s3z;*.xm;*.xmz;*.it;*.itz;*.umx;*.mtm;*.flac;*.fla;*.oga;*.ogg;*.aac;*.m4a;*.m4b;*.mp4;*.mpc;*.mp+;*.mpp;*.ac3;*.wma;*.ape;*.mac|WAVE Audio|*.wav|Ogg Vorbis|*.ogg|MPEG Layer 1|*.mp1;*.m1a|MPEG Layer 2|*.mp2;*.m2a;*.mpa;*.mus|MPEG Layer 3|*.mp3;*.mpg;*.mpeg;*.mp3pro|Audio IFF|*.aif;*.aiff|Broadcast Wave|*.bwf|Windows Media Audio|*.wma;*.wmv|Advanced Audio Codec|*.aac;*.adts|MPEG 4 Audio|*.mp4;*.m4a;*.m4b|MOD Music|*.mod;*.mdz|MO3 Music|*.mo3|S3M Music|*.s3m;*.s3z|XM Music|*.xm;*.xmz|IT Music|*.it;*.itz;*.umx|MTM Music|*.mtm|Free Lossless Audio Codec|*.flac;*.fla|Free Lossless Audio Codec (Ogg)|*.oga;*.ogg|Advanced Audio Coding|*.aac|Advanced Audio Coding MPEG-4|*.m4a;*.m4b;*.mp4|Musepack|*.mpc;*.mp+;*.mpp|Dolby Digital AC-3|*.ac3|Windows Media Audio|*.wma|Monkey's Audio|*.ape;*.mac";
+			openFileDialog.Filter = filter;
 			if (openFileDialog.ShowDialog() == DialogResult.OK)
 			{
 				AudioFileQueryTextBox.Text = openFileDialog.FileName;

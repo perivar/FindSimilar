@@ -262,9 +262,14 @@
     <None Include="NativeLibraries\Bass\bassmix.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Include="NativeLibraries\Bass\basswma.dll" />
+    <None Include="NativeLibraries\Bass\bass_aac.dll" />
+    <None Include="NativeLibraries\Bass\bass_ac3.dll" />
+    <None Include="NativeLibraries\Bass\bass_ape.dll" />
     <None Include="NativeLibraries\Bass\bass_fx.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Include="NativeLibraries\Bass\bass_mpc.dll" />
     <None Include="NativeLibraries\Bass\tags.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>

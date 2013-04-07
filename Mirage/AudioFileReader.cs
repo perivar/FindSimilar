@@ -21,15 +21,24 @@ namespace Mirage
 
 			float[] floatBuffer = null;
 			
-			// try to use Bass
+			// Try to use Un4Seen Bass
 			BassProxy bass = BassProxy.Instance;
 			Un4seen.Bass.AddOn.Tags.TAG_INFO tags = bass.GetTagInfoFromFile(fileIn);
 			double duration = -1;
 			if ((duration = tags.duration) > 0) {
+				Dbg.WriteLine("Using BASS to decode the file ...");
+
 				// duration in seconds
 				if (duration > secondsToAnalyze) {
 					// find segment to extract
-					double seekIndex = (duration/2-(secondsToAnalyze/2));
+					double startSeconds = (duration/2-(secondsToAnalyze/2));
+					if (startSeconds < 0) {
+						startSeconds = 0;
+					}
+					floatBuffer = bass.ReadMonoFromFile(fileIn, srate, secondsToAnalyze*1000, (int) (startSeconds*1000));
+					
+					// if this failes, the duration read from the tags was wrong
+					// TODO: Take care of this?
 				} else {
 					// return whole file
 					floatBuffer = bass.ReadMonoFromFile(fileIn, srate, 0, 0);

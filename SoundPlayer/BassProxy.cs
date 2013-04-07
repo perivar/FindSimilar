@@ -101,6 +101,9 @@ namespace FindSimilar.AudioProxies
 				Bass.BASS_GetInfo(info);
 				Debug.WriteLine(info.ToString());
 				
+				string nativeSupport = Utils.BASSAddOnGetSupportedFileExtensions(null);
+				Debug.WriteLine("Native Bass Supported Extensions: " + nativeSupport);
+				
 				BASS_PLUGININFO flacInfo = Bass.BASS_PluginGetInfo(pluginFlac);
 				foreach (BASS_PLUGINFORM f in flacInfo.formats) {
 					Debug.WriteLine("Type={0}, Name={1}, Exts={2}", f.ctype, f.name, f.exts);
@@ -125,6 +128,17 @@ namespace FindSimilar.AudioProxies
 				foreach (BASS_PLUGINFORM f in apeInfo.formats) {
 					Debug.WriteLine("Type={0}, Name={1}, Exts={2}", f.ctype, f.name, f.exts);
 				}
+
+				Dictionary<int, string> loadedPlugIns = new Dictionary<int, string>();
+				loadedPlugIns.Add(pluginFlac, "bassflac.dll");
+				loadedPlugIns.Add(pluginAAC, "bass_aac.dll");
+				loadedPlugIns.Add(pluginMPC, "bass_mpc.dll");
+				loadedPlugIns.Add(pluginAC3, "bass_ac3.dll");
+				loadedPlugIns.Add(pluginWMA, "basswma.dll");
+				loadedPlugIns.Add(pluginAPE, "bass_ape.dll");
+				
+				string fileSupportedExtFilter = Utils.BASSAddOnGetPluginFileFilter(loadedPlugIns, "All supported Audio Files", true);
+				Debug.WriteLine("Bass generated FileFilter: " + fileSupportedExtFilter);
 				#endif
 			} else {
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
@@ -334,8 +348,11 @@ namespace FindSimilar.AudioProxies
 		
 		#region Open methods
 		public void OpenFile(string path) {
-			// int stream = Bass.BASS_StreamCreateFile(path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
-			int stream = Bass.BASS_StreamCreateFile(path, 0, 0, BASSFlag.BASS_DEFAULT);
+			// BASS_STREAM_PRESCAN = Pre-scan the file for accurate seek points and length reading in MP3/MP2/MP1 files
+			// and chained OGG files (has no effect on normal OGG files). This can significantly increase the time taken to create the stream, particularly with a large file and/or slow storage media.
+			// BASS_SAMPLE_FLOAT = Use 32-bit floating-point sample data.
+			int stream = Bass.BASS_StreamCreateFile(path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
+			//int stream = Bass.BASS_StreamCreateFile(path, 0, 0, BASSFlag.BASS_DEFAULT);
 			_playingStream = stream;
 			CanPlay = true;
 		}
