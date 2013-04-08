@@ -280,6 +280,29 @@ namespace FindSimilar.AudioProxies
 		}
 
 		/// <summary>
+		/// Return the duration in seconds
+		/// </summary>
+		/// <param name="filename">filename</param>
+		/// <returns>duration in seconds</returns>
+		public double GetDurationInSeconds(string filename) {
+			
+			double time = -1;
+			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_STREAM_PRESCAN);
+			if (stream != 0) {
+				
+				// length in bytes
+				long len = Bass.BASS_ChannelGetLength(stream, BASSMode.BASS_POS_BYTES);
+				
+				// the time length
+				time = Bass.BASS_ChannelBytes2Seconds(stream, len);
+				
+				// free resource
+				Bass.BASS_StreamFree(stream);
+			}
+			return time;
+		}
+		
+		/// <summary>
 		/// Recode the file
 		/// </summary>
 		/// <param name="fileName">Initial file</param>

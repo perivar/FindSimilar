@@ -23,9 +23,8 @@ namespace Mirage
 			
 			// Try to use Un4Seen Bass
 			BassProxy bass = BassProxy.Instance;
-			Un4seen.Bass.AddOn.Tags.TAG_INFO tags = bass.GetTagInfoFromFile(fileIn);
-			double duration = -1;
-			if ((duration = tags.duration) > 0) {
+			double duration = bass.GetDurationInSeconds(fileIn);
+			if (duration > 0) {
 				Dbg.WriteLine("Using BASS to decode the file ...");
 
 				// duration in seconds
