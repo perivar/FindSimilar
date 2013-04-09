@@ -119,20 +119,35 @@ namespace FindSimilar
 		#region Drag and Drop
 		void TabPage1DragEnter(object sender, DragEventArgs e)
 		{
-			if (e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effect = DragDropEffects.Copy;
+			/*
+			foreach ( var item in e.Data.GetFormats() ) {
+				MessageBox.Show( item );
+			}
+			 */
+
+			if (e.Data.GetDataPresent(DataFormats.FileDrop)) {
+				e.Effect = DragDropEffects.Copy;
+			} else if (e.Data.GetDataPresent(DataFormats.Text)) {
+				e.Effect = DragDropEffects.Copy;
+			}
 		}
 		
 		void TabPage1DragDrop(object sender, DragEventArgs e)
 		{
-			string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-			foreach (string inputFilePath in files) {
-				string fileExtension = Path.GetExtension(inputFilePath);
-				int pos = Array.IndexOf(Mir.extensions, fileExtension);
-				if (pos >- 1)
-				{
-					AudioFileQueryTextBox.Text = inputFilePath;
-					break;
+			if (e.Data.GetDataPresent(DataFormats.FileDrop)) {
+				string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+				foreach (string inputFilePath in files) {
+					string fileExtension = Path.GetExtension(inputFilePath);
+					int pos = Array.IndexOf(Mir.extensions, fileExtension);
+					if (pos >- 1)
+					{
+						AudioFileQueryTextBox.Text = inputFilePath;
+						break;
+					}
 				}
+			} else if (e.Data.GetDataPresent(DataFormats.Text)) {
+				string droppedText = (string)e.Data.GetData(DataFormats.Text);
+				AudioFileQueryTextBox.Text = droppedText;
 			}
 		}
 		#endregion
@@ -198,6 +213,22 @@ namespace FindSimilar
 		{
 			if (e.KeyChar == (char) Keys.Space) {
 				PlaySelected();
+			}
+		}
+		
+		void DataGridView1MouseDown(object sender, MouseEventArgs e)
+		{
+			// The DoDragDrop method of a control is used to start a drag and drop operation.
+			// We call it from MouseDown event of the DataGridView.
+			// The first parameter is the data that we want to send in drag and drop operation.
+			// Here we are sending selected rows of the DataGridView.
+			// The second parameter is a DragDropEffects enumeration that provides the drag and drop operation effect.
+			// The cursor style changes accordingly while the drag and drop is being performed.
+			// Possible values are DragDropEffects.All, DragDropEffects.Copy, DragDropEffects.Link, DragDropEffects.Move,
+			// DragDropEffects.None and DragDropEffects.Scroll.
+			if (dataGridView1.SelectedRows[0].Cells[1].Value != null) {
+				string data = dataGridView1.SelectedRows[0].Cells[1].Value.ToString();
+				dataGridView1.DoDragDrop(data, DragDropEffects.Copy);
 			}
 		}
 		#endregion
