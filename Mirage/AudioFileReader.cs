@@ -44,6 +44,12 @@ namespace Mirage
 				}
 				return floatBuffer;
 			}
+
+			Dbg.WriteLine("Using MPlayer and SOX to decode the file ...");
+			fileIn = Regex.Replace(fileIn, "%20", " ");
+			floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate, secondsToAnalyze);
+			return floatBuffer;
+			
 			
 			// try first to use Naudio to read the file
 			floatBuffer = AudioUtilsNAudio.ReadMonoFromFile(fileIn, srate, 0, 0);

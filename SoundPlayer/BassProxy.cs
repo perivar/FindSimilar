@@ -62,10 +62,36 @@ namespace FindSimilar.AudioProxies
 		/// </summary>
 		private int _playingStream;
 
+		// Properties retrieved when using OpenFile
+		private int sampleRate;
+		private int bitsPerSample;
+		private int channels;
+		private double duration;
+
+		public int SampleRate
+		{
+			get { return sampleRate; }
+		}
+
+		public int BitsPerSample
+		{
+			get { return bitsPerSample; }
+		}
+
+		public int Channels
+		{
+			get { return channels; }
+		}
+
+		public double Duration
+		{
+			get { return duration; }
+		}
+		
 		#region Constructors
 		static BassProxy()
 		{
-			//Call to avoid the freeware splash screen. Didn't see it, but maybe it will appear if the Forms are used :D
+			// Call to avoid the freeware splash screen. Didn't see it, but maybe it will appear if the Forms are used :D
 			BassNet.Registration("gleb.godonoga@gmail.com", "2X155323152222");
 			
 			//Dummy calls made for loading the assemblies
@@ -73,12 +99,9 @@ namespace FindSimilar.AudioProxies
 			int bassMixVersion = BassMix.BASS_Mixer_GetVersion();
 			int bassfxVersion = BassFx.BASS_FX_GetVersion();
 			
-			//Window mainWindow = Application.Current.MainWindow;
-			//WindowInteropHelper interopHelper = new WindowInteropHelper(mainWindow);
-			//if (!Bass.BASS_Init(-1, DEFAULT_SAMPLE_RATE, BASSInit.BASS_DEVICE_SPEAKERS, interopHelper.Handle))
-			
 			//Set Sample Rate / MONO
-			if (Bass.BASS_Init(-1, DEFAULT_SAMPLE_RATE, BASSInit.BASS_DEVICE_SPEAKERS | BASSInit.BASS_DEVICE_DEFAULT | BASSInit.BASS_DEVICE_MONO, IntPtr.Zero))
+			//if (Bass.BASS_Init(-1, DEFAULT_SAMPLE_RATE, BASSInit.BASS_DEVICE_SPEAKERS | BASSInit.BASS_DEVICE_MONO | BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero))
+			if (Bass.BASS_Init(-1, DEFAULT_SAMPLE_RATE, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero))
 			{
 				// Load the plugins
 				int pluginFlac = Bass.BASS_PluginLoad("bassflac.dll");
@@ -144,13 +167,13 @@ namespace FindSimilar.AudioProxies
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 			}
 			
+			// Set filter for anti aliasing
 			if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_MIXER_FILTER, 50)) {
-				/*Set filter for anti aliasing*/
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 			}
 			
+			// Set floating parameters to be passed
 			if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_FLOATDSP, true)) {
-				/*Set floating parameters to be passed*/
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 			}
 		}
@@ -192,15 +215,23 @@ namespace FindSimilar.AudioProxies
 		{
 			int totalmilliseconds = milliseconds <= 0 ? Int32.MaxValue : milliseconds + startmillisecond;
 			float[] data = null;
-			//create streams for re-sampling
-			int stream = Bass.BASS_StreamCreateFile(filename, 0, 0, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT); //Decode the stream
-			if (stream == 0)
+			
+			// Create streams for re-sampling
+			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT); //Decode the stream
+			if (stream == 0) {
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+			}
+			
+			// mixer stream
+			//int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_MIXER_END | BASSFlag.BASS_SAMPLE_FLOAT);
+			//int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_MIXER_NORAMPIN);
 			int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
-			if (mixerStream == 0)
+			if (mixerStream == 0) {
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+			}
 
-			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_FILTER))
+			//if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_FILTER))
+			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_DOWNMIX | BASSFlag.BASS_MIXER_NORAMPIN))
 			{
 				int bufferSize = samplerate * 20 * 4; /*read 10 seconds at each iteration*/
 				float[] buffer = new float[bufferSize];
@@ -212,10 +243,10 @@ namespace FindSimilar.AudioProxies
 					int bytesRead = Bass.BASS_ChannelGetData(mixerStream, buffer, bufferSize);
 					if (bytesRead == 0)
 						break;
-					float[] chunk = new float[bytesRead / 4]; //each float contains 4 bytes
+					float[] chunk = new float[bytesRead / 4]; // each float contains 4 bytes
 					Array.Copy(buffer, chunk, bytesRead / 4);
 					chunks.Add(chunk);
-					size += bytesRead / 4; //size of the data
+					size += bytesRead / 4; // size of the data
 				}
 
 				if ((float)(size) / samplerate * 1000 < (milliseconds + startmillisecond))
@@ -244,9 +275,93 @@ namespace FindSimilar.AudioProxies
 			Bass.BASS_StreamFree(stream);
 			return data;
 		}
+		
 		#endregion
 
 		#region Public Methods
+		
+		/// <summary>
+		/// Read the spectrum from file
+		/// </summary>
+		/// <param name="filename">filename</param>
+		/// <param name="samplerate"></param>
+		/// <param name="startmillisecond"></param>
+		/// <param name="milliseconds"></param>
+		/// <param name="overlap"></param>
+		/// <param name="wdftsize"></param>
+		/// <param name="logbins"></param>
+		/// <param name="startfreq"></param>
+		/// <param name="endfreq"></param>
+		/// <returns></returns>
+		public float[][] ReadSpectrum(string filename, int samplerate, int startmillisecond, int milliseconds, int overlap, int wdftsize, int logbins, int startfreq, int endfreq)
+		{
+			int totalmilliseconds = 0;
+			if (milliseconds <= 0) {
+				totalmilliseconds = Int32.MaxValue;
+			} else {
+				totalmilliseconds = milliseconds + startmillisecond;
+			}
+			const int logbase = 2;
+			double logMin = Math.Log(startfreq, logbase);
+			double logMax = Math.Log(endfreq, logbase);
+			double delta = (logMax - logMin)/logbins;
+			double accDelta = 0;
+			float[] freqs = new float[logbins + 1];
+			for (int i = 0; i <= logbins /*32 octaves*/; ++i)
+			{
+				freqs[i] = (float) Math.Pow(logbase, logMin + accDelta);
+				accDelta += delta; // accDelta = delta * i
+			}
+
+			List<float[]> data = new List<float[]>();
+			int[] streams = new int[wdftsize/overlap - 1];
+			int[] mixerstreams = new int[wdftsize/overlap - 1];
+			double sec = (double) overlap/samplerate;
+			for (int i = 0; i < wdftsize/overlap - 1; i++)
+			{
+				streams[i] = Bass.BASS_StreamCreateFile(filename, 0, 0, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT); //Decode the stream
+				if (!Bass.BASS_ChannelSetPosition(streams[i], (float)startmillisecond/1000 + sec*i)) {
+					throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+				}
+				
+				mixerstreams[i] = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
+				if (!BassMix.BASS_Mixer_StreamAddChannel(mixerstreams[i], streams[i], BASSFlag.BASS_MIXER_FILTER))  {
+					throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+				}
+
+			}
+
+			float[] buffer = new float[wdftsize/2];
+			int size = 0;
+			int iter = 0;
+			while ((float) (size)/samplerate*1000 < totalmilliseconds)
+			{
+				int bytesRead = Bass.BASS_ChannelGetData(mixerstreams[iter%(wdftsize/overlap - 1)], buffer, (int) BASSData.BASS_DATA_FFT2048);
+				if (bytesRead == 0)
+					break;
+				float[] chunk = new float[logbins];
+				for (int i = 0; i < logbins; i++)
+				{
+					int lowBound = (int) freqs[i];
+					int endBound = (int) freqs[i + 1];
+					int startIndex = Un4seen.Bass.Utils.FFTFrequency2Index(lowBound, wdftsize, samplerate);
+					int endIndex = Un4seen.Bass.Utils.FFTFrequency2Index(endBound, wdftsize, samplerate);
+					float sum = 0f;
+					for (int j = startIndex; j < endIndex; j++)
+					{
+						sum += buffer[j];
+					}
+					chunk[i] = sum/(endIndex - startIndex);
+				}
+				
+				data.Add(chunk);
+				size += bytesRead/4;
+				iter++;
+			}
+
+			return data.ToArray();
+		}
+
 		/// <summary>
 		///   Read data from file
 		/// </summary>
@@ -284,10 +399,19 @@ namespace FindSimilar.AudioProxies
 		/// </summary>
 		/// <param name="filename">filename</param>
 		/// <returns>duration in seconds</returns>
-		public double GetDurationInSeconds(string filename) {
+		public double GetDurationInSeconds(string filename, bool preScanMPStreams = false) {
 			
 			double time = -1;
-			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_STREAM_PRESCAN);
+			
+			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
+			// Use BASS_ChannelGetData(Int32, IntPtr, Int32) to retrieve decoded sample data.
+			// The BASS_SAMPLE_SOFTWARE, BASS_SAMPLE_3D, BASS_SAMPLE_FX, BASS_STREAM_AUTOFREE and SPEAKER flags can not be used together with this flag.
+			
+			// BASS_STREAM_PRESCAN	Enable pin-point accurate seeking (to the exact byte) on the MP3/MP2/MP1 stream.
+			// This also increases the time taken to create the stream, due to the entire file being pre-scanned for the seek points.
+			
+			//int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_STREAM_PRESCAN);
+			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | (preScanMPStreams ? BASSFlag.BASS_STREAM_PRESCAN : BASSFlag.BASS_DEFAULT));
 			if (stream != 0) {
 				
 				// length in bytes
@@ -310,7 +434,7 @@ namespace FindSimilar.AudioProxies
 		/// <param name="targetSampleRate">Target sample rate</param>
 		public void RecodeTheFile(string fileName, string outFileName, int targetSampleRate)
 		{
-			int stream = Bass.BASS_StreamCreateFile(fileName, 0, 0, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
+			int stream = Bass.BASS_StreamCreateFile(fileName, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
 			TAG_INFO tags = new TAG_INFO();
 			BassTags.BASS_TAG_GetFromFile(stream, tags);
 			int mixerStream = BassMix.BASS_Mixer_StreamCreate(targetSampleRate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
@@ -371,12 +495,24 @@ namespace FindSimilar.AudioProxies
 		
 		#region Open methods
 		public void OpenFile(string path) {
+			
 			// BASS_STREAM_PRESCAN = Pre-scan the file for accurate seek points and length reading in MP3/MP2/MP1 files
 			// and chained OGG files (has no effect on normal OGG files). This can significantly increase the time taken to create the stream, particularly with a large file and/or slow storage media.
+			
 			// BASS_SAMPLE_FLOAT = Use 32-bit floating-point sample data.
-			int stream = Bass.BASS_StreamCreateFile(path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
-			//int stream = Bass.BASS_StreamCreateFile(path, 0, 0, BASSFlag.BASS_DEFAULT);
-			_playingStream = stream;
+			//int stream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
+			_playingStream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_DEFAULT);
+			
+			if (_playingStream != 0)
+			{
+				var info = Bass.BASS_ChannelGetInfo(_playingStream);
+
+				sampleRate = info.freq;
+				bitsPerSample = info.Is8bit ? 8 : (info.Is32bit ? 32 : 16);
+				channels = info.chans;
+
+				duration = Bass.BASS_ChannelBytes2Seconds(_playingStream, Bass.BASS_ChannelGetLength(_playingStream));
+			}
 			CanPlay = true;
 		}
 		#endregion
