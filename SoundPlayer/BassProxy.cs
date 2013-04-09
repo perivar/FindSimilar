@@ -217,20 +217,35 @@ namespace FindSimilar.AudioProxies
 			float[] data = null;
 			
 			// Create streams for re-sampling
+			
+			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
+			// Use BASS_ChannelGetData(Int32, IntPtr, Int32) to retrieve decoded sample data.
+			// The BASS_SAMPLE_SOFTWARE, BASS_SAMPLE_3D, BASS_SAMPLE_FX, BASS_STREAM_AUTOFREE and SPEAKER flags can not be used together with this flag.
+			
+			// BASS_SAMPLE_MONO	Decode/play the stream (MP3/MP2/MP1 only) in mono, reducing the CPU usage (if it was originally stereo).
+			// This flag is automatically applied if BASS_DEVICE_MONO was specified when calling BASS_Init(Int32, Int32, BASSInit, IntPtr, IntPtr).
+			
+			// BASS_SAMPLE_FLOAT	Produce 32-bit floating-point output.
+			// WDM drivers or the BASS_STREAM_DECODE flag are required to use this flag in Windows.
+			
 			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT); //Decode the stream
 			if (stream == 0) {
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 			}
 			
 			// mixer stream
-			//int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_MIXER_END | BASSFlag.BASS_SAMPLE_FLOAT);
-			//int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_MIXER_NORAMPIN);
-			int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
+			int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT);
 			if (mixerStream == 0) {
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 			}
 
-			//if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_FILTER))
+			// BASS_MIXER_DOWNMIX	If the source has more channels than the mixer output (and the mixer is stereo or mono),
+			// then a channel matrix is created, initialized with the appropriate downmixing matrix.
+			// Note the source data is assumed to follow the standard channel ordering, as described in the STREAMPROC documentation.
+			
+			// BASS_MIXER_NORAMPIN	Do not ramp-in the start, including after seeking (BASS_Mixer_ChannelSetPosition).
+			// This is useful for gap-less playback, where a source channel is intended to seamlessly follow another. This does not affect volume and pan changes, which are always ramped.
+			
 			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_DOWNMIX | BASSFlag.BASS_MIXER_NORAMPIN))
 			{
 				int bufferSize = samplerate * 20 * 4; /*read 10 seconds at each iteration*/
@@ -410,7 +425,6 @@ namespace FindSimilar.AudioProxies
 			// BASS_STREAM_PRESCAN	Enable pin-point accurate seeking (to the exact byte) on the MP3/MP2/MP1 stream.
 			// This also increases the time taken to create the stream, due to the entire file being pre-scanned for the seek points.
 			
-			//int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_STREAM_PRESCAN);
 			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | (preScanMPStreams ? BASSFlag.BASS_STREAM_PRESCAN : BASSFlag.BASS_DEFAULT));
 			if (stream != 0) {
 				
