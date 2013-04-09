@@ -47,8 +47,6 @@ namespace FindSimilar
 			//
 			// Constructor code after the InitializeComponent() call.
 			//
-			player = GetSoundPlayer();
-			
 			this.DistanceTypeCombo.DataSource = Enum.GetValues(typeof(AudioFeature.DistanceType));
 			
 			this.dataGridView1.Columns.Add("Id", "Id");
@@ -63,14 +61,6 @@ namespace FindSimilar
 			db = new Db();
 			
 			ReadAllTracks();
-		}
-		
-		private IAudio GetSoundPlayer() {
-			
-			//string[] asioDevices = SoundPlayer.GetAsioDriverNames();
-			//return SoundPlayer.GetAsioInstance(asioDevices[0], 250);
-			//return NAudioProxy.GetWaveOutInstance();
-			return BassProxy.Instance;
 		}
 		
 		private void ReadAllTracks() {
@@ -94,33 +84,28 @@ namespace FindSimilar
 			// return if play is auto play is disabled
 			if (!autoPlayCheckBox.Checked) return;
 			
-			/*
-			float[] audioData = Mirage.AudioFileReader.Decode(filePath, Analyzer.SAMPLING_RATE, Analyzer.SECONDS_TO_ANALYZE);
-			if (audioData == null || audioData.Length == 0)  {
-				Dbg.WriteLine("Error! - No Audio Found");
-				return;
-			}
-			
-			NAudioFloatArrayProvider provicer = new NAudioFloatArrayProvider(Analyzer.SAMPLING_RATE, audioData, 2);
-			player.OpenSampleProvider(provicer);
-			 */
-			
-			player = GetSoundPlayer();
+			player = BassProxy.Instance;
 			if (player != null) {
-				/*
-				if (player is BassProxy) {
-					Un4seen.Bass.AddOn.Tags.TAG_INFO tags = ((BassProxy)player).GetTagInfoFromFile(filePath);
-					Debug.WriteLine("Name: {0} Duration {1}", tags.title, tags.duration);
-					
-					float[] audioData = Mirage.AudioFileReader.Decode(filePath, Analyzer.SAMPLING_RATE, Analyzer.SECONDS_TO_ANALYZE);
-				}
-				 */
 				player.Stop();
 				player.OpenFile(filePath);
 				if (player.CanPlay) {
 					player.Play();
 				} else {
-					Debug.WriteLine("Failed playing ...");
+					Debug.WriteLine("Failed playing using Un4Seen Bass, trying to use mplayer ...");
+
+					float[] audioData = Mirage.AudioFileReader.Decode(filePath, Analyzer.SAMPLING_RATE, Analyzer.SECONDS_TO_ANALYZE);
+					if (audioData != null && audioData.Length > 0) {
+						player = NAudioProxy.GetWaveOutInstance();
+						if (player != null) {
+							NAudioFloatArrayProvider provicer = new NAudioFloatArrayProvider(Analyzer.SAMPLING_RATE, audioData, 2);
+							((NAudioProxy) player).OpenSampleProvider(provicer);
+							if (player.CanPlay) {
+								player.Play();
+							} else {
+								MessageBox.Show("Could not play file!", "Error playing file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -131,6 +116,7 @@ namespace FindSimilar
 			}
 		}
 		
+		#region Drag and Drop
 		void TabPage1DragEnter(object sender, DragEventArgs e)
 		{
 			if (e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effect = DragDropEffects.Copy;
@@ -149,6 +135,7 @@ namespace FindSimilar
 				}
 			}
 		}
+		#endregion
 		
 		void AudioFileQueryBtnClick(object sender, EventArgs e)
 		{
@@ -174,6 +161,7 @@ namespace FindSimilar
 			if (player != null) player.Dispose();
 		}
 		
+		#region DataGridView Navigation
 		void DataGridView1SelectionChanged(object sender, EventArgs e)
 		{
 			// on first load the selectedfilepath is null
@@ -212,7 +200,9 @@ namespace FindSimilar
 				PlaySelected();
 			}
 		}
+		#endregion
 		
+		#region ToolStripMenu Clicks
 		void FindSimilarToolStripMenuItemClick(object sender, EventArgs e)
 		{
 			if (dataGridView1.SelectedRows[0].Cells[0].Value != null) {
@@ -221,6 +211,13 @@ namespace FindSimilar
 				FindById(queryId);
 			}
 		}
+		
+		void OpenFileLocationToolStripMenuItemClick(object sender, EventArgs e)
+		{
+			string path = Path.GetDirectoryName(selectedFilePath);
+			System.Diagnostics.Process.Start(path);
+		}
+		#endregion
 		
 		void ResetBtnClick(object sender, EventArgs e)
 		{
@@ -237,9 +234,13 @@ namespace FindSimilar
 				int queryId = -1;
 				int.TryParse(QueryIdTextBox.Text, out queryId);
 				FindById(queryId);
+			} else if (tabControl1.SelectedTab == tabControl1.TabPages["tabStringSearch"]) {
+				string queryString = QueryStringTextBox.Text;
+				FindByString(queryString);
 			}
 		}
 		
+		#region Find methods
 		private void FindByFilePath(string queryPath) {
 			if (queryPath != "") {
 				FileInfo fi = new FileInfo(queryPath);
@@ -294,6 +295,30 @@ namespace FindSimilar
 			//selectedFilePath = null;
 		}
 		
+		private void FindByString(string queryString) {
+
+			if (queryString != "") {
+				
+				// Clear all rows
+				this.dataGridView1.Rows.Clear();
+
+				// search for tracks
+				string whereClause = string.Format("WHERE name like '%{0}%'", queryString);
+				Dictionary<string, KeyValuePair<int, long>> filesFound = db.GetTracks(whereClause);
+				Console.Out.WriteLine("Database contains {0} files that matches the query '{1}'.", filesFound.Count, queryString);
+				
+				int counter = 0;
+				foreach (string filePath in filesFound.Keys) {
+					this.dataGridView1.Rows.Add(filesFound[filePath].Key, filePath, filesFound[filePath].Value);
+					if (counter == NUM_TO_TAKE) break;
+					counter++;
+				}
+			}
+			
+			// reset
+			//selectedFilePath = null;
+		}
+		
 		void QueryIdTextBoxKeyPress(object sender, KeyPressEventArgs e)
 		{
 			if (e.KeyChar == (char) Keys.Enter) {
@@ -311,6 +336,15 @@ namespace FindSimilar
 			}
 		}
 		
+		void QueryStringTextBoxKeyPress(object sender, KeyPressEventArgs e)
+		{
+			if (e.KeyChar == (char) Keys.Enter) {
+				string queryString = QueryStringTextBox.Text;
+				FindByString(queryString);
+			}
+		}
+		#endregion
+
 		void AutoPlayCheckBoxCheckedChanged(object sender, EventArgs e)
 		{
 			if (!autoPlayCheckBox.Checked) {

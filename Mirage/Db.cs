@@ -262,7 +262,7 @@ namespace Mirage
 		/// Return all tracks from the database
 		/// </summary>
 		/// <returns>a dictionary of filenames as Key. The Values are keyvaluepairs with the track-id as Key and duration as Value.</returns>
-		public Dictionary<string, KeyValuePair<int, long>> GetTracks() {
+		public Dictionary<string, KeyValuePair<int, long>> GetTracks(string whereClause = null) {
 
 			Dictionary<string, KeyValuePair<int, long>> trackNames = new Dictionary<string, KeyValuePair<int, long>>();
 			
@@ -270,8 +270,13 @@ namespace Mirage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-
-			dbcmd.CommandText = "SELECT trackid, name, duration FROM mirage";
+			
+			string query = "SELECT trackid, name, duration FROM mirage";
+			if (whereClause != null && whereClause != "") {
+				query = string.Format("{0} {1}", query, whereClause);
+			}
+			
+			dbcmd.CommandText = query;
 			IDataReader reader = dbcmd.ExecuteReader();
 			
 			while(reader.Read())

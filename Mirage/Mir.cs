@@ -279,7 +279,7 @@ namespace Mirage
 				
 				// get all already processed files stored in the database
 				// store in memory
-				// TODO: will this work with huge volumes?
+				// It seems to work well with huge volumes of file (200k)
 				Dictionary<string, KeyValuePair<int, long>> filesProcessed = db.GetTracks();
 				
 				Console.Out.WriteLine("Database contains {0} already processed files.", filesProcessed.Count);

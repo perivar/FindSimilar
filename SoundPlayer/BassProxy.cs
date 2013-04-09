@@ -517,8 +517,7 @@ namespace FindSimilar.AudioProxies
 			//int stream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
 			_playingStream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_DEFAULT);
 			
-			if (_playingStream != 0)
-			{
+			if (_playingStream != 0) {
 				var info = Bass.BASS_ChannelGetInfo(_playingStream);
 
 				sampleRate = info.freq;
@@ -526,8 +525,10 @@ namespace FindSimilar.AudioProxies
 				channels = info.chans;
 
 				duration = Bass.BASS_ChannelBytes2Seconds(_playingStream, Bass.BASS_ChannelGetLength(_playingStream));
+				CanPlay = true;
+			} else {
+				CanPlay = false;
 			}
-			CanPlay = true;
 		}
 		#endregion
 		
