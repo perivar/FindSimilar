@@ -36,7 +36,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Temp" -resetdb</StartArguments>
+    <StartArguments>-gui</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -53,7 +53,10 @@
       <HintPath>NativeLibraries\Bass\Bass.Net.dll</HintPath>
     </Reference>
     <Reference Include="NAudio">
-      <HintPath>..\..\AudioVSTToolbox\CommonUtils\Audio\NAudio\NAudio.dll</HintPath>
+      <HintPath>NativeLibraries\NAudio\NAudio.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.WindowsMediaFormat">
+      <HintPath>NativeLibraries\NAudio\NAudio.WindowsMediaFormat.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -81,40 +84,40 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\Arguments.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\Arguments.cs">
       <Link>Arguments.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\Audio\NAudio\AudioUtilsNAudio.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\Audio\NAudio\AudioUtilsNAudio.cs">
       <Link>AudioUtilsNAudio.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\Audio\RiffRead.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\Audio\RiffRead.cs">
       <Link>RiffRead.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\BinaryFile.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\BinaryFile.cs">
       <Link>BinaryFile.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\BitCounter.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\BitCounter.cs">
       <Link>BitCounter.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\ColorUtils.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\ColorUtils.cs">
       <Link>ColorUtils.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\FFT\fftw\FFTW.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\FFT\fftw\FFTW.cs">
       <Link>FFTW.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\FFT\LomontFFT.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\FFT\LomontFFT.cs">
       <Link>LomontFFT.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\ImageUtils.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\ImageUtils.cs">
       <Link>ImageUtils.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\IOUtils.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\IOUtils.cs">
       <Link>IOUtils.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\MathUtils.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\MathUtils.cs">
       <Link>MathUtils.cs</Link>
     </Compile>
-    <Compile Include="..\..\AudioVSTToolbox\CommonUtils\StringUtils.cs">
+    <Compile Include="..\AudioVSTToolbox\CommonUtils\StringUtils.cs">
       <Link>StringUtils.cs</Link>
     </Compile>
     <Compile Include="aquila\Cache.cs" />
