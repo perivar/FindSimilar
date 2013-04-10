@@ -37,13 +37,17 @@ namespace Mirage
 					floatBuffer = bass.ReadMonoFromFile(fileIn, srate, secondsToAnalyze*1000, (int) (startSeconds*1000));
 					
 					// if this failes, the duration read from the tags was wrong or it is something wrong with the audio file
-					IOUtils.LogMessageToFile(Mir.WARNING_FILES_LOG, fileIn);
+					if (floatBuffer == null) {
+						IOUtils.LogMessageToFile(Mir.WARNING_FILES_LOG, fileIn);
+					}
 				} else {
 					// return whole file
 					floatBuffer = bass.ReadMonoFromFile(fileIn, srate, 0, 0);
 
 					// if this failes, the duration read from the tags was wrong or it is something wrong with the audio file
-					IOUtils.LogMessageToFile(Mir.WARNING_FILES_LOG, fileIn);
+					if (floatBuffer == null) {
+						IOUtils.LogMessageToFile(Mir.WARNING_FILES_LOG, fileIn);
+					}
 				}
 			}
 
