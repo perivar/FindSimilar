@@ -28,14 +28,16 @@ namespace FindSimilar
 		private static Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 		//private static Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 		
-		private static int NUM_TO_TAKE = 100;
-		private static double PERCENTAGE = 0.8; // 1.0 = disabled
-		
+		private static int DEFAULT_NUM_TO_TAKE = 100;
+		private static double DEFAULT_PERCENTAGE_ENABLED = 0.8;
+		private static double DEFAULT_PERCENTAGE_DISABLED = 1.0;
+
 		// Instance Variables
 		private AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 		private Db db = null;
 		private IAudio player = null;
 		private string selectedFilePath = null;
+		private double percentage = DEFAULT_PERCENTAGE_ENABLED;
 		
 		public FindSimilarClientForm()
 		{
@@ -55,7 +57,7 @@ namespace FindSimilar
 			this.dataGridView1.Columns.Add("Path", "Path");
 			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 			
-			this.dataGridView1.Columns.Add("Duration", "Duration");
+			this.dataGridView1.Columns.Add("Duration_Similarity", "Duration (ms) / Similarity");
 			this.dataGridView1.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
 			db = new Db();
@@ -74,11 +76,12 @@ namespace FindSimilar
 			int counter = 0;
 			foreach (string filePath in filesProcessed.Keys) {
 				this.dataGridView1.Rows.Add(filesProcessed[filePath].Key, filePath, filesProcessed[filePath].Value);
-				if (counter == NUM_TO_TAKE) break;
+				if (counter == DEFAULT_NUM_TO_TAKE) break;
 				counter++;
 			}
 		}
 		
+		#region Play
 		private void Play(string filePath) {
 			
 			// return if play is auto play is disabled
@@ -115,6 +118,7 @@ namespace FindSimilar
 				Play(selectedFilePath);
 			}
 		}
+		#endregion
 		
 		#region Drag and Drop
 		void TabPage1DragEnter(object sender, DragEventArgs e)
@@ -152,30 +156,6 @@ namespace FindSimilar
 		}
 		#endregion
 		
-		void AudioFileQueryBtnClick(object sender, EventArgs e)
-		{
-			// convert extension string array to open file dialog filter
-			//openFileDialog.Filter = "Audio Files(*.wav;*.mp3)|*.wav;*.mp3|All files (*.*)|*.*";
-			//string filter = string.Join(";", Mir.extensionsWithStar);
-			//filter = String.Format("Audio Files({0})|{0}|All files (*.*)|*.*", filter);
-			string filter = "All supported Audio Files|*.wav;*.ogg;*.mp1;*.m1a;*.mp2;*.m2a;*.mpa;*.mus;*.mp3;*.mpg;*.mpeg;*.mp3pro;*.aif;*.aiff;*.bwf;*.wma;*.wmv;*.aac;*.adts;*.mp4;*.m4a;*.m4b;*.mod;*.mdz;*.mo3;*.s3m;*.s3z;*.xm;*.xmz;*.it;*.itz;*.umx;*.mtm;*.flac;*.fla;*.oga;*.ogg;*.aac;*.m4a;*.m4b;*.mp4;*.mpc;*.mp+;*.mpp;*.ac3;*.wma;*.ape;*.mac|WAVE Audio|*.wav|Ogg Vorbis|*.ogg|MPEG Layer 1|*.mp1;*.m1a|MPEG Layer 2|*.mp2;*.m2a;*.mpa;*.mus|MPEG Layer 3|*.mp3;*.mpg;*.mpeg;*.mp3pro|Audio IFF|*.aif;*.aiff|Broadcast Wave|*.bwf|Windows Media Audio|*.wma;*.wmv|Advanced Audio Codec|*.aac;*.adts|MPEG 4 Audio|*.mp4;*.m4a;*.m4b|MOD Music|*.mod;*.mdz|MO3 Music|*.mo3|S3M Music|*.s3m;*.s3z|XM Music|*.xm;*.xmz|IT Music|*.it;*.itz;*.umx|MTM Music|*.mtm|Free Lossless Audio Codec|*.flac;*.fla|Free Lossless Audio Codec (Ogg)|*.oga;*.ogg|Advanced Audio Coding|*.aac|Advanced Audio Coding MPEG-4|*.m4a;*.m4b;*.mp4|Musepack|*.mpc;*.mp+;*.mpp|Dolby Digital AC-3|*.ac3|Windows Media Audio|*.wma|Monkey's Audio|*.ape;*.mac";
-			openFileDialog.Filter = filter;
-			if (openFileDialog.ShowDialog() == DialogResult.OK)
-			{
-				AudioFileQueryTextBox.Text = openFileDialog.FileName;
-			}
-		}
-		
-		void DistanceTypeComboSelectedValueChanged(object sender, EventArgs e)
-		{
-			Enum.TryParse<AudioFeature.DistanceType>(DistanceTypeCombo.SelectedValue.ToString(), out distanceType);
-		}
-		
-		void FindSimilarClientFormFormClosing(object sender, FormClosingEventArgs e)
-		{
-			if (player != null) player.Dispose();
-		}
-		
 		#region DataGridView Navigation
 		void DataGridView1SelectionChanged(object sender, EventArgs e)
 		{
@@ -197,18 +177,6 @@ namespace FindSimilar
 			}
 		}
 		
-		void DataGridView1CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
-		{
-			if (e.Button == MouseButtons.Right) {
-				dataGridView1.CurrentCell = dataGridView1[e.ColumnIndex, e.RowIndex];
-			} else if (e.Button == MouseButtons.Left) {
-				if (e.ColumnIndex >= 0 && e.RowIndex >= 0) {
-					dataGridView1.CurrentCell = null;
-					dataGridView1.CurrentCell = dataGridView1[e.ColumnIndex, e.RowIndex];
-				}
-			}
-		}
-		
 		void DataGridView1KeyPress(object sender, KeyPressEventArgs e)
 		{
 			if (e.KeyChar == (char) Keys.Space) {
@@ -218,17 +186,32 @@ namespace FindSimilar
 		
 		void DataGridView1MouseDown(object sender, MouseEventArgs e)
 		{
-			// The DoDragDrop method of a control is used to start a drag and drop operation.
-			// We call it from MouseDown event of the DataGridView.
-			// The first parameter is the data that we want to send in drag and drop operation.
-			// Here we are sending selected rows of the DataGridView.
-			// The second parameter is a DragDropEffects enumeration that provides the drag and drop operation effect.
-			// The cursor style changes accordingly while the drag and drop is being performed.
-			// Possible values are DragDropEffects.All, DragDropEffects.Copy, DragDropEffects.Link, DragDropEffects.Move,
-			// DragDropEffects.None and DragDropEffects.Scroll.
-			if (dataGridView1.SelectedRows[0].Cells[1].Value != null) {
-				string data = dataGridView1.SelectedRows[0].Cells[1].Value.ToString();
-				dataGridView1.DoDragDrop(data, DragDropEffects.Copy);
+			// Get the row index of the item the mouse is below.
+			DataGridView.HitTestInfo hti = dataGridView1.HitTest(e.X, e.Y);
+
+			if (hti.ColumnIndex >= 0 && hti.RowIndex >= 0) {
+				DataGridViewCell dragCell = dataGridView1[hti.ColumnIndex, hti.RowIndex];
+				
+				// set current cell
+				dataGridView1.CurrentCell = null;
+				dataGridView1.CurrentCell = dragCell;
+
+				// check value
+				if (e.Button == MouseButtons.Left) {
+					if (dragCell.Value != null) {
+						
+						// The DoDragDrop method of a control is used to start a drag and drop operation.
+						// We call it from MouseDown event of the DataGridView.
+						// The first parameter is the data that we want to send in drag and drop operation.
+						// The second parameter is a DragDropEffects enumeration that provides the drag and drop operation effect.
+						// The cursor style changes accordingly while the drag and drop is being performed.
+						// Possible values are DragDropEffects.All, DragDropEffects.Copy, DragDropEffects.Link, DragDropEffects.Move,
+						// DragDropEffects.None and DragDropEffects.Scroll.
+						
+						string cellContent = dragCell.Value.ToString();
+						dataGridView1.DoDragDrop(cellContent, DragDropEffects.Copy);
+					}
+				}
 			}
 		}
 		#endregion
@@ -250,6 +233,7 @@ namespace FindSimilar
 		}
 		#endregion
 		
+		#region Button Clicks, Combo and Checkbox Changes and Form Closing
 		void ResetBtnClick(object sender, EventArgs e)
 		{
 			ReadAllTracks();
@@ -271,6 +255,49 @@ namespace FindSimilar
 			}
 		}
 		
+		void AudioFileQueryBtnClick(object sender, EventArgs e)
+		{
+			// convert extension string array to open file dialog filter
+			//openFileDialog.Filter = "Audio Files(*.wav;*.mp3)|*.wav;*.mp3|All files (*.*)|*.*";
+			//string filter = string.Join(";", Mir.extensionsWithStar);
+			//filter = String.Format("Audio Files({0})|{0}|All files (*.*)|*.*", filter);
+			string filter = "All supported Audio Files|*.wav;*.ogg;*.mp1;*.m1a;*.mp2;*.m2a;*.mpa;*.mus;*.mp3;*.mpg;*.mpeg;*.mp3pro;*.aif;*.aiff;*.bwf;*.wma;*.wmv;*.aac;*.adts;*.mp4;*.m4a;*.m4b;*.mod;*.mdz;*.mo3;*.s3m;*.s3z;*.xm;*.xmz;*.it;*.itz;*.umx;*.mtm;*.flac;*.fla;*.oga;*.ogg;*.aac;*.m4a;*.m4b;*.mp4;*.mpc;*.mp+;*.mpp;*.ac3;*.wma;*.ape;*.mac|WAVE Audio|*.wav|Ogg Vorbis|*.ogg|MPEG Layer 1|*.mp1;*.m1a|MPEG Layer 2|*.mp2;*.m2a;*.mpa;*.mus|MPEG Layer 3|*.mp3;*.mpg;*.mpeg;*.mp3pro|Audio IFF|*.aif;*.aiff|Broadcast Wave|*.bwf|Windows Media Audio|*.wma;*.wmv|Advanced Audio Codec|*.aac;*.adts|MPEG 4 Audio|*.mp4;*.m4a;*.m4b|MOD Music|*.mod;*.mdz|MO3 Music|*.mo3|S3M Music|*.s3m;*.s3z|XM Music|*.xm;*.xmz|IT Music|*.it;*.itz;*.umx|MTM Music|*.mtm|Free Lossless Audio Codec|*.flac;*.fla|Free Lossless Audio Codec (Ogg)|*.oga;*.ogg|Advanced Audio Coding|*.aac|Advanced Audio Coding MPEG-4|*.m4a;*.m4b;*.mp4|Musepack|*.mpc;*.mp+;*.mpp|Dolby Digital AC-3|*.ac3|Windows Media Audio|*.wma|Monkey's Audio|*.ape;*.mac";
+			openFileDialog.Filter = filter;
+			if (openFileDialog.ShowDialog() == DialogResult.OK)
+			{
+				AudioFileQueryTextBox.Text = openFileDialog.FileName;
+			}
+		}
+		
+		void DistanceTypeComboSelectedValueChanged(object sender, EventArgs e)
+		{
+			Enum.TryParse<AudioFeature.DistanceType>(DistanceTypeCombo.SelectedValue.ToString(), out distanceType);
+		}
+		
+		void AutoPlayCheckBoxCheckedChanged(object sender, EventArgs e)
+		{
+			if (!autoPlayCheckBox.Checked) {
+				if (player != null) {
+					player.Stop();
+				}
+			}
+		}
+		
+		void IgnoreFileLengthCheckedChanged(object sender, EventArgs e)
+		{
+			if (IgnoreFileLengthCheckBox.Checked) {
+				percentage = DEFAULT_PERCENTAGE_DISABLED;
+			} else {
+				percentage = DEFAULT_PERCENTAGE_ENABLED;
+			}
+		}
+		
+		void FindSimilarClientFormFormClosing(object sender, FormClosingEventArgs e)
+		{
+			if (player != null) player.Dispose();
+		}
+		#endregion
+		
 		#region Find methods
 		private void FindByFilePath(string queryPath) {
 			if (queryPath != "") {
@@ -284,7 +311,7 @@ namespace FindSimilar
 					this.dataGridView1.Rows.Add(-1, queryPath, 0);
 					
 					// Add the found similar tracks
-					var similarTracks = Mir.SimilarTracks(queryPath, db, analysisMethod, NUM_TO_TAKE, PERCENTAGE, distanceType);
+					var similarTracks = Mir.SimilarTracks(queryPath, db, analysisMethod, DEFAULT_NUM_TO_TAKE, percentage, distanceType);
 					foreach (var entry in similarTracks)
 					{
 						this.dataGridView1.Rows.Add(entry.Key.Key, entry.Key.Value, entry.Value);
@@ -312,7 +339,7 @@ namespace FindSimilar
 					this.dataGridView1.Rows.Add(queryId, m1.Name, 0);
 					
 					// Add the found similar tracks
-					var similarTracks = Mir.SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, NUM_TO_TAKE, PERCENTAGE, distanceType);
+					var similarTracks = Mir.SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, DEFAULT_NUM_TO_TAKE, percentage, distanceType);
 					foreach (var entry in similarTracks)
 					{
 						this.dataGridView1.Rows.Add(entry.Key.Key, entry.Key.Value, entry.Value);
@@ -341,7 +368,7 @@ namespace FindSimilar
 				int counter = 0;
 				foreach (string filePath in filesFound.Keys) {
 					this.dataGridView1.Rows.Add(filesFound[filePath].Key, filePath, filesFound[filePath].Value);
-					if (counter == NUM_TO_TAKE) break;
+					if (counter == DEFAULT_NUM_TO_TAKE) break;
 					counter++;
 				}
 			}
@@ -375,14 +402,5 @@ namespace FindSimilar
 			}
 		}
 		#endregion
-
-		void AutoPlayCheckBoxCheckedChanged(object sender, EventArgs e)
-		{
-			if (!autoPlayCheckBox.Checked) {
-				if (player != null) {
-					player.Stop();
-				}
-			}
-		}
 	}
 }
