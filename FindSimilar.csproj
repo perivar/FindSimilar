@@ -376,6 +376,7 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
+    <None Include="README.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FindSimilarClient\FindSimilarClientForm.resx">
