@@ -40,7 +40,10 @@ namespace Mirage
 {
 	public class Mir
 	{
-		static string _version = "1.0.5";
+		static string _version = "1.0.6";
+
+		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
+		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
 		// Supported audio files
 		// These two string arrays needs to be in sync
@@ -263,8 +266,8 @@ namespace Mirage
 		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
 		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
-			FileInfo failedFilesLog = new FileInfo("failed_files_log.txt");
-			failedFilesLog.Delete();
+			FAILED_FILES_LOG.Delete();
+			WARNING_FILES_LOG.Delete();
 			
 			// scan directory for audio files
 			try
@@ -309,7 +312,7 @@ namespace Mirage
 						Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms)", fileInfo.Name, fileCounter, filesRemaining.Count, feature.Duration);
 					} else {
 						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
-						IOUtils.LogMessageToFile(failedFilesLog, fileInfo.FullName);
+						IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
 					}
 				}
 				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, filesAll.Count());

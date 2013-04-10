@@ -36,69 +36,22 @@ namespace Mirage
 					}
 					floatBuffer = bass.ReadMonoFromFile(fileIn, srate, secondsToAnalyze*1000, (int) (startSeconds*1000));
 					
-					// if this failes, the duration read from the tags was wrong
-					// TODO: Take care of this?
+					// if this failes, the duration read from the tags was wrong or it is something wrong with the audio file
+					IOUtils.LogMessageToFile(Mir.WARNING_FILES_LOG, fileIn);
 				} else {
 					// return whole file
 					floatBuffer = bass.ReadMonoFromFile(fileIn, srate, 0, 0);
+
+					// if this failes, the duration read from the tags was wrong or it is something wrong with the audio file
+					IOUtils.LogMessageToFile(Mir.WARNING_FILES_LOG, fileIn);
 				}
-				return floatBuffer;
 			}
 
-			Dbg.WriteLine("Using MPlayer and SOX to decode the file ...");
-			fileIn = Regex.Replace(fileIn, "%20", " ");
-			floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate, secondsToAnalyze);
-			return floatBuffer;
-			
-			
-			// try first to use Naudio to read the file
-			floatBuffer = AudioUtilsNAudio.ReadMonoFromFile(fileIn, srate, 0, 0);
-			if (floatBuffer != null && floatBuffer.Length != 0) {
-				Dbg.WriteLine("Using NAudio to decode the file ...");
-				
-				// if the audio file is larger than seconds to analyze,
-				// find a proper section to exctract
-				int samples = -1;
-				if ((samples = floatBuffer.Length) > secondsToAnalyze*srate) {
-					int seekIndex = (samples/2-(secondsToAnalyze/2)*srate);
-					float[] floatBufferCropped = new float[secondsToAnalyze*srate];
-					Array.Copy(floatBuffer, seekIndex, floatBufferCropped, 0, secondsToAnalyze*srate);
-					
-					Dbg.WriteLine("Decoding Execution Time: " + t.Stop().TotalMilliseconds + " ms");
-					return floatBufferCropped;
-				} else {
-					Dbg.WriteLine("Decoding Execution Time: " + t.Stop().TotalMilliseconds + " ms");
-					return floatBuffer;
-				}
-			}
-			
-			fileIn = Regex.Replace(fileIn, "%20", " ");
-			
-			// check if sox can read it
-			using (Process checkSoxReadable = new Process())
-			{
-				checkSoxReadable.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
-				//checkSox.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
-				checkSoxReadable.StartInfo.Arguments = " --i \"" + fileIn + "\"";
-				checkSoxReadable.StartInfo.UseShellExecute = false;
-				checkSoxReadable.StartInfo.RedirectStandardOutput = true;
-				checkSoxReadable.StartInfo.RedirectStandardError = true;
-				checkSoxReadable.Start();
-				checkSoxReadable.WaitForExit();
-				
-				int exitCode = checkSoxReadable.ExitCode;
-				// 0 = succesfull
-				// 1 = partially succesful
-				// 2 = failed
-				if (exitCode == 0) {
-					// sox can read the file
-					Dbg.WriteLine("Using SOX to decode the file ...");
-					floatBuffer = DecodeUsingSox(fileIn, srate, secondsToAnalyze);
-				} else {
-					// use mplayer to first convert it, then sox to read it
-					Dbg.WriteLine("Using MPlayer and SOX to decode the file ...");
-					floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate, secondsToAnalyze);
-				}
+			// Bass failed reading or never even tried, so use another alternative
+			if (floatBuffer == null) {
+				Dbg.WriteLine("Using MPlayer and SOX to decode the file ...");
+				fileIn = Regex.Replace(fileIn, "%20", " ");
+				floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate, secondsToAnalyze);
 			}
 			return floatBuffer;
 		}

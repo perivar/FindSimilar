@@ -230,13 +230,19 @@ namespace FindSimilar.AudioProxies
 			
 			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT); //Decode the stream
 			if (stream == 0) {
-				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+				// throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+				// failed creating the stream, something wrong with the audio file?
+				Console.Out.WriteLine("[E150] Error reading audio file: {0}. Faulty file? [{1}]", filename, Bass.BASS_ErrorGetCode().ToString());
+				return null;
 			}
 			
 			// mixer stream
 			int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT);
 			if (mixerStream == 0) {
-				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+				//throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+				// failed creating mixer stream, something wrong with the audio file?
+				Console.Out.WriteLine("[E151] Error reading audio file: {0}. Faulty file? [{1}]", filename, Bass.BASS_ErrorGetCode().ToString());
+				return null;
 			}
 
 			// BASS_MIXER_DOWNMIX	If the source has more channels than the mixer output (and the mixer is stereo or mono),
@@ -245,52 +251,57 @@ namespace FindSimilar.AudioProxies
 			
 			// BASS_MIXER_NORAMPIN	Do not ramp-in the start, including after seeking (BASS_Mixer_ChannelSetPosition).
 			// This is useful for gap-less playback, where a source channel is intended to seamlessly follow another. This does not affect volume and pan changes, which are always ramped.
-			
-			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_DOWNMIX | BASSFlag.BASS_MIXER_NORAMPIN))
-			{
+			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_DOWNMIX | BASSFlag.BASS_MIXER_NORAMPIN)) {
 				int bufferSize = samplerate * 20 * 4; /*read 10 seconds at each iteration*/
 				float[] buffer = new float[bufferSize];
 				List<float[]> chunks = new List<float[]>();
 				int size = 0;
-				while ((float)(size) / samplerate * 1000 < totalmilliseconds)
-				{
-					//get re-sampled/mono data
+				while ((float)(size) / samplerate * 1000 < totalmilliseconds) {
+					// get re-sampled/mono data
 					int bytesRead = Bass.BASS_ChannelGetData(mixerStream, buffer, bufferSize);
-					if (bytesRead == 0)
+					if (bytesRead == 0) {
 						break;
+					}
+					
 					float[] chunk = new float[bytesRead / 4]; // each float contains 4 bytes
 					Array.Copy(buffer, chunk, bytesRead / 4);
 					chunks.Add(chunk);
 					size += bytesRead / 4; // size of the data
 				}
 
-				if ((float)(size) / samplerate * 1000 < (milliseconds + startmillisecond))
-					return null; /*not enough samples to return the requested data*/
+				if ((float)(size) / samplerate * 1000 < (milliseconds + startmillisecond)) {
+					// not enough samples to return the requested data
+					Console.Out.WriteLine("[E152] Error reading audio file: {0}. Not enough samples to return the requested data!", filename);
+					return null;
+				}
+				
 				int start = (int)((float)startmillisecond * samplerate / 1000);
 				int end = (milliseconds <= 0) ? size : (int)((float)(startmillisecond + milliseconds) * samplerate / 1000);
 				data = new float[size];
 				int index = 0;
-				/*Concatenate*/
-				foreach (float[] chunk in chunks)
-				{
+				
+				// Concatenate
+				foreach (float[] chunk in chunks) {
 					Array.Copy(chunk, 0, data, index, chunk.Length);
 					index += chunk.Length;
 				}
-				/*Select specific part of the song*/
-				if (start != 0 || end != size)
-				{
+				
+				// Select specific part of the song
+				if (start != 0 || end != size) {
 					float[] temp = new float[end - start];
 					Array.Copy(data, start, temp, 0, end - start);
 					data = temp;
 				}
+			} else {
+				// throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+				Console.Out.WriteLine("[E153] Error reading audio file: {0}. [{1}]", filename, Bass.BASS_ErrorGetCode().ToString());
+				return null;
 			}
-			else
-				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+			
 			Bass.BASS_StreamFree(mixerStream);
 			Bass.BASS_StreamFree(stream);
 			return data;
 		}
-		
 		#endregion
 
 		#region Public Methods
