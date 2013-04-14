@@ -3,7 +3,8 @@
  * http://hop.at/mirage
  *
  * Copyright (C) 2007-2008 Dominik Schnitzer <dominik@schnitzer.at>
- *
+ * Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -51,13 +52,17 @@ namespace Mirage
 			// Load the DCT
 			dct = Matrix.Load(new FileStream("Mirage/Resources/dct.filter", FileMode.Open));
 			#if DEBUG
-			//dct.DrawMatrixGraph("dct-mirage-optimized.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				dct.DrawMatrixGraph("dct-mirage-optimized.png");
+			}
 			#endif
 			
 			// Load the MFCC filters from the filter File.
 			filterWeights = Matrix.Load(new FileStream("Mirage/Resources/filterweights.filter", FileMode.Open));
 			#if DEBUG
-			//filterWeights.DrawMatrixGraph("melfilters-mirage-optimized.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				filterWeights.DrawMatrixGraph("melfilters-mirage-optimized.png");
+			}
 			#endif
 			
 			fwFT = new int[filterWeights.rows, 2];
@@ -112,11 +117,8 @@ namespace Mirage
 
 			try {
 				Matrix mfcc = dct.Multiply(mel);
-
 				Dbg.WriteLine ("Mirage - mfcc Execution Time: {0} ms", t.Stop().TotalMilliseconds);
-
 				return mfcc;
-
 			} catch (MatrixDimensionMismatchException) {
 				throw new MfccFailedException ();
 			}

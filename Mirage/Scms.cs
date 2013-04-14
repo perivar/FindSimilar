@@ -3,7 +3,8 @@
  * http://hop.at/mirage
  *
  * Copyright (C) 2007-2008 Dominik Schnitzer <dominik@schnitzer.at>
- *
+ * Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -79,6 +80,7 @@ namespace Mirage
 			t.Start();
 			
 			Comirva.Audio.Util.Maths.Matrix mean = mfccs.Mean(2);
+
 			#if DEBUG
 			if (Analyzer.OUTPUT_DEBUG_INFO) {
 				mean.WriteText(name + "_mean.txt");
@@ -140,16 +142,22 @@ namespace Mirage
 
 			// Mean
 			Vector m = mfcc.Mean();
+			
 			#if DEBUG
-			m.WriteText(name + "_mean_orig.txt");
-			m.DrawMatrixGraph(name + "_mean_orig.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				m.WriteText(name + "_mean_orig.txt");
+				m.DrawMatrixGraph(name + "_mean_orig.png");
+			}
 			#endif
 			
 			// Covariance
 			Matrix c = mfcc.Covariance(m);
+
 			#if DEBUG
-			c.WriteText(name + "_covariance_orig.txt");
-			c.DrawMatrixGraph(name + "_covariance_orig.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				c.WriteText(name + "_covariance_orig.txt");
+				c.DrawMatrixGraph(name + "_covariance_orig.png");
+			}
 			#endif
 
 			// Inverse Covariance
@@ -161,9 +169,12 @@ namespace Mirage
 				Dbg.WriteLine("MatrixSingularException - Scms failed!");
 				return null;
 			}
+
 			#if DEBUG
-			ic.WriteAscii(name + "_inverse_covariance_orig.txt");
-			ic.DrawMatrixGraph(name + "_inverse_covariance_orig.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				ic.WriteAscii(name + "_inverse_covariance_orig.txt");
+				ic.DrawMatrixGraph(name + "_inverse_covariance_orig.png");
+			}
 			#endif
 
 			// Store the Mean, Covariance, Inverse Covariance in an optimal format.

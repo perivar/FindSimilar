@@ -3,6 +3,7 @@
  * http://hop.at/mirage
  * 
  * Copyright (C) 2007 Dominik Schnitzer <dominik@schnitzer.at>
+ * Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -96,7 +97,9 @@ namespace Mirage
 				}
 			}
 			#if DEBUG
-			//filterWeights.DrawMatrixGraph("melfilters-mirage-lessoptimized.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				filterWeights.DrawMatrixGraph("melfilters-mirage-lessoptimized.png");
+			}
 			#endif
 			
 			// Compute the DCT
@@ -120,7 +123,9 @@ namespace Mirage
 				}
 			}
 			#if DEBUG
-			//dct.DrawMatrixGraph("dct-mirage-lessoptimized.png");
+			if (Analyzer.OUTPUT_DEBUG_INFO) {
+				dct.DrawMatrixGraph("dct-mirage-lessoptimized.png");
+			}
 			#endif
 		}
 		

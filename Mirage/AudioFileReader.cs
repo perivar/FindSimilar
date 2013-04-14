@@ -1,4 +1,27 @@
-﻿using System;
+﻿/*
+ * Mirage - High Performance Music Similarity and Automatic Playlist Generator
+ * http://hop.at/mirage
+ * 
+ * Copyright (C) 2007 Dominik Schnitzer <dominik@schnitzer.at>
+ * Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA  02110-1301, USA.
+ */
+ 
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -10,6 +33,7 @@ using NAudio;
 
 using FindSimilar.AudioProxies;
 
+// Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
 	public class AudioFileReader
@@ -20,6 +44,15 @@ namespace Mirage
 			t.Start();
 
 			float[] floatBuffer = null;
+			
+			// check if file exists
+			if (fileIn != null && fileIn != "") {
+				FileInfo fi = new FileInfo(fileIn);
+				if (!fi.Exists) {
+					Console.Out.WriteLine("No file found {0}!", fileIn);
+					return null;
+				}
+			}
 			
 			// Try to use Un4Seen Bass
 			BassProxy bass = BassProxy.Instance;
@@ -74,7 +107,6 @@ namespace Mirage
 				Dbg.WriteLine("Temporary raw file: " + raw);
 				
 				toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
-				//toraw.StartInfo.FileName = @"C:\Program Files (x86)\sox-14.4.1\sox.exe";
 				toraw.StartInfo.Arguments = " \"" + fileIn + "\" -r "+srate+" -e float -b 32 -G -t raw \"" + raw + "\" channels 1";
 				toraw.StartInfo.UseShellExecute = false;
 				toraw.StartInfo.RedirectStandardOutput = true;
@@ -164,8 +196,6 @@ namespace Mirage
 				Dbg.WriteLine("Temporary wav file: " + soxreadablewav);
 				
 				tosoxreadable.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
-				//tosoxreadable.StartInfo.FileName = @"C:\Program Files (x86)\mplayer-svn-35908\mplayer.exe";
-
 				tosoxreadable.StartInfo.Arguments = " -quiet -vc null -vo null -ao pcm:fast:waveheader \""+fileIn+"\" -ao pcm:file=\\\""+soxreadablewav+"\\\"";
 				tosoxreadable.StartInfo.UseShellExecute = false;
 				tosoxreadable.StartInfo.RedirectStandardOutput = true;
@@ -218,7 +248,6 @@ namespace Mirage
 				Dbg.WriteLine("Temporary wav file: " + wav);
 				
 				towav.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
-				//towav.StartInfo.FileName = @"C:\Program Files (x86)\mplayer-svn-35908\mplayer.exe";
 				towav.StartInfo.Arguments = " -quiet -ao pcm:fast:waveheader \""+fileIn+"\" -format floatle -af resample="+srate+":0:2,pan=1:0.5:0.5 -channels 1 -vo null -vc null -ao pcm:file=\\\""+wav+"\\\"";
 				towav.StartInfo.UseShellExecute = false;
 				towav.StartInfo.RedirectStandardOutput = true;

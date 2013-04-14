@@ -3,6 +3,7 @@
  * http://hop.at/mirage
  * 
  * Copyright (C) 2007 Dominik Schnitzer <dominik@schnitzer.at>
+ * Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +24,7 @@
 using System;
 using System.Diagnostics;
 
+// Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
 

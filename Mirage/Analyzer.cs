@@ -3,7 +3,8 @@
  * http://hop.at/mirage
  *
  * Copyright (C) 2007-2008 Dominik Schnitzer <dominik@schnitzer.at>
- *
+ * Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -40,6 +41,7 @@ using ZedGraph;
 using System.Drawing;
 using System.Drawing.Imaging;
 
+// Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
 	public class Analyzer

@@ -4,7 +4,8 @@
  *
  * Copyright (C) 2007-2008 Dominik Schnitzer <dominik@schnitzer.at>
  *           (C) 2008 Bertrand Lorentz <bertrand.lorentz@gmail.com>
- *
+ * Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
