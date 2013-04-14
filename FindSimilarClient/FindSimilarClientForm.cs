@@ -49,6 +49,7 @@ namespace FindSimilar
 			//
 			// Constructor code after the InitializeComponent() call.
 			//
+			this.version.Text = Mirage.Mir.VERSION;
 			this.DistanceTypeCombo.DataSource = Enum.GetValues(typeof(AudioFeature.DistanceType));
 			
 			this.dataGridView1.Columns.Add("Id", "Id");
@@ -402,5 +403,6 @@ namespace FindSimilar
 			}
 		}
 		#endregion
+
 	}
 }

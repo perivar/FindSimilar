@@ -42,8 +42,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		static string _version = "1.0.6";
-
+		public static string VERSION = "1.0.7";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -703,7 +702,7 @@ namespace Mirage
 		}
 		
 		private static void PrintUsage() {
-			Console.WriteLine("FindSimilar. Version {0}.", _version);
+			Console.WriteLine("FindSimilar. Version {0}.", VERSION);
 			Console.WriteLine("Copyright (C) 2012-2013 Per Ivar Nerseth.");
 			Console.WriteLine();
 			Console.WriteLine("Usage: FindSimilar.exe <Arguments>");

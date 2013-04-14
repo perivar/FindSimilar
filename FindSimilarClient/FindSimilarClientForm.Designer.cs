@@ -50,6 +50,8 @@
 			this.ResetBtn = new System.Windows.Forms.Button();
 			this.autoPlayCheckBox = new System.Windows.Forms.CheckBox();
 			this.IgnoreFileLengthCheckBox = new System.Windows.Forms.CheckBox();
+			this.versionLabel = new System.Windows.Forms.Label();
+			this.version = new System.Windows.Forms.Label();
 			this.tabControl1.SuspendLayout();
 			this.tabFileSearch.SuspendLayout();
 			this.tabIdSearch.SuspendLayout();
@@ -268,12 +270,30 @@
 			this.IgnoreFileLengthCheckBox.UseVisualStyleBackColor = true;
 			this.IgnoreFileLengthCheckBox.CheckedChanged += new System.EventHandler(this.IgnoreFileLengthCheckedChanged);
 			// 
+			// versionLabel
+			// 
+			this.versionLabel.Location = new System.Drawing.Point(12, 6);
+			this.versionLabel.Name = "versionLabel";
+			this.versionLabel.Size = new System.Drawing.Size(46, 17);
+			this.versionLabel.TabIndex = 9;
+			this.versionLabel.Text = "Version:";
+			// 
+			// version
+			// 
+			this.version.Location = new System.Drawing.Point(64, 6);
+			this.version.Name = "version";
+			this.version.Size = new System.Drawing.Size(102, 17);
+			this.version.TabIndex = 10;
+			this.version.Text = "version_number";
+			// 
 			// FindSimilarClientForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(700, 395);
 			this.ContextMenuStrip = this.contextMenuStrip1;
+			this.Controls.Add(this.version);
+			this.Controls.Add(this.versionLabel);
 			this.Controls.Add(this.IgnoreFileLengthCheckBox);
 			this.Controls.Add(this.autoPlayCheckBox);
 			this.Controls.Add(this.ResetBtn);
@@ -295,6 +315,8 @@
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
 		}
+		private System.Windows.Forms.Label version;
+		private System.Windows.Forms.Label versionLabel;
 		private System.Windows.Forms.CheckBox IgnoreFileLengthCheckBox;
 		private System.Windows.Forms.ToolStripMenuItem openFileLocationToolStripMenuItem;
 		private System.Windows.Forms.Label QueryStringLabel;
