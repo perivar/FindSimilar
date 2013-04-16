@@ -231,12 +231,57 @@ namespace Mirage
 					break;
 				case AudioFeature.DistanceType.UCR_Dtw:
 					return UCRCSharp.UCR.DTW(this.GetArray(), other.GetArray());
+				case AudioFeature.DistanceType.CosineSimilarity:
+					return CosineSimilarity(this, other);
 				case AudioFeature.DistanceType.KullbackLeiblerDivergence:
 				default:
 					return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));
 			}
 			Dtw dtw = new Dtw(this.GetArray(), other.GetArray(), distanceMeasure, true, true, null, null, null);
 			return dtw.GetCost();
+		}
+		
+		public static float CosineSimilarity(Scms s1, Scms s2) {
+			float mean = 1 - CosineSimilarity(s1.mean, s2.mean);
+			float cov = 1 - CosineSimilarity(s1.cov, s2.cov);
+			//float icov = CosineSimilarity(s1.icov, s2.icov) * 100;
+			return mean + cov;// + icov;
+		}
+		
+		/// <summary>
+		/// Calculate Cosine Similarity
+		/// </summary>
+		/// <param name="f1">first float array</param>
+		/// <param name="f2">second float array</param>
+		/// <returns>The result of this calculation will always be a value between 0 and 1,
+		/// where 0 means 0% similar, and the 1 means 100% similar.</returns>
+		public static float CosineSimilarity(float[] f1, float[] f2) {
+			
+			// To calculate the cosine similarity, we need to:
+			// Take the dot product of vectors A and B.
+			// Calculate the magnitude of Vector A.
+			// Calculate the magnitude of Vector B.
+			// Multiple the magnitudes of A and B.
+			// Divide the dot product of A and B by the product of the magnitudes of A and B.
+			// The result of this calculation will always be a value between 0 and 1, where 0 means 0% similar, and the 1 means 100% similar.  Pretty convenient, huh?
+			
+			double sim = 0.0d;
+			
+			int N = 0;
+			N = ((f2.Length < f1.Length) ? f2.Length : f1.Length);
+			
+			double dot = 0.0d;
+			double mag1 = 0.0d;
+			double mag2 = 0.0d;
+			for (int n = 0; n < N; n++)
+			{
+				dot += f1[n] * f2[n];
+				mag1 += Math.Pow(f1[n], 2);
+				mag2 += Math.Pow(f2[n], 2);
+			}
+
+			sim = dot / (Math.Sqrt(mag1) * Math.Sqrt(mag2));
+			return (float) (sim);
 		}
 		
 		public double[] GetArray() {

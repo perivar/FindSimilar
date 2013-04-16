@@ -44,6 +44,7 @@
 			this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.findSimilarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.dumpDebugInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.DistanceTypeCombo = new System.Windows.Forms.ComboBox();
 			this.GoBtn = new System.Windows.Forms.Button();
@@ -197,9 +198,10 @@
 			// 
 			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
 									this.findSimilarToolStripMenuItem,
-									this.openFileLocationToolStripMenuItem});
+									this.openFileLocationToolStripMenuItem,
+									this.dumpDebugInfoToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(169, 70);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(169, 92);
 			// 
 			// findSimilarToolStripMenuItem
 			// 
@@ -214,6 +216,13 @@
 			this.openFileLocationToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
 			this.openFileLocationToolStripMenuItem.Text = "Open file location";
 			this.openFileLocationToolStripMenuItem.Click += new System.EventHandler(this.OpenFileLocationToolStripMenuItemClick);
+			// 
+			// dumpDebugInfoToolStripMenuItem
+			// 
+			this.dumpDebugInfoToolStripMenuItem.Name = "dumpDebugInfoToolStripMenuItem";
+			this.dumpDebugInfoToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
+			this.dumpDebugInfoToolStripMenuItem.Text = "Dump debug info";
+			this.dumpDebugInfoToolStripMenuItem.Click += new System.EventHandler(this.DumpDebugInfoToolStripMenuItemClick);
 			// 
 			// DistanceTypeCombo
 			// 
@@ -315,6 +324,7 @@
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
 		}
+		private System.Windows.Forms.ToolStripMenuItem dumpDebugInfoToolStripMenuItem;
 		private System.Windows.Forms.Label version;
 		private System.Windows.Forms.Label versionLabel;
 		private System.Windows.Forms.CheckBox IgnoreFileLengthCheckBox;

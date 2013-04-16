@@ -232,6 +232,27 @@ namespace FindSimilar
 			string path = Path.GetDirectoryName(selectedFilePath);
 			System.Diagnostics.Process.Start(path);
 		}
+
+		void DumpDebugInfoToolStripMenuItemClick(object sender, EventArgs e)
+		{
+			FileInfo fileInfo = new FileInfo(selectedFilePath);
+			
+			AudioFeature feature = null;
+			
+			switch (analysisMethod) {
+				case Analyzer.AnalysisMethod.MandelEllis:
+					feature = Analyzer.AnalyzeMandelEllis(fileInfo, true);
+					break;
+				case Analyzer.AnalysisMethod.SCMS:
+					feature = Analyzer.AnalyzeScms(fileInfo, true);
+					break;
+			}
+			
+			if (feature != null) {
+				string text = String.Format("Name: {0}\nDuration: {1} ms", feature.Name, feature.Duration);
+				MessageBox.Show(text, "Feature information");
+			}
+		}
 		#endregion
 		
 		#region Button Clicks, Combo and Checkbox Changes and Form Closing
@@ -403,6 +424,6 @@ namespace FindSimilar
 			}
 		}
 		#endregion
-
+		
 	}
 }

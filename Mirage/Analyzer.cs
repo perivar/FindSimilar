@@ -73,7 +73,7 @@ namespace Mirage
 		
 		public static void Init () {}
 
-		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath)
+		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=false)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start ();
@@ -115,7 +115,7 @@ namespace Mirage
 			return audioFeature;
 		}
 		
-		public static Scms AnalyzeScms(FileInfo filePath)
+		public static Scms AnalyzeScms(FileInfo filePath, bool doOutputDebugInfo=false)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start ();
@@ -131,10 +131,13 @@ namespace Mirage
 			
 			#if DEBUG
 			if (Analyzer.OUTPUT_DEBUG_INFO) {
-				DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
 				WriteAscii(audiodata, name + "_audiodata.ascii.txt");
 			}
 			#endif
+			
+			if (doOutputDebugInfo) {
+				DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
+			}
 			
 			// Calculate duration in ms
 			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
@@ -177,9 +180,12 @@ namespace Mirage
 
 				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
 				stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
-				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			}
 			#endif
+
+			if (doOutputDebugInfo) {
+				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+			}
 			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
@@ -194,15 +200,20 @@ namespace Mirage
 			if (Analyzer.OUTPUT_DEBUG_INFO) {
 				mfccdata.WriteAscii(name + "_mfccdata.ascii.txt");
 				mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
-				mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
 			}
 			#endif
 			
 			// Store in a Statistical Cluster Model Similarity class.
 			// A Gaussian representation of a song
 			Scms audioFeature = Scms.GetScms(mfccdata, name);
-
+			
 			if (audioFeature != null) {
+				
+				// Store image if debugging
+				if (doOutputDebugInfo) {
+					audioFeature.Image = mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
+				}
+
 				// Store duration
 				audioFeature.Duration = (long) duration;
 				

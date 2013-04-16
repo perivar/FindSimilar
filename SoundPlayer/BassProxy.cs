@@ -99,6 +99,10 @@ namespace FindSimilar.AudioProxies
 			int bassMixVersion = BassMix.BASS_Mixer_GetVersion();
 			int bassfxVersion = BassFx.BASS_FX_GetVersion();
 			
+			#if DEBUG
+			Debug.WriteLine("Bass Version: {0}, Mix Version: {1}, FX Version: {2}", bassVersion, bassMixVersion, bassfxVersion);
+			#endif
+			
 			//Set Sample Rate / MONO
 			//if (Bass.BASS_Init(-1, DEFAULT_SAMPLE_RATE, BASSInit.BASS_DEVICE_SPEAKERS | BASSInit.BASS_DEVICE_MONO | BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero))
 			if (Bass.BASS_Init(-1, DEFAULT_SAMPLE_RATE, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero))

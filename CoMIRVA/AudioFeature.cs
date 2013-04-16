@@ -26,7 +26,8 @@ namespace Comirva.Audio.Feature
 			Dtw_Manhattan = 3,
 			Dtw_SquaredEuclidean = 4,
 			Dtw_Maximum = 5,
-			UCR_Dtw = 6
+			UCR_Dtw = 6,
+			CosineSimilarity = 7
 		}
 		
 		private Image image;
