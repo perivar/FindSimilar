@@ -191,6 +191,25 @@ namespace Comirva.Audio.Util.Maths
 				}
 			}
 		}
+
+		/// <summary>
+		/// Construct matrixData matrix from a two-dimensional array
+		/// </summary>
+		/// <param name="matrix2DArray">2D array</param>
+		public Matrix(double[,] matrix2DArray, int rows, int columns) {
+
+			this.rowCount = rows;
+			this.columnCount = columns;
+
+			double[][] matrixData = new double[rows][];
+			for (int i = 0; i < rows; i++) {
+				matrixData[i] = new double[columns];
+				for (int j = 0; j < columns; j++) {
+					matrixData[i][j] = matrix2DArray[i, j];
+				}
+			}
+			this.matrixData = matrixData;
+		}
 		#endregion
 
 		// ------------------------
@@ -244,11 +263,30 @@ namespace Comirva.Audio.Util.Maths
 		#endregion
 
 		#region Get Methods
+		
+		/// <summary>
 		/// Access the internal two-dimensional array.
-		/// <returns>Pointer to the two-dimensional array of matrix elements.</returns>
+		/// </summary>
+		/// <returns>The two-dimensional array of matrix elements.</returns>
 		public double[][] GetArray()
 		{
 			return matrixData;
+		}
+		
+		/// <summary>
+		/// Return the internal two-dimensional jagged array as a two dimensional array.
+		/// </summary>
+		/// <returns>A two-dimensional array of matrix elements.</returns>
+		public double[,] GetTwoDimensionalArray()
+		{
+			double[,] d = new double[this.Rows, this.Columns];
+			
+			for (int i = 0; i < this.Rows; i++) {
+				for (int j = 0; j < this.Columns; j++) {
+					d[i,j] = this.matrixData[i][j];
+				}
+			}
+			return d;
 		}
 
 		/// <summary>Copy the internal two-dimensional array.</summary>

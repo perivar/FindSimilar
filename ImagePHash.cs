@@ -91,8 +91,8 @@ namespace Imghash
 			//	The DCT separates the image into a collection of frequencies
 			//	and scalars. While JPEG uses an 8x8 DCT, this algorithm uses
 			//	a 32x32 DCT.
-			DCT dct = new DCT(size);
-			double[,] dctVals = dct.ApplyDCT(vals);
+			Dct2 dct = new Dct2(size);
+			double[,] dctVals = dct.Dct(vals);
 			
 			#if DEBUG
 			// create byte array to be able to save the image

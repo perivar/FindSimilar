@@ -583,6 +583,11 @@ namespace Mirage
 		[STAThread]
 		public static void Main(string[] args) {
 
+			//Imghash.Program.DCTTester(false);
+			//DctMethods.test2();
+			//Console.In.ReadLine();
+			//return;
+			
 			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 			

@@ -1,85 +1,90 @@
-using System;
+﻿using System;
+using CommonUtils;
 
-// from http://code.google.com/p/dct-watermark/source/browse/trunk/src/net/watermark/DCT.java?r=2
-public class DCT2 {
+/// <summary>
+/// Mimics the dct2 and idct2 methods from Octave (two-dimensional DCT-II and inverse DCT - DCT-III)
+/// dct2 	= Computes the 2-D discrete cosine transform of matrix x
+/// idct2 	= Computes the inverse 2-D discrete cosine transform of matrix x
+/// </summary>
+/// <remarks>taken from http://stackoverflow.com/questions/4240490/problems-with-dct-and-idct-algorithm-in-java</remarks>
+public class Dct2 : DctInterface {
 	
-	public int N;
-	public double[,] C;
-	public double[,] Ct;
+	private int N;
+	private double[] c;
 
-	public DCT2(int N) {
+	public Dct2(int N) {
 		this.N = N;
-		this.C = new double[N,N];
-		this.Ct = new double[N,N];
+		this.initializeCoefficients();
+	}
+
+	// Some authors further multiply the X0 term by 1/√2
+	// and multiply the resulting matrix by an overall scale factor of √(2/N)
+	// This makes the DCT-II matrix orthogonal, but breaks the direct correspondence with a real-even DFT of half-shifted input.
+	private void initializeCoefficients() {
+		c = new double[N];
+
+		for (int i = 1; i < N; i++) {
+			c[i] = 1;
+		}
+		c[0] = 1 / Math.Sqrt(2.0);
+	}
+
+	// http://unix4lyfe.org/dct/
+	public double[,] Dct(double[,] S) {
 		
-		int i;
-		int j;
-		double pi = Math.Atan(1.0) * 4.0;
-		for (j = 0; j < N; j++) {
-			this.C[0,j] = 1.0 / Math.Sqrt(N);
-			this.Ct[j,0] = this.C[0,j];
-		}
-		for (i = 1; i < N; i++) {
-			for (j = 0; j < N; j++) {
-				this.C[i,j] = Math.Sqrt(2.0 / N) * Math.Cos(pi * (2 * j + 1) * i / (2.0 * N));
-				this.Ct[j,i] = this.C[i,j];
+		double[,] F = new double[N, N];
+		for (int v = 0; v < N; v++) {
+			for (int u = 0; u < N; u++) {
+				
+				double sum = 0.0;
+				for (int y = 0; y < N; y++) {
+					for (int x = 0; x < N; x++) {
+						sum +=
+							Math.Cos( ( v * Math.PI * (2.0 * y + 1) / (2.0 * N) ) ) * 
+							Math.Cos( ( u * Math.PI * (2.0 * x + 1) / (2.0 * N) ) ) * 
+							S[x, y];
+					}
+				}
+				
+				// This only works for a 8x8 bloc of data, or else you would have to change this:
+				// (c[u]*c[v])/4.0)
+				// into something like this:
+				// (2*c[u]*c[v])/Math.Sqrt(M*N)
+				//Where M and N are the dimentions of the table
+				//sum*=((c[u]*c[v])/4.0);
+				sum *= (2 * c[u] * c[v]) / Math.Sqrt(N * N);
+				
+				F[u, v] = sum;
 			}
 		}
+		return F;
 	}
 
-	public void DCT(double[,] input, double[,] output) {
-		double[,] temp = new double[N,N];
-		double temp1;
-		int i, j, k;
-		for (i = 0; i < N; i++) {
-			for (j = 0; j < N; j++) {
-				temp[i,j] = 0.0;
-				for (k = 0; k < N; k++) {
-					temp[i,j] += (input[i,k] - 128) * this.Ct[k,j];
+	// http://unix4lyfe.org/dct/
+	public double[,] InverseDct(double[,] F) {
+		
+		double[,] S = new double[N, N];
+		for (int y = 0; y < N; y++) {
+			for (int x = 0; x < N; x++) {
+				
+				double sum = 0.0;
+				for (int v = 0; v < N; v++) {
+					for (int u = 0; u < N; u++) {
+						// This only works for a 8x8 bloc of data, or else you would have to change this:
+						// (c[u]*c[v])/4.0)
+						// into something like this:
+						// (2*c[u]*c[v])/Math.Sqrt(M*N)
+						//Where M and N are the dimentions of the table
+						//sum+=(c[u]*c[v])/4.0*Math.Cos(((2*i+1)/(2.0*N))*u*Math.PI)*Math.Cos(((2*j+1)/(2.0*N))*v*Math.PI)*F[u,v];
+						sum+=( 2 * c[v] * c[u] ) / Math.Sqrt(N * N) *
+							Math.Cos( ( (2.0 * y + 1 ) / (2.0 * N) ) * v * Math.PI) * 
+							Math.Cos( ( (2.0 * x + 1 ) / (2.0 * N) ) * u * Math.PI) *
+							F[v , u];
+					}
 				}
+				S[y, x] = Math.Round(sum);
 			}
 		}
-
-		for (i = 0; i < N; i++) {
-			for (j = 0; j < N; j++) {
-				temp1 = 0.0;
-				for (k = 0; k < N; k++) {
-					temp1 += this.C[i,k] * temp[k,j];
-				}
-				output[i,j] = (int) Math.Round(temp1);
-			}
-		}
-	}
-
-	public void IDCT(double[,] input, double[,] output) {
-		double[,] temp = new double[N,N];
-		double temp1;
-		int i, j, k;
-
-		for (i = 0; i < N; i++) {
-			for (j = 0; j < N; j++) {
-				temp[i,j] = 0.0;
-				for (k = 0; k < N; k++) {
-					temp[i,j] += input[i,k] * this.C[k,j];
-				}
-			}
-		}
-
-		for (i = 0; i < N; i++) {
-			for (j = 0; j < N; j++) {
-				temp1 = 0.0;
-				for (k = 0; k < N; k++) {
-					temp1 += this.Ct[i,k] * temp[k,j];
-				}
-				temp1 += 128.0;
-				if (temp1 < 0) {
-					output[i,j] = 0;
-				} else if (temp1 > 255) {
-					output[i,j] = 255;
-				} else {
-					output[i,j] = (int) Math.Round(temp1);
-				}
-			}
-		}
+		return S;
 	}
 }

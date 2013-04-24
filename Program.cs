@@ -21,44 +21,54 @@ namespace Imghash
 		}
 		 */
 		
-		public static void DCTTester() {
-			int N = 4;
-			Random generator = new Random();
+		public static void DCTTester(bool doRandom) {
 
+			int N = 0;
 			double[,] f = new double[N,N];
 			double[,] F = new double[N,N];
 			
-			// Generate random integers between 0 and 255
 			Console.WriteLine("Original values");
 			Console.WriteLine("-----------");
 
-			int @value;
-			for (int x=0;x<N;x++)
-			{
-				for (int y=0;y<N;y++)
+			if (doRandom) {
+				// Generate random integers between 0 and 255
+				N = 4;
+				Random generator = new Random();
+
+				int val;
+				for (int x=0;x<N;x++)
 				{
-					@value = generator.Next(255);
-					f[x,y] = @value;
-					Console.WriteLine(f[x,y]+" => f["+x+"]["+y+"]");
+					for (int y=0;y<N;y++)
+					{
+						val = generator.Next(255);
+						f[x,y] = val;
+						Console.WriteLine(f[x,y]+" => f["+x+"]["+y+"]");
+					}
+				}
+			} else {
+				// Set some integers between 0 and 255
+				N = 4;
+				f = new double[,] {
+					{54.0	, 35.0	, 16.0	, 32.0},
+					{128.0	, 185.0	, 1.0	, 89.0},
+					{14.0	, 96.0	, 156.0	, 45.0},
+					{45.0	, 223.0	, 6.0	, 12.0}
+				};
+				// octave3.6.4_gcc4.6.2
+				// > format short g
+				// > X = [54.0, 35.0, 16.0, 32.0; 128.0, 185.0, 1.0, 89.0; 14.0, 96.0, 156.0, 45.0; 45.0, 223.0, 6.0, 12.0]
+				for (int x=0;x<N;x++)
+				{
+					for (int y=0;y<N;y++)
+					{
+						Console.WriteLine(f[x,y]+" => f["+x+"]["+y+"]");
+					}
 				}
 			}
 			
-			/*
-			// force the values to compare
-			f = new double[,] { {54.0, 35.0}, {128.0, 185.0} };
-			for (int x=0;x<N;x++)
-			{
-				for (int y=0;y<N;y++)
-				{
-					Console.WriteLine(f[x,y]+" => f["+x+"]["+y+"]");
-				}
-			}
-			 */
-			
-			//DCT dctApplied = new DCT(N);
-			//dctApplied.ForwardDCT(f, F);
-			DCT dctApplied = new DCT(N);
-			F = dctApplied.ApplyDCT(f);
+			//DctInterface dctApplied = new Dct2(N);
+			DctInterface dctApplied = new DctComirva(N, N);
+			F = dctApplied.Dct(f);
 			
 			Console.WriteLine("\nFrom f to F");
 			Console.WriteLine("-----------");
@@ -77,8 +87,7 @@ namespace Imghash
 				}
 			}
 
-			//dctApplied.InverseDCT(F, f);
-			f = dctApplied.ApplyIDCT(F);
+			f = dctApplied.InverseDct(F);
 			
 			Console.WriteLine("\nBack to f");
 			Console.WriteLine("---------");
