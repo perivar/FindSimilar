@@ -88,34 +88,17 @@ namespace Comirva.Audio
 				}
 			}
 			#if DEBUG
-			if (Mirage.Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Mirage.Analyzer.DEBUG_INFO_VERBOSE) {
 				filterWeights.DrawMatrixGraph("melfilters-mirage-orig.png");
 			}
 			#endif
 			
 			// Compute the DCT
 			// This whole section is copied from GetDCTMatrix() from CoMirva package
-			dct = new Matrix(numberCoefficients, numberFilters);
-			
-			// compute constants
-			double k1 = Math.PI/numberFilters;
-			double w1 = 1.0/(Math.Sqrt(numberFilters));
-			double w2 = Math.Sqrt(2.0/numberFilters);
-
-			//generate dct matrix
-			for(int i = 0; i < numberCoefficients; i++)
-			{
-				for(int j = 0; j < numberFilters; j++)
-				{
-					if(i == 0)
-						dct.Set(i, j, w1 * Math.Cos(k1*i*(j + 0.5d)));
-					else
-						dct.Set(i, j, w2 * Math.Cos(k1*i*(j + 0.5d)));
-				}
-			}
+			dct = new DctComirva(numberCoefficients, numberFilters).DCTMatrix;
 
 			#if DEBUG
-			if (Mirage.Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Mirage.Analyzer.DEBUG_INFO_VERBOSE) {
 				dct.DrawMatrixGraph("dct-mirage-orig.png");
 			}
 			#endif
@@ -144,9 +127,9 @@ namespace Comirva.Audio
 				}
 			}
 			
-			// 6. DCT (Discrete cosine transform)
+			// 6. DCT (Discrete Cosine Transform)
 			Matrix mfcc = dct * mel;
-
+			
 			Mirage.Dbg.WriteLine("mfcc (MfccMirage-MirageWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return mfcc;
 		}
@@ -173,7 +156,7 @@ namespace Comirva.Audio
 			m.LogEquals();
 			m *= log10;
 
-			// 6. DCT (Discrete cosine transform)
+			// 6. DCT (Discrete Cosine Transform)
 			m = dct * m;
 			
 			Mirage.Dbg.WriteLine("mfcc (MfccMirage-ComirvaWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");

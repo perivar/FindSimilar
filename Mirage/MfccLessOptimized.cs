@@ -97,7 +97,7 @@ namespace Mirage
 				}
 			}
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				filterWeights.DrawMatrixGraph("melfilters-mirage-lessoptimized.png");
 			}
 			#endif
@@ -123,7 +123,7 @@ namespace Mirage
 				}
 			}
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				dct.DrawMatrixGraph("dct-mirage-lessoptimized.png");
 			}
 			#endif

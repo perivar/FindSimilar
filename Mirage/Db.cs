@@ -86,7 +86,7 @@ namespace Mirage
 				dbcmd = dbcon.CreateCommand();
 			}
 			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
-				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER)";
+				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER, bitstring TEXT)";
 			
 			try {
 				dbcmd.ExecuteNonQuery();
@@ -138,23 +138,29 @@ namespace Mirage
 		/// <returns>-1 if failed otherwise the track-id passed</returns>
 		public int AddTrack(int trackid, AudioFeature audioFeature)
 		{
+			IDbDataParameter dbTrackIdParam = new SQLiteParameter("@trackid", DbType.Int64);
 			IDbDataParameter dbAudioFeatureParam = new SQLiteParameter("@audioFeature", DbType.Binary);
 			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
 			IDbDataParameter dbDurationParam = new SQLiteParameter("@duration", DbType.Int64);
+			IDbDataParameter dbBitStringParam = new SQLiteParameter("@bitstring", DbType.String);
 			
+			dbTrackIdParam.Value = trackid;
 			dbAudioFeatureParam.Value = audioFeature.ToBytes();
 			dbNameParam.Value = audioFeature.Name;
 			dbDurationParam.Value = audioFeature.Duration;
+			dbBitStringParam.Value = audioFeature.BitString;
 			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration) " +
-				"VALUES (" + trackid + ", @audioFeature, @name, @duration)";
+			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration, bitstring) " +
+				"VALUES (@trackid, @audioFeature, @name, @duration, @bitstring)";
+			dbcmd.Parameters.Add(dbTrackIdParam);
 			dbcmd.Parameters.Add(dbAudioFeatureParam);
 			dbcmd.Parameters.Add(dbNameParam);
 			dbcmd.Parameters.Add(dbDurationParam);
+			dbcmd.Parameters.Add(dbBitStringParam);
 			
 			try {
 				dbcmd.ExecuteNonQuery();
@@ -231,7 +237,7 @@ namespace Mirage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "SELECT audioFeature, name, duration FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, name, duration, bitstring FROM mirage " +
 				"WHERE trackid = " + trackid;
 			IDataReader reader = dbcmd.ExecuteReader();
 			if (!reader.Read()) {
@@ -240,7 +246,8 @@ namespace Mirage
 			
 			byte[] buf = (byte[]) reader.GetValue(0);
 			string name = reader.GetString(1);
-			long duration = (int) reader.GetInt64(2);
+			long duration = reader.GetInt64(2);
+			string bitstring = reader.GetString(3);
 			
 			reader.Close();
 			
@@ -255,6 +262,7 @@ namespace Mirage
 			}
 			audioFeature.Name = name;
 			audioFeature.Duration = duration;
+			audioFeature.BitString = bitstring;
 			
 			return audioFeature;
 		}
@@ -317,7 +325,7 @@ namespace Mirage
 				}
 			}
 			
-			dbcmd.CommandText = "SELECT audioFeature, trackid, name, duration FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, trackid, name, duration, bitstring FROM mirage " +
 				"WHERE trackid NOT in (" + trackSql + ")";
 
 			if (duration > 0 && percentage < 1.0) {
@@ -355,6 +363,7 @@ namespace Mirage
 				mapping[i] = tracksIterator.GetInt32(1);
 				audioFeature.Name = tracksIterator.GetString(2);
 				audioFeature.Duration = tracksIterator.GetInt64(3);
+				audioFeature.BitString = tracksIterator.GetString(4);
 				tracks[i] = audioFeature;
 				i++;
 			}

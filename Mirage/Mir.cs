@@ -583,8 +583,9 @@ namespace Mirage
 		[STAThread]
 		public static void Main(string[] args) {
 
-			//Imghash.Program.DCTTester(false);
-			//DctMethods.test2();
+			//Imghash.Program.HashTester(args);
+			//DctMethods.test2(true);
+			//DctComirva.test();
 			//Console.In.ReadLine();
 			//return;
 			

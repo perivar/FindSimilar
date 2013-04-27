@@ -82,7 +82,7 @@ namespace Mirage
 			Comirva.Audio.Util.Maths.Matrix mean = mfccs.Mean(2);
 
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				mean.WriteText(name + "_mean.txt");
 				mean.DrawMatrixGraph(name + "_mean.png");
 			}
@@ -91,7 +91,7 @@ namespace Mirage
 			// Covariance
 			Comirva.Audio.Util.Maths.Matrix covarMatrix = mfccs.Cov(mean);
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				covarMatrix.WriteText(name + "_covariance.txt");
 				covarMatrix.DrawMatrixGraph(name + "_covariance.png");
 			}
@@ -106,7 +106,7 @@ namespace Mirage
 				return null;
 			}
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				covarMatrixInv.WriteAscii(name + "_inverse_covariance.txt");
 				covarMatrixInv.DrawMatrixGraph(name + "_inverse_covariance.png");
 			}
@@ -144,7 +144,7 @@ namespace Mirage
 			Vector m = mfcc.Mean();
 			
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				m.WriteText(name + "_mean_orig.txt");
 				m.DrawMatrixGraph(name + "_mean_orig.png");
 			}
@@ -154,7 +154,7 @@ namespace Mirage
 			Matrix c = mfcc.Covariance(m);
 
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				c.WriteText(name + "_covariance_orig.txt");
 				c.DrawMatrixGraph(name + "_covariance_orig.png");
 			}
@@ -171,7 +171,7 @@ namespace Mirage
 			}
 
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				ic.WriteAscii(name + "_inverse_covariance_orig.txt");
 				ic.DrawMatrixGraph(name + "_inverse_covariance_orig.png");
 			}
@@ -233,6 +233,8 @@ namespace Mirage
 					return UCRCSharp.UCR.DTW(this.GetArray(), other.GetArray());
 				case AudioFeature.DistanceType.CosineSimilarity:
 					return CosineSimilarity(this, other);
+				case AudioFeature.DistanceType.BitStringHamming:
+					return Imghash.ImagePHash.HammingDistance(this.BitString, other.BitString);
 				case AudioFeature.DistanceType.KullbackLeiblerDivergence:
 				default:
 					return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));

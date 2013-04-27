@@ -27,11 +27,26 @@ namespace Comirva.Audio.Feature
 			Dtw_SquaredEuclidean = 4,
 			Dtw_Maximum = 5,
 			UCR_Dtw = 6,
-			CosineSimilarity = 7
+			CosineSimilarity = 7,
+			BitStringHamming = 8
 		}
 		
+		private string bitString;
 		private Image image;
-		
+
+		/// <summary>
+		/// Bitstring that represents the audio feature.
+		/// This is a 'binary string' (aka bitstring) (like. 001010111011100010) which is easy to do a hamming distance on.
+		/// </summary>
+		public string BitString {
+			get {
+				return bitString;
+			}
+			set {
+				bitString = value;
+			}
+		}
+
 		/// <summary>
 		/// Image that represents the audio feature
 		/// </summary>

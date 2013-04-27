@@ -38,13 +38,255 @@ public class DctMethods
 	}
 
 	/// <summary>
-	/// Method that calculate dct2 in two dimensions directly
+	/// Method that calculate the Discrete Cosine Transform in one dimension.
+	/// </summary>
+	/// <param name="A">signal array</param>
+	/// <returns>returns the one-dimensional discrete cosine transform of A. The resulting array B is the same size as A and contains the discrete cosine transform coefficients B(k1,k2).</returns>
+	public static double[][] dct(double[][] A)
+	{
+		return dct(A, 0);
+	}
+	
+	/// <summary>
+	/// Method that calculate the Discrete Cosine Transform in one dimension.
+	/// </summary>
+	/// <param name="A">signal array</param>
+	/// <param name="offset">value to add or substract to the signal value before multiplying with the Cosine Tranform</param>
+	/// <returns>returns the one-dimensional discrete cosine transform of A. The resulting array B is the same size as A and contains the discrete cosine transform coefficients B(k1,k2).</returns>
+	public static double[][] dct(double[][] A, double offset)
+	{
+		if (A.Length == 0)
+			throw new Exception("A empty");
+
+		if (A[0].Length == 0)
+			throw new Exception("A row empty");
+
+		int n = A.Length;
+		int m = A[0].Length;
+
+		double[][] B = new double[n][];
+		for (int i=0;i<n;i++)
+			B[i] = new double[m];
+		
+		double alfa;
+		double sum;
+
+		for (int k = 0; k < n; k++)
+		{
+			for (int l = 0; l < m; l++)
+			{
+				sum = 0;
+				for (int i = 0; i < n; i++)
+				{
+					sum += (A[i][l] + offset) * Math.Cos((Math.PI * (2.0 * i + 1.0) * k) / (2.0 * n));
+				}
+				alfa = k == 0 ? 1.0 / Math.Sqrt(n) : Math.Sqrt(2.0 / n);
+				B[k][l] = alfa * sum;
+			}
+		}
+
+		return B;
+	}
+
+	/// <summary>
+	/// Method that calculate the Inverse Discrete Cosine Transformin one dimension.
+	/// </summary>
+	/// <param name="A">signal array</param>
+	/// <returns>returns the one-dimensional inverse discrete cosine transform (DCT) of A. The resulting array B is the same size as A and contains the inverse discrete cosine transform coefficients B(k1,k2).</returns>
+	public static double[][] idct(double[][] A)
+	{
+		return idct(A, 0);
+	}
+	
+	/// <summary>
+	/// Method that calculate the Inverse Discrete Cosine Transformin one dimension.
+	/// </summary>
+	/// <param name="A">signal array</param>
+	/// <param name="offset">value to add or substract to the signal value before multiplying with the Cosine Tranform</param>
+	/// <returns>returns the one-dimensional inverse discrete cosine transform (DCT) of A. The resulting array B is the same size as A and contains the inverse discrete cosine transform coefficients B(k1,k2).</returns>
+	public static double[][] idct(double[][] A, double offset)
+	{
+		if (A.Length == 0)
+			throw new Exception("A empty");
+
+		if (A[0].Length == 0)
+			throw new Exception("A row empty");
+
+		int n = A.Length;
+		int m = A[0].Length;
+
+		double[][] B = new double[n][];
+		for (int i=0;i<n;i++)
+			B[i] = new double[m];
+		
+		double alfa;
+
+		for (int k = 0; k < n; k++)
+		{
+			for (int l = 0; l < m; l++)
+			{
+				B[k][l] = 0;
+				for (int i = 0; i < n; i++)
+				{
+					alfa = i == 0 ? 1.0 / Math.Sqrt(n) : Math.Sqrt(2.0 / n);
+					B[k][l] += alfa * A[i][l] * Math.Cos((Math.PI * (2.0 * k + 1) * i) / (2.0 * n));
+				}
+				B[k][l] += offset;
+			}
+		}
+
+		return B;
+	}
+
+	/// <summary>
+	/// Method that calculate the Discrete Cosine Transform2 in two dimensions, first
+	/// calculate the Discrete Cosine Transform in row and after calculate the Discrete Cosine Transform in column
+	/// </summary>
+	/// <param name="A">signal array</param>
+	/// <returns>returns the two-dimensional discrete cosine transform of A. The resulting array B is the same size as A and contains the discrete cosine transform coefficients B(k1,k2).</returns>
+	public static double[][] dct2(double[][] A)
+	{
+		return dct2(A, 0);
+	}
+	
+	/// <summary>
+	/// Method that calculate the Discrete Cosine Transform2 in two dimensions, first
+	/// calculate the Discrete Cosine Transform in row and after calculate the Discrete Cosine Transform in column
+	/// </summary>
+	/// <param name="A">signal array</param>
+	/// <param name="offset">value to add or substract to the signal value before multiplying with the Cosine Tranform</param>
+	/// <returns>returns the two-dimensional discrete cosine transform of A. The resulting array B is the same size as A and contains the discrete cosine transform coefficients B(k1,k2).</returns>
+	public static double[][] dct2(double[][] A, double offset)
+	{
+		if (A.Length == 0)
+			throw new Exception("A empty");
+
+		if (A[0].Length == 0)
+			throw new Exception("A row empty");
+
+		int n = A.Length;
+		int m = A[0].Length;
+
+		double[][] B = new double[n][];
+		for (int i=0;i<n;i++)
+			B[i] = new double[m];
+		
+		double[][] C = new double[n][];
+		for (int i=0;i<n;i++)
+			C[i] = new double[m];
+
+		double alfa;
+		double sum;
+
+		for (int k = 0; k < n; k++)
+		{
+			for (int l = 0; l < m; l++)
+			{
+				sum = 0;
+				for (int i = 0; i < n; i++)
+				{
+					sum += (A[i][l] + offset) * Math.Cos((Math.PI * (2.0 * i + 1.0) * k) / (2.0 * n));
+				}
+				alfa = k == 0 ? 1.0 / Math.Sqrt(n) : Math.Sqrt(2.0 / n);
+				B[k][l] = alfa * sum;
+			}
+		}
+
+		for (int l = 0; l < m; l++)
+		{
+			for (int k = 0; k < n; k++)
+			{
+				sum = 0;
+				for (int j = 0; j < m; j++)
+				{
+					sum += B[k][j] * Math.Cos((Math.PI * (2.0 * j + 1.0) * l) / (2.0 * m));
+				}
+				alfa = l == 0 ? 1.0 / Math.Sqrt(m) : Math.Sqrt(2.0 / m);
+				C[k][l] = alfa * sum;
+			}
+		}
+
+		return C;
+	}
+
+	/// <summary>
+	/// Method that calculate idct2 in two dimensions, first
+	/// calculate the Inverse Discrete Cosine Transformin row and after calculate the Inverse Discrete Cosine Transformin column
+	/// </summary>
+	/// <param name="A">signal array</param>
+	/// <returns>returns the two-dimensional inverse discrete cosine transform (DCT) of A. The resulting array B is the same size as A and contains the inverse discrete cosine transform coefficients B(k1,k2).</returns>
+	public static double[][] idct2(double[][] A)
+	{
+		return idct2(A, 0);
+	}
+	
+	/// <summary>
+	/// Method that calculate idct2 in two dimensions, first
+	/// calculate the Inverse Discrete Cosine Transformin row and after calculate the Inverse Discrete Cosine Transformin column
+	/// </summary>
+	/// <param name="A">signal array</param>
+	/// <param name="offset">value to add or substract to the signal value before multiplying with the Cosine Tranform</param>
+	/// <returns>returns the two-dimensional inverse discrete cosine transform (DCT) of A. The resulting array B is the same size as A and contains the inverse discrete cosine transform coefficients B(k1,k2).</returns>
+	public static double[][] idct2(double[][] A, double offset)
+	{
+		if (A.Length == 0)
+			throw new Exception("A empty");
+
+		if (A[0].Length == 0)
+			throw new Exception("A row empty");
+
+		int n = A.Length;
+		int m = A[0].Length;
+
+		double[][] B = new double[n][];
+		for (int i=0;i<n;i++)
+			B[i] = new double[m];
+		
+		double[][] C = new double[n][];
+		for (int i=0;i<n;i++)
+			C[i] = new double[m];
+
+		double alfa;
+
+		for (int k = 0; k < n; k++)
+		{
+			for (int l = 0; l < m; l++)
+			{
+				B[k][l] = 0;
+				for (int i = 0; i < n; i++)
+				{
+					alfa = i == 0 ? 1.0 / Math.Sqrt(n) : Math.Sqrt(2.0 / n);
+					B[k][l] += alfa * A[i][l] * Math.Cos((Math.PI * (2.0 * k + 1) * i) / (2.0 * n));
+				}
+			}
+		}
+
+		for (int l = 0; l < m; l++)
+		{
+			for (int k = 0; k < n; k++)
+			{
+				C[k][l] = 0;
+				for (int j = 0; j < m; j++)
+				{
+					alfa = j == 0 ? 1.0 / Math.Sqrt(m) : Math.Sqrt(2.0 / m);
+					C[k][l] += alfa * B[k][j] * Math.Cos((Math.PI * (2.0 * l + 1) * j) / (2.0 * m));
+				}
+				C[k][l] += offset;
+			}
+		}
+
+		return C;
+	}
+
+	/// <summary>
+	/// Method that calculate the Discrete Cosine Transform2 in two dimensions directly
 	/// just as described here:
 	/// http://www.mathworks.it/help/toolbox/images/ref/dct2.html
 	/// </summary>
 	/// <param name="A">signal array</param>
 	/// <param name="offset">value to add or substract to the signal value before multiplying with the Cosine Tranform</param>
 	/// <returns>returns the two-dimensional discrete cosine transform of A. The resulting array B is the same size as A and contains the discrete cosine transform coefficients B(k1,k2).</returns>
+	/// <remarks>Even though this method is supposed to be faster than the dct2 version, it's not?!</remarks>
 	public static double[][] dct2in2dimension(double[][] A, double offset)
 	{
 		if (A.Length == 0)
@@ -85,7 +327,9 @@ public class DctMethods
 				{
 					for (int j = 0; j < m; j++)
 					{
-						sum += (A[i][j] + offset) * Math.Cos((Math.PI * (2 * i + 1) * k) / (2 * n)) * Math.Cos((Math.PI * (2 * j + 1) * l) / (2 * m));
+						sum += (A[i][j] + offset)
+							* Math.Cos((Math.PI * (2.0 * i + 1) * k) / (2.0 * n))
+							* Math.Cos((Math.PI * (2.0 * j + 1) * l) / (2.0 * m));
 					}
 				}
 				B[k][l] = alf1[k] * alf2[l] * sum;
@@ -103,7 +347,8 @@ public class DctMethods
 	/// </summary>
 	/// <param name="A">signal array</param>
 	/// <param name="offset">value to add or substract to the signal value before multiplying with the Cosine Tranform</param>
-	/// <returns>returns the two-dimensional inverse discrete cosine transform (DCT) of A. The resulting array B is the same size as A and contains the discrete cosine transform coefficients B(k1,k2).</returns>
+	/// <returns>returns the two-dimensional inverse discrete cosine transform (DCT) of A. The resulting array B is the same size as A and contains the inverse discrete cosine transform coefficients B(k1,k2).</returns>
+	/// <remarks>Even though this method is supposed to be faster than the dct2 version, it's not?!</remarks>
 	public static double[][] idct2in2dimension(double[][] A, double offset)
 	{
 		if (A.Length == 0)
@@ -143,7 +388,9 @@ public class DctMethods
 				{
 					for (int j = 0; j < m; j++)
 					{
-						B[k][l] += alf1[i] * alf2[j] * A[i][j] * Math.Cos((Math.PI * (2 * k + 1) * i) / (2 * n)) * Math.Cos((Math.PI * (2 * l + 1) * j) / (2 * m));
+						B[k][l] += alf1[i] * alf2[j] * A[i][j]
+							* Math.Cos((Math.PI * (2.0 * k + 1) * i) / (2.0 * n))
+							* Math.Cos((Math.PI * (2.0 * l + 1) * j) / (2.0 * m));
 					}
 				}
 				B[k][l] += offset;
@@ -153,125 +400,7 @@ public class DctMethods
 
 		return B;
 	}
-
-	/// <summary>
-	/// Method that calculate dct2 in two dimensions, first
-	/// calculate dct in row and after calculate dct in column
-	/// </summary>
-	/// <param name="A">signal array</param>
-	/// <param name="offset">value to add or substract to the signal value before multiplying with the Cosine Tranform</param>
-	/// <returns>returns the two-dimensional discrete cosine transform of A. The resulting array B is the same size as A and contains the discrete cosine transform coefficients B(k1,k2).</returns>
-	public static double[][] dct2(double[][] A, double offset)
-	{
-		if (A.Length == 0)
-			throw new Exception("A empty");
-
-		if (A[0].Length == 0)
-			throw new Exception("A row empty");
-
-		int n = A.Length;
-		int m = A[0].Length;
-
-		double[][] B = new double[n][];
-		for (int i=0;i<n;i++)
-			B[i] = new double[m];
-		
-		double[][] c2 = new double[n][];
-		for (int i=0;i<n;i++)
-			c2[i] = new double[m];
-
-		double alfa;
-		double sum;
-
-		for (int k = 0; k < n; k++)
-		{
-			for (int l = 0; l < m; l++)
-			{
-				sum = 0;
-				for (int i = 0; i < n; i++)
-				{
-					sum += (A[i][l] + offset) * Math.Cos((Math.PI * (2.0 * i + 1.0) * k) / (2.0 * n));
-				}
-				alfa = k == 0 ? 1.0 / Math.Sqrt(n) : Math.Sqrt(2.0 / n);
-				B[k][l] = alfa * sum;
-			}
-		}
-
-		for (int l = 0; l < m; l++)
-		{
-			for (int k = 0; k < n; k++)
-			{
-				sum = 0;
-				for (int j = 0; j < m; j++)
-				{
-					sum += B[k][j] * Math.Cos((Math.PI * (2.0 * j + 1.0) * l) / (2.0 * m));
-				}
-				alfa = l == 0 ? 1.0 / Math.Sqrt(m) : Math.Sqrt(2.0 / m);
-				c2[k][l] = alfa * sum;
-			}
-		}
-
-		return c2;
-	}
-
-	/// <summary>
-	/// Method that calculate idct2 in two dimensions, first
-	/// calculate idct in row and after calculate idct in column
-	/// </summary>
-	/// <param name="A">signal array</param>
-	/// <param name="offset">value to add or substract to the signal value before multiplying with the Cosine Tranform</param>
-	/// <returns>returns the two-dimensional inverse discrete cosine transform (DCT) of A. The resulting array B is the same size as A and contains the discrete cosine transform coefficients B(k1,k2).</returns>
-	public static double[][] idct2(double[][] A, double offset)
-	{
-		if (A.Length == 0)
-			throw new Exception("A empty");
-
-		if (A[0].Length == 0)
-			throw new Exception("A row empty");
-
-		int n = A.Length;
-		int m = A[0].Length;
-
-		double[][] B = new double[n][];
-		for (int i=0;i<n;i++)
-			B[i] = new double[m];
-		
-		double[][] c2 = new double[n][];
-		for (int i=0;i<n;i++)
-			c2[i] = new double[m];
-
-		double alfa;
-
-		for (int k = 0; k < n; k++)
-		{
-			for (int l = 0; l < m; l++)
-			{
-				B[k][l] = 0;
-				for (int i = 0; i < n; i++)
-				{
-					alfa = i == 0 ? 1.0 / Math.Sqrt(n) : Math.Sqrt(2.0 / n);
-					B[k][l] += alfa * A[i][l] * Math.Cos((Math.PI * (2.0 * k + 1) * i) / (2.0 * n));
-				}
-			}
-		}
-
-		for (int l = 0; l < m; l++)
-		{
-			for (int k = 0; k < n; k++)
-			{
-				c2[k][l] = 0;
-				for (int j = 0; j < m; j++)
-				{
-					alfa = j == 0 ? 1.0 / Math.Sqrt(m) : Math.Sqrt(2.0 / m);
-					c2[k][l] += alfa * B[k][j] * Math.Cos((Math.PI * (2.0 * l + 1) * j) / (2.0 * m));
-				}
-				c2[k][l] += offset;
-			}
-		}
-
-		return c2;
-	}
-
+	
 	/// <summary>
 	/// Compress the matrix with the threshold percentage
 	/// </summary>
@@ -331,17 +460,83 @@ public class DctMethods
 		return A;
 	}
 	
-	// test from example 1
+	public static double[,] dct2(double[,] f) {
+		
+		int rows = f.GetLength(0);
+		int columns = f.GetLength(1);
+
+		double[][] fArray = new double[rows][];
+		for (int i = 0; i < rows; i++) {
+			fArray[i] = new double[columns];
+			for (int j = 0; j < columns; j++) {
+				fArray[i][j] = f[i, j];
+			}
+		}
+		
+		double[][] dctArray = dct2(fArray, 0);
+		
+		double[,] d = new double[rows, columns];
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < columns; j++) {
+				d[i,j] = dctArray[i][j];
+			}
+		}
+
+		return d;
+	}
+	
+	public static double[,] idct2(double[,] F) {
+		
+		int rows = F.GetLength(0);
+		int columns = F.GetLength(1);
+
+		double[][] FArray = new double[rows][];
+		for (int i = 0; i < rows; i++) {
+			FArray[i] = new double[columns];
+			for (int j = 0; j < columns; j++) {
+				FArray[i][j] = F[i, j];
+			}
+		}
+		
+		double[][] dctArray = idct2(FArray, 0);
+		
+		double[,] d = new double[rows, columns];
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < columns; j++) {
+				d[i,j] = dctArray[i][j];
+			}
+		}
+		
+		return d;
+	}
+
+	#region Testing Methods
+	// test 1
+	// Octave results:
 	// format short g
-	// z = [1 2 3; 4 5 6];
+	// z = [1 2 3; 4 5 6; 7 8 9; 10 11 12];
 	//
-	// dct2(z) = [+8.5732   -2.0000    0.0000
-	//            -3.6742         0         0];
-	public static void test1()
+	//octave:5> dct(z)
+	//ans =
+	//          11          13          15
+	//     -6.6913     -6.6913     -6.6913
+	//           0           0           0
+	//    -0.47554    -0.47554    -0.47554
+	//
+	//octave:6> dct2(z)
+	//ans =
+	//      22.517     -2.8284           0
+	//      -11.59           0           0
+	//           0           0           0
+	//    -0.82366           0           0
+	//
+	public static void test1(bool _2D = true)
 	{
 		double[][] vals = new double[][] {
 			new double[] { 1.0, 2.0, 3.0 },
-			new double[] { 4.0, 5.0, 6.0 }
+			new double[] { 4.0, 5.0, 6.0 },
+			new double[] { 7.0, 8.0, 9.0 },
+			new double[] { 10.0, 11.0, 12.0 }
 		};
 		
 		double offset = 0;
@@ -350,27 +545,41 @@ public class DctMethods
 
 		Stopwatch stopWatch = Stopwatch.StartNew();
 		long startS = stopWatch.ElapsedTicks;
-		double[][] result = dct2(vals, offset);
+		double[][] result;
+		if (_2D) {
+			result = dct2(vals, offset);
+			Console.WriteLine("dct2 result: ");
+		} else {
+			result = dct(vals, offset);
+			Console.WriteLine("dct result: ");
+		}
 		long endS = stopWatch.ElapsedTicks;
-
-		Console.WriteLine("dct2 result: ");
 		PrintMatrix(result);
+		Console.WriteLine("time in ticks: " + (endS - startS));
 
-		Console.WriteLine("time: " + (endS - startS));
+		//result = Filter(result, 1.0);
+		//Console.WriteLine("dct2 filtered: ");
+		//PrintMatrix(result);
 
-		result = Filter(result, 1.0);
-
-		Console.WriteLine("dct2 filtered: ");
-		PrintMatrix(result);
-
-		double[][] ivals = idct2(result, -offset);
-		Console.WriteLine("idct2 result: ");
+		long startE = stopWatch.ElapsedTicks;
+		double[][] ivals;
+		if (_2D) {
+			ivals = idct2(result, -offset);
+			Console.WriteLine("idct2 result: ");
+		} else {
+			ivals = idct(result, -offset);
+			Console.WriteLine("idct result: ");
+		}
+		long endE = stopWatch.ElapsedTicks;
 		PrintMatrix(ivals);
+		Console.WriteLine("time in ticks: " + (endE - startE));
 	}
 
-	// test from example 2
+	// test 2
+	// Octave results:
 	// format short g
 	/*
+octave:43>
 z = [139 144 149 153 155 155 155 155;
 144 151 153 156 159 156 156 156;
 150 155 160 163 158 156 156 156;
@@ -379,92 +588,119 @@ z = [139 144 149 153 155 155 155 155;
 161 161 161 161 160 157 157 157;
 162 162 161 163 162 157 157 157;
 162 162 161 161 163 158 158 158];
-	 */
-	// dct2(z-128) =
-	/*
-	   235.6250   -1.0333  -12.0809   -5.2029    2.1250   -1.6724   -2.7080    1.3238
-	   -22.5904  -17.4842   -6.2405   -3.1574   -2.8557   -0.0695    0.4342   -1.1856
-	   -10.9493   -9.2624   -1.5758    1.5301    0.2029   -0.9419   -0.5669   -0.0629
-	    -7.0816   -1.9072    0.2248    1.4539    0.8963   -0.0799   -0.0423    0.3315
-	    -0.6250   -0.8381    1.4699    1.5563   -0.1250   -0.6610    0.6088    1.2752
-	     1.7541   -0.2029    1.6205   -0.3424   -0.7755    1.4759    1.0410   -0.9930
-	    -1.2825   -0.3600   -0.3169   -1.4601   -0.4900    1.7348    1.0758   -0.7613
-	    -2.5999    1.5519   -3.7628   -1.8448    1.8716    1.2139   -0.5679   -0.4456
-	 */
-	public static void test2()
-	{
-		double[][] vals = new double[][] {
-			new double[] { 139.0, 144.0, 149.0, 153.0, 155.0, 155.0, 155.0, 155.0 },
-			new double[] { 144.0, 151.0, 153.0, 156.0, 159.0, 156.0, 156.0, 156.0 },
-			new double[] { 150.0, 155.0, 160.0, 163.0, 158.0, 156.0, 156.0, 156.0 },
-			new double[] { 159.0, 161.0, 162.0, 160.0, 160.0, 159.0, 159.0, 159.0 },
-			new double[] { 159.0, 160.0, 161.0, 162.0, 162.0, 155.0, 155.0, 155.0 },
-			new double[] { 161.0, 161.0, 161.0, 161.0, 160.0, 157.0, 157.0, 157.0 },
-			new double[] { 162.0, 162.0, 161.0, 163.0, 162.0, 157.0, 157.0, 157.0 },
-			new double[] { 162.0, 162.0, 161.0, 161.0, 163.0, 158.0, 158.0, 158.0 } };
 
+octave:43> g = dct2(z-128)
+g =
+      235.62     -1.0333     -12.081     -5.2029       2.125     -1.6724      -2.708      1.3238
+      -22.59     -17.484     -6.2405     -3.1574     -2.8557   -0.069456     0.43417     -1.1856
+     -10.949     -9.2624     -1.5758      1.5301     0.20295    -0.94186    -0.56694   -0.062924
+     -7.0816     -1.9072     0.22479      1.4539     0.89625   -0.079874   -0.042291     0.33154
+      -0.625    -0.83811      1.4699      1.5563      -0.125    -0.66099     0.60885      1.2752
+      1.7541    -0.20286      1.6205    -0.34244    -0.77554      1.4759       1.041    -0.99296
+     -1.2825    -0.35995    -0.31694     -1.4601    -0.48996      1.7348      1.0758    -0.76135
+     -2.5999      1.5519     -3.7628     -1.8448      1.8716      1.2139    -0.56788    -0.44564
+
+octave:44> idct2(g)+128
+ans =
+         139         144         149         153         155         155         155         155
+         144         151         153         156         159         156         156         156
+         150         155         160         163         158         156         156         156
+         159         161         162         160         160         159         159         159
+         159         160         161         162         162         155         155         155
+         161         161         161         161         160         157         157         157
+         162         162         161         163         162         157         157         157
+         162         162         161         161         163         158         158         158
+
+octave:49> g = dct(z-128)
+g =
+
+      74.953      82.024      86.267      90.156      90.156      80.964      80.964      80.964
+     -21.818     -14.969     -9.3908     -6.4728      -5.921     -1.7745     -1.7745     -1.7745
+     -8.8097     -7.5031     -7.3446     -4.6522     -1.2737    -0.46194    -0.46194    -0.46194
+     -2.4118     -3.7457     -3.9958     -3.0683     -1.4969     -1.7704     -1.7704     -1.7704
+     0.70711    -0.70711    -0.70711     -2.4749     0.35355     0.35355     0.35355     0.35355
+       1.365     0.22465     0.90791     0.57409     -1.7777      1.2224      1.2224      1.2224
+    -0.94311     -1.4843     0.74614     0.77897     -2.1512    -0.19134    -0.19134    -0.19134
+     -1.8165      -1.685     0.14561      2.9764     0.20231     -2.3922     -2.3922     -2.3922
+
+octave:50> idct(g)+128
+ans =
+
+         139         144         149         153         155         155         155         155
+         144         151         153         156         159         156         156         156
+         150         155         160         163         158         156         156         156
+         159         161         162         160         160         159         159         159
+         159         160         161         162         162         155         155         155
+         161         161         161         161         160         157         157         157
+         162         162         161         163         162         157         157         157
+         162         162         161         161         163         158         158         158
+	 */
+	public static void test2(bool _2D = true, bool random=false)
+	{
+		double[][] vals;
+		if (random) {
+			// Generate random integers between 0 and 255
+			int N = 8;
+			Random generator = new Random();
+
+			vals = new double[N][];
+			int val;
+			for (int x=0;x<N;x++)
+			{
+				vals[x] = new double[N];
+				for (int y=0;y<N;y++)
+				{
+					val = generator.Next(255);
+					vals[x][y] = val;
+				}
+			}
+		} else {
+			vals = new double[][] {
+				new double[] { 139.0, 144.0, 149.0, 153.0, 155.0, 155.0, 155.0, 155.0 },
+				new double[] { 144.0, 151.0, 153.0, 156.0, 159.0, 156.0, 156.0, 156.0 },
+				new double[] { 150.0, 155.0, 160.0, 163.0, 158.0, 156.0, 156.0, 156.0 },
+				new double[] { 159.0, 161.0, 162.0, 160.0, 160.0, 159.0, 159.0, 159.0 },
+				new double[] { 159.0, 160.0, 161.0, 162.0, 162.0, 155.0, 155.0, 155.0 },
+				new double[] { 161.0, 161.0, 161.0, 161.0, 160.0, 157.0, 157.0, 157.0 },
+				new double[] { 162.0, 162.0, 161.0, 163.0, 162.0, 157.0, 157.0, 157.0 },
+				new double[] { 162.0, 162.0, 161.0, 161.0, 163.0, 158.0, 158.0, 158.0 } };
+		}
 		double offset = -128;
 		Console.WriteLine("vals: ");
 		PrintMatrix(vals);
 
 		Stopwatch stopWatch = Stopwatch.StartNew();
 		long startS = stopWatch.ElapsedTicks;
-		double[][] result = dct2(vals, offset);
+		double[][] result;
+		if (_2D) {
+			result = dct2(vals, offset);
+			Console.WriteLine("dct2 result: ");
+		} else {
+			result = dct(vals, offset);
+			Console.WriteLine("dct result: ");
+		}
 		long endS = stopWatch.ElapsedTicks;
-
-		Console.WriteLine("dct2 result: ");
 		PrintMatrix(result);
 
-		Console.WriteLine("time: " + (endS - startS));
+		Console.WriteLine("time in ticks: " + (endS - startS));
 
 		//result = Filter(result, 0.25);
-		result = CutLeastSignificantCoefficients(result);
-		Console.WriteLine("dct2 filtered: ");
-		PrintMatrix(result);
+		//result = CutLeastSignificantCoefficients(result);
+		//Console.WriteLine("dct2 filtered: ");
+		//PrintMatrix(result);
 
 		long startE = stopWatch.ElapsedTicks;
-		double[][] ivals = idct2(result, -offset);
+		double[][] ivals;
+		if (_2D) {
+			ivals = idct2(result, -offset);
+			Console.WriteLine("idct2 result: ");
+		} else {
+			ivals = idct(result, -offset);
+			Console.WriteLine("idct result: ");
+		}
 		long endE = stopWatch.ElapsedTicks;
-
-		Console.WriteLine("idct2 result: ");
 		PrintMatrix(ivals);
-		Console.WriteLine("time: " + (endE - startE));
+		Console.WriteLine("time in ticks: " + (endE - startE));
 	}
-
-	// test from example 3
-	// 
-	// z =  [3     7    -5
-	//       8    -9     7];
-	//
-	// dct2(z) =
-	// 
-	//     4.4907    4.5000    4.9075
-	//    -0.4082    3.5000  -14.1451
-	public static void test3()
-	{
-		double[][] vals = {
-			new double[] { 3.0, 7.0, -5.0 },
-			new double[] { 8.0, -9.0, 7.0 } };
-		double offset = 0;
-		Console.WriteLine("vals: ");
-		PrintMatrix(vals);
-
-		Stopwatch stopWatch = Stopwatch.StartNew();
-		long startS = stopWatch.ElapsedTicks;
-		double[][] result = dct2(vals, offset);
-		long endS = stopWatch.ElapsedTicks;
-
-		Console.WriteLine("dct2 result: ");
-		PrintMatrix(result);
-
-		Console.WriteLine("time: " + (endS - startS));
-
-		//result = filter(result, 0.25);
-		//Console.WriteLine("dct2 filtered: ");
-		//printMatrix(result);
-
-		double[][] ivals = idct2(result, -offset);
-		Console.WriteLine("idct2 result: ");
-		PrintMatrix(ivals);
-	}
+	#endregion
 }

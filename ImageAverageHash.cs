@@ -52,24 +52,10 @@ namespace Imghash
 			ulong hash = 0; // = Unsigned 64-bit integer
 			for(int i = 0; i < (squeezedImage.Width * squeezedImage.Height); i++)
 			{
-				//if(i % squeezedImage.Width == 0) {
-				//	Console.WriteLine();
-				//}
-
 				if(grayscaleByteArray[i] >= averageValue) {
 					hash |= (1UL << ((squeezedImage.Width * squeezedImage.Height - 1) - i));
-					//string binString = StringUtils.LongToBinaryString((long)hash);
-					//Console.Write(binString + " (" + bitCounter.CountOnesWithPrecomputation(hash) + ")\n");
-					//Console.Write(StringUtils.BinaryStringToHexString(binString)+"\n");
-
-					//	Console.Write(" ");
-					//} else {
-					//	Console.Write("#");
 				}
 			}
-			//Console.WriteLine();
-			//Console.WriteLine();
-
 			return hash;
 		}
 

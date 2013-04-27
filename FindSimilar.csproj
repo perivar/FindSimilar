@@ -143,9 +143,9 @@
     <Compile Include="aquila\WaveFile.cs" />
     <Compile Include="aquila\Window.cs" />
     <Compile Include="DctComirva.cs" />
-    <Compile Include="DctInterface.cs" />
     <Compile Include="DctMethods.cs" />
     <Compile Include="DctLessOptimized.cs" />
+    <Compile Include="DiscreteCosineTransform.cs" />
     <Compile Include="FindSimilarClient\FindSimilarClientForm.cs" />
     <Compile Include="FindSimilarClient\FindSimilarClientForm.Designer.cs">
       <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
@@ -163,7 +163,6 @@
     <Compile Include="CoMIRVA\Matrix.cs" />
     <Compile Include="CoMIRVA\QRDecomposition.cs" />
     <Compile Include="CoMIRVA\SingularValueDecomposition.cs" />
-    <Compile Include="Dct2.cs" />
     <Compile Include="ImagePHash.cs" />
     <Compile Include="ImageAverageHash.cs" />
     <Compile Include="MatchBox\MelFilterBank.cs" />

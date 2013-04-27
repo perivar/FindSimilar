@@ -46,7 +46,8 @@ namespace Mirage
 {
 	public class Analyzer
 	{
-		public static bool OUTPUT_DEBUG_INFO = false;
+		public const bool DEBUG_INFO_VERBOSE = false;
+		public const bool DEFAULT_DEBUG_INFO = false;
 		
 		public enum AnalysisMethod {
 			SCMS = 1,
@@ -55,25 +56,23 @@ namespace Mirage
 		
 		public const int SAMPLING_RATE = 44100; //22050;
 		private const int WINDOW_SIZE = 2048; //2048 1024;
-		private const int MEL_COEFFICIENTS = 36; // 36 filters (SPHINX-III uses 40)
+		private const int MEL_COEFFICIENTS = 40; // 36 filters (SPHINX-III uses 40)
 		public const int MFCC_COEFFICIENTS = 20; //20
 		public const int SECONDS_TO_ANALYZE = 60;
 		
-		private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		//private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		private static MfccMirage mfccMirage = new MfccMirage(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 
 		#if DEBUG
-		private static Mfcc mfccOptimized = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		private static MFCC mfccComirva = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, SAMPLING_RATE/2, MEL_COEFFICIENTS);
+		//private static Mfcc mfccOptimized = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		//private static MFCC mfccComirva = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, SAMPLING_RATE/2, MEL_COEFFICIENTS);
 		#endif
 		
 		// Create the STFS object with 50% overlap (half of the window size);
 		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 		
-		public static void Init () {}
-
-		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=false)
+		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start ();
@@ -115,7 +114,7 @@ namespace Mirage
 			return audioFeature;
 		}
 		
-		public static Scms AnalyzeScms(FileInfo filePath, bool doOutputDebugInfo=false)
+		public static Scms AnalyzeScms(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start ();
@@ -130,7 +129,7 @@ namespace Mirage
 			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
 			
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				WriteAscii(audiodata, name + "_audiodata.ascii.txt");
 			}
 			#endif
@@ -174,7 +173,7 @@ namespace Mirage
 			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audiodata);
 
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				stftdata.WriteAscii(name + "_stftdata.ascii.txt");
 				stftdata.DrawMatrixGraph(name + "_stftdata.png");
 
@@ -192,12 +191,12 @@ namespace Mirage
 			// reflecting similar effects in the human's subjective aural perception)
 			
 			// 5. Take Logarithm
-			// 6. DCT (Discrete cosine transform)
+			// 6. DCT (Discrete Cosine Transform)
 			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
 			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 
 			#if DEBUG
-			if (Analyzer.OUTPUT_DEBUG_INFO) {
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				mfccdata.WriteAscii(name + "_mfccdata.ascii.txt");
 				mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
 			}
@@ -214,6 +213,10 @@ namespace Mirage
 					audioFeature.Image = mfccdata.DrawMatrixImage(name + "_mfccdataimage.png");
 				}
 
+				// Store bitstring hash as well
+				string hashString = GetBitString(mfccdata);
+				audioFeature.BitString = hashString;
+				
 				// Store duration
 				audioFeature.Duration = (long) duration;
 				
@@ -292,6 +295,50 @@ namespace Mirage
 			}
 			pw.Close();
 		}
+		
+		/// <summary>
+		/// Computes the perceptual hash of an audio file using the mfcc matrix
+		/// </summary>
+		/// <param name="mfcc">mfcc Matrix</param>
+		/// <returns>Returns a 'binary string' (aka bitstring) (like. 001010111011100010) which is easy to do a hamming distance on.</returns>
+		private static string GetBitString(Comirva.Audio.Util.Maths.Matrix mfcc) {
 
+			int rows = mfcc.Rows;
+			int columns = mfcc.Columns;
+			
+			// 5. Compute the average value.
+			// Compute the mean DCT value (using only
+			// the 8x8 DCT low-frequency values and excluding the first term
+			// since the DC coefficient can be significantly different from
+			// the other values and will throw off the average).
+			double total = 0;
+			for (int x = 0; x < rows; x++) {
+				for (int y = 0; y < columns; y++) {
+					total += mfcc.MatrixData[x][y];
+				}
+			}
+			total -= mfcc.MatrixData[0][0];
+			
+			double avg = total / (double)((rows * columns) - 1);
+
+			// 6. Further reduce the DCT.
+			// This is the magic step. Set the 64 hash bits to 0 or 1
+			// depending on whether each of the 64 DCT values is above or
+			// below the average value. The result doesn't tell us the
+			// actual low frequencies; it just tells us the very-rough
+			// relative scale of the frequencies to the mean. The result
+			// will not vary as long as the overall structure of the image
+			// remains the same; this can survive gamma and color histogram
+			// adjustments without a problem.
+			string hash = "";
+			for (int x = 0; x < rows; x++) {
+				for (int y = 0; y < columns; y++) {
+					if (x != 0 && y != 0) {
+						hash += (mfcc.MatrixData[x][y] > avg ? "1" : "0");
+					}
+				}
+			}
+			return hash;
+		}
 	}
 }
