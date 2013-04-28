@@ -29,7 +29,7 @@ namespace Comirva.Audio
 		/// <param name="winsize">window size</param>
 		/// <param name="srate">sample rate</param>
 		/// <param name="numberFilters">number of filters (MEL COEFFICIENTS). E.g. 36 (SPHINX-III uses 40)</param>
-		/// <param name="numberCoefficients">number of MFCC COEFFICIENTS</param>
+		/// <param name="numberCoefficients">number of MFCC COEFFICIENTS. E.g. 20</param>
 		public MfccMirage(int winsize, int srate, int numberFilters, int numberCoefficients)
 		{
 			double[] mel = new double[srate/2 - 19];
@@ -106,19 +106,26 @@ namespace Comirva.Audio
 		
 		/// <summary>
 		/// Apply internal DCT and Mel Filterbands
+		/// This method is faster than ApplyComirvaWay since it uses fewer loops.
 		/// </summary>
-		/// <param name="m">matrix</param>
+		/// <param name="m">matrix (stftdata)</param>
 		/// <returns>matrix mel scaled and dct'ed</returns>
 		public Matrix Apply(ref Matrix m)
 		{
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
+			//m.WriteAscii("m-original.ascii.txt");
+			//m.DrawMatrixGraph("m-original.png", true);
+			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
 			// reflecting similar effects in the human's subjective aural perception)
-			Matrix mel = new Matrix(filterWeights.Rows, m.Columns);
-			mel = filterWeights * m;
+			//Matrix mel = new Matrix(filterWeights.Rows, m.Columns);
+			Matrix mel = filterWeights * m;
+			
+			//mel.WriteAscii("mel-original.ascii.txt");
+			//mel.DrawMatrixGraph("mel-original.png", true);
 			
 			// 5. Take Logarithm
 			for (int i = 0; i < mel.Rows; i++) {
@@ -127,8 +134,15 @@ namespace Comirva.Audio
 				}
 			}
 			
+			//mel.WriteAscii("mel-log10-original.ascii.txt");
+			//mel.DrawMatrixGraph("mel-log10-original.png", true);
+			
 			// 6. DCT (Discrete Cosine Transform)
 			Matrix mfcc = dct * mel;
+			//double[][] dctMel = DctMethods.dct(mel.MatrixData);
+			//Matrix mfcc = new Matrix(dctMel);
+			//mfcc.WriteAscii("mfcc-original.ascii.txt");
+			//mfcc.DrawMatrixGraph("mfcc-original.png", true);
 			
 			Mirage.Dbg.WriteLine("mfcc (MfccMirage-MirageWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return mfcc;
@@ -137,7 +151,7 @@ namespace Comirva.Audio
 		/// <summary>
 		/// Apply internal DCT and Mel Filterbands utilising the Comirva Matrix methods
 		/// </summary>
-		/// <param name="m">matrix</param>
+		/// <param name="m">matrix (stftdata)</param>
 		/// <returns>matrix mel scaled and dct'ed</returns>
 		public Matrix ApplyComirvaWay(ref Matrix m)
 		{
@@ -160,6 +174,53 @@ namespace Comirva.Audio
 			m = dct * m;
 			
 			Mirage.Dbg.WriteLine("mfcc (MfccMirage-ComirvaWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return m;
+		}
+		
+		/// <summary>
+		/// Perform an inverse mfcc. E.g. perform an idct and inverse Mel Filterbands and return stftdata
+		/// </summary>
+		/// <param name="mfcc">mfcc matrix</param>
+		/// <returns>matrix idct'ed and mel removed (e.g. stftdata)</returns>
+		public Matrix InverseMfcc(ref Matrix mfcc)
+		{
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
+			
+			//mfcc.WriteAscii("mfcc-inverse.ascii.txt");
+			//mfcc.DrawMatrixGraph("mfcc-inverse.png", true);
+			
+			// 6. Perform the IDCT (Inverse Discrete Cosine Transform)
+			//double[][] dctMel = DctMethods.idct(mfcc.MatrixData);
+			//Matrix mel = new Matrix(dctMel);
+			Matrix mel = dct.Transpose() * mfcc;
+			//mel.WriteAscii("mel-log10-inverse.ascii.txt");
+			//mel.DrawMatrixGraph("mel-log10-inverse.png", true);
+			
+			// 5. Take Inverse Logarithm
+			for (int i = 0; i < mel.Rows; i++) {
+				for (int j = 0; j < mel.Columns; j++) {
+					//mel.MatrixData[i][j] = (mel.MatrixData[i][j] < 0.000001 ? 0 : mel.MatrixData[i][j]);
+					mel.MatrixData[i][j] = Math.Pow(10, mel.MatrixData[i][j] / 10);
+				}
+			}
+			
+			//mel.WriteAscii("mel-inverse.ascii.txt");
+			//mel.DrawMatrixGraph("mel-inverse.png", true);
+			
+			// 4. Mel Scale Filterbank
+			// Mel-frequency is proportional to the logarithm of the linear frequency,
+			// reflecting similar effects in the human's subjective aural perception)
+			// Matrix mel = new Matrix(filterWeights.Rows, m.Columns);
+			// mel = filterWeights * m;
+			
+			//Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
+			Matrix m = filterWeights.Transpose() * mel;
+
+			//m.WriteAscii("m-inverse.ascii.txt");
+			//m.DrawMatrixGraph("m-inverse.png", true);
+			
+			Mirage.Dbg.WriteLine("imfcc (MfccMirage-MirageWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
 	}

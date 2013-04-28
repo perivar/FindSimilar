@@ -63,8 +63,31 @@ namespace Comirva.Audio {
 				//}
 			}
 			
-			Mirage.Dbg.WriteLine("Stft (ComputeComirvaMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("stft (ComputeComirvaMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return stft;
+		}
+		
+		/// <summary>
+		/// Perform an inverse STFT and return the audiodata
+		/// </summary>
+		/// <param name="stft">A matrix with the STFT</param>
+		/// <returns>Audio data</returns>
+		public float[] InverseStft(Matrix stft) {
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
+			
+			// stft is a Matrix with "winsize" Rows and "hops" Columns
+			int hops = stft.Columns;
+			int audiodataLength = (hops * hopsize) + winsize;
+			float[] audiodata = new float[audiodataLength];
+			
+			//for (int i = 0; i < hops; i++) {
+			// fft.ComputeComirvaMatrixUsingLomont(ref stft, i, audiodata, i*hopsize);
+			// fft.ComputeInverseComirvaMatrixUsingLomont();
+			//}
+			
+			Mirage.Dbg.WriteLine("istft (ComputeComirvaMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return audiodata;
 		}
 	}
 }

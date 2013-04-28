@@ -47,7 +47,7 @@ namespace Mirage
 	public class Analyzer
 	{
 		public const bool DEBUG_INFO_VERBOSE = false;
-		public const bool DEFAULT_DEBUG_INFO = true;
+		public const bool DEFAULT_DEBUG_INFO = false;
 		
 		public enum AnalysisMethod {
 			SCMS = 1,
@@ -69,7 +69,7 @@ namespace Mirage
 		#endif
 		
 		// Create the STFS object with 50% overlap (half of the window size);
-		private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
+		//private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 		
 		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
@@ -186,6 +186,15 @@ namespace Mirage
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				mfccdata.WriteAscii(name + "_mfccdata.ascii.txt");
 				mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
+			}
+			#endif
+
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				// try to do an inverse mfcc and inverse stft
+				Comirva.Audio.Util.Maths.Matrix stftdata2 = mfccMirage.InverseMfcc(ref mfccdata);
+				stftdata2.DrawMatrixImageLogY(name + "_specgramlog2.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+				float[] audiodata2 = stftMirage.InverseStft(stftdata2);
 			}
 			#endif
 			

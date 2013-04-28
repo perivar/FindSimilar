@@ -162,6 +162,10 @@ namespace Mirage
 			}
 		}
 		
+		public void ComputeInverseComirvaMatrixUsingLomont() {
+			// NOT IMPLEMENTED
+		}
+		
 		~Fft()
 		{
 			fftwf_destroy_plan(fftwPlan);
