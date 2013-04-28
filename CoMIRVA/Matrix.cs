@@ -1541,30 +1541,31 @@ namespace Comirva.Audio.Util.Maths
 		/// </summary>
 		/// <param name="matrixA">Matrix A</param>
 		/// <param name="matrixB">Matrix B</param>
+		/// <param name="doParallel">Whether to use parallel processing (Note! This is much slower when running in STAThread mode!)</param>
 		/// <returns>The dot product</returns>
 		/// <remarks>Developed by Ron Whittle</remarks>
 		/// <see cref="http://www.daniweb.com/software-development/csharp/code/355645/optimizing-matrix-multiplication">Optimizing Matrix Multiplication</see>
-		public static Matrix MatrixProductFast(Matrix matrixA, Matrix matrixB) {
+		public static Matrix MatrixProductFast(Matrix matrixA, Matrix matrixB, bool doParallel=false) {
 			int aRows = matrixA.MatrixData.Length; int aCols = matrixA.MatrixData[0].Length;
 			int bRows = matrixB.MatrixData.Length; int bCols = matrixB.MatrixData[0].Length;
 			if (aCols != bRows)
 				throw new Exception("Non-conformable matrices in MatrixProduct");
 
 			Matrix matrixC = new Matrix(aRows, bCols);
-			MatrixProductFast(aRows, matrixA.MatrixData, matrixB.MatrixData, matrixC.MatrixData, false);
+			MatrixProductFast(aRows, matrixA.MatrixData, matrixB.MatrixData, matrixC.MatrixData, doParallel);
 			
 			return matrixC;
 		}
 		
 		/// <summary>
 		/// Optimized inline multplication of a square matrix: C = A * B.
-		/// Optimized using  PLINQ, which gives us an easy way to perform parallel tasks.
+		/// Parallel optimization using PLINQ can be turned on, which gives us an easy way to perform parallel tasks.
 		/// </summary>
 		/// <param name="N">Number of Rows and Columns (identical since the matrix has to be square and of similar size)</param>
 		/// <param name="A">Matrix A</param>
 		/// <param name="B">Matrix B</param>
 		/// <param name="C">Resulting Matrix C. Array C must be fully allocated or you'll get a null reference exception</param>
-		/// <param name="doParallel">Whether to use parallel processing (normally slower?!)</param>
+		/// <param name="doParallel">Whether to use parallel processing (Note! This is much slower when running in STAThread mode!)</param>
 		/// <remarks>Developed by Ron Whittle</remarks>
 		/// <see cref="http://www.daniweb.com/software-development/csharp/code/355645/optimizing-matrix-multiplication">Optimizing Matrix Multiplication</see>
 		private static void MatrixProductFast(int N, double[][] A, double[][] B, double[][] C, bool doParallel) {
@@ -1589,9 +1590,9 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="B">Matrix B</param>
 		/// <param name="C">Resulting Matrix C. Array C must be fully allocated or you'll get a null reference exception</param>
 		/// <param name="i">Parameter to the method and calculate multiple rows at a time</param>
-		/// <remarks>This is also the conclusion described here:
-		/// http://www.heatonresearch.com/content/choosing-best-c-array-type-matrix-multiplication
-		/// </remarks>
+		/// <remarks>Developed by Ron Whittle</remarks>
+		/// <see cref="http://www.daniweb.com/software-development/csharp/code/355645/optimizing-matrix-multiplication">Optimizing Matrix Multiplication</see>
+		/// <seealso cref="http://www.heatonresearch.com/content/choosing-best-c-array-type-matrix-multiplication">Optimizing Matrix Multiplication Conclusion</seealso>
 		private static void MatrixProductFast(int N, double[][] A, double[][] B, double[][] C, int i) {
 			
 			// This leads into the best part about using jagged arrays.
