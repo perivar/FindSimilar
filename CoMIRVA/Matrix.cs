@@ -7,6 +7,8 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
+using System.Threading.Tasks; // for using Parallell tasks (dot product)
+
 using CommonUtils;
 
 // For drawing graph
@@ -68,6 +70,12 @@ namespace Comirva.Audio.Util.Maths
 		//   Class variables
 		// ------------------------
 
+		// Random to make sure the seed is different and we actually get real random numbers when using it
+		private static readonly Random random = new Random();
+		
+		// Epsilon, used for comparing if matrices are identical
+		private const double EPSILON = 0.00000001;
+		
 		// Array for internal storage of elements.
 		private double[][] matrixData;
 
@@ -118,7 +126,7 @@ namespace Comirva.Audio.Util.Maths
 			this.rowCount = rows;
 			this.columnCount = columns;
 			matrixData = new double[rows][];
-			for (int i=0;i<rows;i++)
+			for (int i = 0; i < rows; i++)
 				matrixData[i] = new double[columns];
 		}
 
@@ -201,14 +209,13 @@ namespace Comirva.Audio.Util.Maths
 			this.rowCount = rows;
 			this.columnCount = columns;
 
-			double[][] matrixData = new double[rows][];
+			this.matrixData = new double[rows][];
 			for (int i = 0; i < rows; i++) {
 				matrixData[i] = new double[columns];
 				for (int j = 0; j < columns; j++) {
 					matrixData[i][j] = matrix2DArray[i, j];
 				}
 			}
-			this.matrixData = matrixData;
 		}
 		#endregion
 
@@ -840,7 +847,7 @@ namespace Comirva.Audio.Util.Maths
 			{
 				for (int j = 0; j < columnCount; j++)
 				{
-					C[i][j] = s*matrixData[i][j];
+					C[i][j] = s * matrixData[i][j];
 				}
 			}
 			return X;
@@ -878,7 +885,7 @@ namespace Comirva.Audio.Util.Maths
 			{
 				throw new ArgumentException("Matrix inner dimensions must agree.");
 			}
-			Matrix X = new Matrix(rowCount,B.columnCount);
+			Matrix X = new Matrix(rowCount, B.columnCount);
 			double[][] C = X.GetArray();
 			double[] Bcolj = new double[columnCount];
 			for (int j = 0; j < B.columnCount; j++)
@@ -893,7 +900,7 @@ namespace Comirva.Audio.Util.Maths
 					double s = 0;
 					for (int k = 0; k < columnCount; k++)
 					{
-						s += Arowi[k]*Bcolj[k];
+						s += Arowi[k] * Bcolj[k];
 					}
 					C[i][j] = s;
 				}
@@ -1127,16 +1134,24 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="rows">Number of rows.</param>
 		/// <param name="columns">Number of colums.</param>
 		/// <returns>An rows-by-columns matrix with uniformly distributed random elements.</returns>
+		/// <remarks>Developed by James McCaffrey</remarks>
+		/// <see cref="http://msdn.microsoft.com/en-us/magazine/jj863137.aspx">Matrix Decomposition</see>
+		public static Matrix Random(int rows, int columns, double minVal, double maxVal)
+		{
+			// return matrix with values between minVal and maxVal
+			Matrix result = new Matrix(rows, columns);
+			for (int i = 0; i < rows; ++i)
+				for (int j = 0; j < columns; ++j)
+					result.MatrixData[i][j] = (maxVal - minVal) * random.NextDouble() + minVal;
+			return result;
+		}
+		
+		/// <summary>Generate matrix with random elements</summary>
+		/// <param name="rows">Number of rows.</param>
+		/// <param name="columns">Number of colums.</param>
+		/// <returns>An rows-by-columns matrix with uniformly distributed random elements.</returns>
 		public static Matrix Random(int rows, int columns) {
-			Random rand = new Random();
-			Matrix matrixData = new Matrix(rows,columns);
-			double[][] X = matrixData.GetArray();
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < columns; j++) {
-					X[i][j] = rand.NextDouble();
-				}
-			}
-			return matrixData;
+			return Random(rows, columns, -1.0, 1.0);
 		}
 
 		/// <summary>Generate identity matrix</summary>
@@ -1447,18 +1462,175 @@ namespace Comirva.Audio.Util.Maths
 		}
 		#endregion
 		
+		#region Optimized Matrix Multiplication Methods
+		/// <summary>
+		/// Multiply two square matrices
+		/// Optimized using The Task Parallel Library (TPL) in the System.Threading.Tasks namespace in the .NET Framework 4 and later.
+		/// </summary>
+		/// <param name="matrixA">Matrix A</param>
+		/// <param name="matrixB">Matrix B</param>
+		/// <returns>The dot product</returns>
+		/// <remarks>Developed by James McCaffrey</remarks>
+		/// <see cref="http://msdn.microsoft.com/en-us/magazine/jj863137.aspx">Matrix Decomposition</see>
+		public static double[][] MatrixProductParallel(double[][] matrixA, double[][] matrixB)
+		{
+			int aRows = matrixA.Length; int aCols = matrixA[0].Length;
+			int bRows = matrixB.Length; int bCols = matrixB[0].Length;
+			if (aCols != bRows)
+				throw new Exception("Non-conformable matrices in MatrixProduct");
+
+			Matrix result = new Matrix(aRows, bCols);
+
+			/*
+			for (int i = 0; i < aRows; ++i) // each row of A
+				for (int j = 0; j < bCols; ++j) // each col of B
+					for (int k = 0; k < aCols; ++k) // could use k < bRows
+						result.MatrixData[i][j] += matrixA[i][k] * matrixB[k][j];
+			 */
+
+			Parallel.For(0, aRows, i =>
+			             {
+			             	for (int j = 0; j < bCols; ++j) // each col of B
+			             		for (int k = 0; k < aCols; ++k) // could use k < bRows
+			             			result.MatrixData[i][j] += matrixA[i][k] * matrixB[k][j];
+			             }
+			            );
+
+			return result.MatrixData;
+		}
+
+		/// <summary>
+		/// Multiply two square matrices
+		/// Optimized using The Task Parallel Library (TPL) in the System.Threading.Tasks namespace in the .NET Framework 4 and later.
+		/// </summary>
+		/// <param name="matrixA">Matrix A</param>
+		/// <param name="matrixB">Matrix B</param>
+		/// <returns>The dot product</returns>
+		/// <remarks>Developed by James McCaffrey</remarks>
+		/// <see cref="http://msdn.microsoft.com/en-us/magazine/jj863137.aspx">Matrix Decomposition</see>
+		public static Matrix MatrixProductParallel(Matrix matrixA, Matrix matrixB)
+		{
+			int aRows = matrixA.MatrixData.Length; int aCols = matrixA.MatrixData[0].Length;
+			int bRows = matrixB.MatrixData.Length; int bCols = matrixB.MatrixData[0].Length;
+			if (aCols != bRows)
+				throw new Exception("Non-conformable matrices in MatrixProduct");
+
+			Matrix result = new Matrix(aRows, bCols);
+
+			/*
+			for (int i = 0; i < aRows; ++i) // each row of A
+				for (int j = 0; j < bCols; ++j) // each col of B
+					for (int k = 0; k < aCols; ++k) // could use k < bRows
+						result.MatrixData[i][j] += matrixA.MatrixData[i][k] * matrixB.MatrixData[k][j];
+			 */
+
+			Parallel.For(0, aRows, i =>
+			             {
+			             	for (int j = 0; j < bCols; ++j) // each col of B
+			             		for (int k = 0; k < aCols; ++k) // could use k < bRows
+			             			result.MatrixData[i][j] += matrixA.MatrixData[i][k] * matrixB.MatrixData[k][j];
+			             }
+			            );
+
+			return result;
+		}
+		
+		/// <summary>
+		/// Optimized inline multplication of a square matrix: C = A * B.
+		/// Parallel optimization using PLINQ can be turned on, which gives us an easy way to perform parallel tasks.
+		/// </summary>
+		/// <param name="matrixA">Matrix A</param>
+		/// <param name="matrixB">Matrix B</param>
+		/// <returns>The dot product</returns>
+		/// <remarks>Developed by Ron Whittle</remarks>
+		/// <see cref="http://www.daniweb.com/software-development/csharp/code/355645/optimizing-matrix-multiplication">Optimizing Matrix Multiplication</see>
+		public static Matrix MatrixProductFast(Matrix matrixA, Matrix matrixB) {
+			int aRows = matrixA.MatrixData.Length; int aCols = matrixA.MatrixData[0].Length;
+			int bRows = matrixB.MatrixData.Length; int bCols = matrixB.MatrixData[0].Length;
+			if (aCols != bRows)
+				throw new Exception("Non-conformable matrices in MatrixProduct");
+
+			Matrix matrixC = new Matrix(aRows, bCols);
+			MatrixProductFast(aRows, matrixA.MatrixData, matrixB.MatrixData, matrixC.MatrixData, false);
+			
+			return matrixC;
+		}
+		
+		/// <summary>
+		/// Optimized inline multplication of a square matrix: C = A * B.
+		/// Optimized using  PLINQ, which gives us an easy way to perform parallel tasks.
+		/// </summary>
+		/// <param name="N">Number of Rows and Columns (identical since the matrix has to be square and of similar size)</param>
+		/// <param name="A">Matrix A</param>
+		/// <param name="B">Matrix B</param>
+		/// <param name="C">Resulting Matrix C. Array C must be fully allocated or you'll get a null reference exception</param>
+		/// <param name="doParallel">Whether to use parallel processing (normally slower?!)</param>
+		/// <remarks>Developed by Ron Whittle</remarks>
+		/// <see cref="http://www.daniweb.com/software-development/csharp/code/355645/optimizing-matrix-multiplication">Optimizing Matrix Multiplication</see>
+		private static void MatrixProductFast(int N, double[][] A, double[][] B, double[][] C, bool doParallel) {
+			if (doParallel) {
+				var source = Enumerable.Range(0, N);
+				var pquery = from num in source.AsParallel()
+					select num;
+				pquery.ForAll((i) => MatrixProductFast(N, A, B, C, i));
+			} else {
+				for (int i = 0; i < N; i++) {
+					MatrixProductFast(N, A, B, C, i);
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Optimized inline multplication of a square matrix: C = A * B.
+		/// Optimized using  PLINQ, which gives us an easy way to perform parallel tasks.
+		/// </summary>
+		/// <param name="N">Number of Rows and Columns (identical since the matrix has to be square and of similar size)</param>
+		/// <param name="A">Matrix A</param>
+		/// <param name="B">Matrix B</param>
+		/// <param name="C">Resulting Matrix C. Array C must be fully allocated or you'll get a null reference exception</param>
+		/// <param name="i">Parameter to the method and calculate multiple rows at a time</param>
+		/// <remarks>This is also the conclusion described here:
+		/// http://www.heatonresearch.com/content/choosing-best-c-array-type-matrix-multiplication
+		/// </remarks>
+		private static void MatrixProductFast(int N, double[][] A, double[][] B, double[][] C, int i) {
+			
+			// This leads into the best part about using jagged arrays.
+			// With the current code every access to an element is a double index.
+			// First to the row, then to the column.
+			// By introducing some extra variables we can optimize this to a single index in each loop
+			// 
+			// Un-optimized loop:
+			//	for (int i = 0; i < N; i++) {
+			// 		for (int j = 0; j < N; j++) {
+			//			for (int k = 0; k < N; k++) {
+			//				C[i][j] += A[i][k] * B[k][j];
+			//			}
+			//		}
+			//	}
+			
+			// By taking one of the indexes out of the loop,
+			// we can use it as a parameter to the method and calculate multiple rows at a time
+			double[] iRowA = A[i];
+			double[] iRowC = C[i];
+			for (int k = 0; k < N; k++) {
+				double[] kRowB = B[k];
+				double ikA = iRowA[k];
+				for (int j = 0; j < N; j++) {
+					iRowC[j] += ikA * kRowB[j];
+				}
+			}
+		}
+		#endregion
+		
 		#region Print
 
 		/// <summary>
 		/// Print the matrix to stdout. Line the elements up in columns
 		/// with matrixData Fortran-like 'Fw.d' style format.
 		/// </summary>
-		/// <param name="w">Column width.</param>
-		/// <param name="d">Number of digits after the decimal.</param>
 		public void Print()
 		{
 			Print(System.Console.Out);
-			//Print(System.Console.Out, CultureInfo.InvariantCulture, 15);
 		}
 		
 		/// <summary>
@@ -1960,25 +2132,68 @@ namespace Comirva.Audio.Util.Maths
 		}
 		#endregion
 		
+		#region Public Static methods
+		/// <summary>
+		/// Compare two matrices
+		/// </summary>
+		/// <param name="matrixA">Matrix A</param>
+		/// <param name="matrixB">Matrix B</param>
+		/// <param name="epsilon">Epsilon, e.g. what are the maximum difference accepted</param>
+		/// <returns>True if the matrixes are similar</returns>
+		/// <remarks>Developed by James McCaffrey</remarks>
+		/// <see cref="http://msdn.microsoft.com/en-us/magazine/jj863137.aspx">Matrix Decomposition</see>
+		public static bool MatrixAreEqual(double[][] matrixA, double[][] matrixB, double epsilon)
+		{
+			// true if all values in matrixA == corresponding values in matrixB
+			int aRows = matrixA.Length; int aCols = matrixA[0].Length;
+			int bRows = matrixB.Length; int bCols = matrixB[0].Length;
+			if (aRows != bRows || aCols != bCols)
+				throw new Exception("Non-conformable matrices in MatrixAreEqual");
+
+			for (int i = 0; i < aRows; ++i) // each row of A and B
+				for (int j = 0; j < aCols; ++j) // each col of A and B
+					if (Math.Abs(matrixA[i][j] - matrixB[i][j]) > epsilon)
+						return false;
+			return true;
+		}
+
+		/// <summary>
+		/// Return the passed Matrix as string using F3 formatting
+		/// </summary>
+		/// <param name="matrix">matrix</param>
+		/// <returns>Matrix as string</returns>
+		public static string MatrixAsString(Matrix matrix)
+		{
+			string s = "";
+			for (int i = 0; i < matrix.MatrixData.Length; ++i)
+			{
+				for (int j = 0; j < matrix.MatrixData[i].Length; ++j)
+					s += matrix.MatrixData[i][j].ToString("F3").PadLeft(8) + " ";
+				s += Environment.NewLine;
+			}
+			return s;
+		}
+		#endregion
+		
 		#region Overrides & Operators
 		public override string ToString() {
 			return String.Format("Rows: {0}, Columns: {1}", this.rowCount, this.columnCount);
 		}
-
+		
 		public string GetAsString() {
 			StringWriter str = new StringWriter();
 			Print(str);
 			return str.ToString();
 		}
 		
-		public override bool Equals(object obj) { return ((Matrix)obj).GetAsString() == this.GetAsString(); }
 		public override int GetHashCode() { return -1; }
 
+		public override bool Equals(object obj) {
+			return MatrixAreEqual(((Matrix)obj).MatrixData, this.MatrixData, EPSILON);
+		}
+		
 		public static bool operator ==(Matrix A, Matrix B) {
-			if (A.rowCount != B.rowCount || A.columnCount != B.columnCount) return false;
-
-			for (int i = 1; i <= A.rowCount; i++) for (int j = 1; j <= A.columnCount; j++) if (A.matrixData[i][j] != B.matrixData[i][j]) return false;
-			return true;
+			return MatrixAreEqual(A.MatrixData, B.MatrixData, EPSILON);
 		}
 
 		public static bool operator !=(Matrix A, Matrix B) { return !(A == B); }

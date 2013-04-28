@@ -47,7 +47,7 @@ namespace Mirage
 	public class Analyzer
 	{
 		public const bool DEBUG_INFO_VERBOSE = false;
-		public const bool DEFAULT_DEBUG_INFO = false;
+		public const bool DEFAULT_DEBUG_INFO = true;
 		
 		public enum AnalysisMethod {
 			SCMS = 1,
@@ -141,12 +141,9 @@ namespace Mirage
 			// Calculate duration in ms
 			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
 			
-			// Normalize
-			//MathUtils.NormalizeInPlace(audiodata);
-
-			// Matlab multiplies with 2^15 (32768)
 			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
-			// if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
+			// Matlab multiplies with 2^15 (32768)
+			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
 			MathUtils.Multiply(ref audiodata, 32768); // 65536
 			
 			// zero pad if the audio file is too short to perform a mfcc
@@ -155,18 +152,6 @@ namespace Mirage
 				int lenNew = WINDOW_SIZE * 8;
 				Array.Resize<float>(ref audiodata, lenNew);
 			}
-			
-			//check for correct array length
-			/*
-			if ((audiodata.Length % WINDOW_SIZE) != 0)
-			{
-				double l = (double) audiodata.Length / WINDOW_SIZE;
-				l = MathUtils.RoundUp(l);
-				int lenNew = (int) l * WINDOW_SIZE;
-				Array.Resize<float>(ref audiodata, lenNew);
-				//throw new Exception("Input data must be multiple of hop size (windowSize/2).");
-			}
-			 */
 			
 			// 2. Windowing
 			// 3. FFT
@@ -192,6 +177,8 @@ namespace Mirage
 			
 			// 5. Take Logarithm
 			// 6. DCT (Discrete Cosine Transform)
+			// It seems the Mirage way of applying the DCT is slightly faster than the
+			// Comirva way
 			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
 			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 

@@ -477,6 +477,9 @@ namespace Mirage
 			//    4.7087e+015  5.3658e+015  -7.4667e+015  -4.0211e+015   1.2355e+015
 			//    6.6107e+014  1.9093e+015  -1.7135e+015  -1.0698e+015   1.4605e+014
 			
+			long start, stop;
+			double elapsed;
+			
 			double[][] x = new double[][] {
 				new double[] {4.00000, 2.00000, 0.60000},
 				new double[] {4.20000, 2.10000, 0.59000},
@@ -498,6 +501,31 @@ namespace Mirage
 			X.Cov().Inverse().Print();
 			//X.Transpose().Cov().Inverse().Print();
 			//X.Transpose().Cov().InverseGausJordan().Print();
+			
+			Comirva.Audio.Util.Maths.Matrix A = Comirva.Audio.Util.Maths.Matrix.Random(500,500);
+			Comirva.Audio.Util.Maths.Matrix B = Comirva.Audio.Util.Maths.Matrix.Random(500,500);
+			
+			start = DateTime.Now.Ticks;
+			Comirva.Audio.Util.Maths.Matrix C0 = A * B;
+			stop = DateTime.Now.Ticks;
+			elapsed = (stop - start) / 1000.0 / 10000;
+			Console.WriteLine("Standards Multiply:  " + elapsed + " seconds");
+
+			start = DateTime.Now.Ticks;
+			Comirva.Audio.Util.Maths.Matrix C1 = Comirva.Audio.Util.Maths.Matrix.MatrixProductParallel(A, B);
+			stop = DateTime.Now.Ticks;
+			elapsed = (stop - start) / 1000.0 / 10000;
+			Console.WriteLine("MatrixProductParallel:  " + elapsed + " seconds");
+			
+			start = DateTime.Now.Ticks;
+			Comirva.Audio.Util.Maths.Matrix C2 = Comirva.Audio.Util.Maths.Matrix.MatrixProductFast(A, B);
+			stop = DateTime.Now.Ticks;
+			elapsed = (stop - start) / 1000.0 / 10000;
+			Console.WriteLine("MatrixProductFast:  " + elapsed + " seconds");
+			
+			if (C0 == C1 && C0 == C2) {
+				Console.WriteLine("C0, C1 and C2 are Equal");
+			}
 			
 			Console.In.ReadLine();
 			return;
@@ -586,6 +614,7 @@ namespace Mirage
 			//Imghash.Program.HashTester(args);
 			//DctMethods.test2(true);
 			//DctComirva.test();
+			//TestComirvaMatrix();
 			//Console.In.ReadLine();
 			//return;
 			
