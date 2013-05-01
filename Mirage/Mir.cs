@@ -28,7 +28,10 @@ using System.IO;
 using System.Globalization;
 using System.Linq;
 using System.Data;
+
 using System.Threading;
+using System.Threading.Tasks;
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -295,29 +298,32 @@ namespace Mirage
 				Console.Out.WriteLine("Found {0} files remaining in scan directory to be processed.", filesRemaining.Count);
 
 				int fileCounter = filesProcessed.Count;
-				foreach (string f in filesRemaining)
-				{
-					FileInfo fileInfo = new FileInfo(f);
-					
-					AudioFeature feature = null;
-					switch (analysisMethod) {
-						case Analyzer.AnalysisMethod.MandelEllis:
-							feature = Analyzer.AnalyzeMandelEllis(fileInfo);
-							break;
-						case Analyzer.AnalysisMethod.SCMS:
-							feature = Analyzer.AnalyzeScms(fileInfo);
-							break;
-					}
-					
-					if (feature != null) {
-						db.AddTrack(fileCounter, feature);
-						fileCounter++;
-						Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms)", fileInfo.Name, fileCounter, filesRemaining.Count, feature.Duration);
-					} else {
-						Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
-						IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
-					}
-				}
+				
+				Parallel.ForEach(filesRemaining, file =>
+				                 {
+				                 	FileInfo fileInfo = new FileInfo(file);
+				                 	
+				                 	AudioFeature feature = null;
+				                 	switch (analysisMethod) {
+				                 		case Analyzer.AnalysisMethod.MandelEllis:
+				                 			feature = Analyzer.AnalyzeMandelEllis(fileInfo);
+				                 			break;
+				                 		case Analyzer.AnalysisMethod.SCMS:
+				                 			feature = Analyzer.AnalyzeScms(fileInfo);
+				                 			break;
+				                 	}
+				                 	
+				                 	if (feature != null) {
+				                 		db.AddTrack(fileCounter, feature);
+				                 		fileCounter++;
+				                 		Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms) (Thread: {4})", fileInfo.Name, fileCounter, filesRemaining.Count, feature.Duration, Thread.CurrentThread.ManagedThreadId);
+				                 		feature = null;
+				                 	} else {
+				                 		Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
+				                 		IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
+				                 	}
+				                 	fileInfo = null;
+				                 });
 				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, filesAll.Count());
 			}
 			catch (UnauthorizedAccessException UAEx)
