@@ -179,7 +179,6 @@ namespace Comirva.Audio
 			// 5. Take Inverse Logarithm
 			for (int i = 0; i < mel.Rows; i++) {
 				for (int j = 0; j < mel.Columns; j++) {
-					//mel.MatrixData[i][j] = (mel.MatrixData[i][j] < 0.000001 ? 0 : mel.MatrixData[i][j]);
 					mel.MatrixData[i][j] = Math.Pow(10, mel.MatrixData[i][j] / 10);
 				}
 			}
