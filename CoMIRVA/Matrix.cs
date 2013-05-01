@@ -1844,7 +1844,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="filename">filename</param>
 		public void WriteF3Formatted(string filename) {
 			TextWriter pw = File.CreateText(filename);
-			for(int i = 0; i< rowCount; i++)
+			for(int i = 0; i < rowCount; i++)
 			{
 				for(int j = 0; j < columnCount; j++)
 				{
@@ -2190,23 +2190,6 @@ namespace Comirva.Audio.Util.Maths
 						return false;
 			return true;
 		}
-
-		/// <summary>
-		/// Return the passed Matrix as string using F3 formatting
-		/// </summary>
-		/// <param name="matrix">matrix</param>
-		/// <returns>Matrix as string</returns>
-		public static string MatrixAsString(Matrix matrix)
-		{
-			string s = "";
-			for (int i = 0; i < matrix.MatrixData.Length; ++i)
-			{
-				for (int j = 0; j < matrix.MatrixData[i].Length; ++j)
-					s += matrix.MatrixData[i][j].ToString("F3", CultureInfo.InvariantCulture).PadLeft(10) + " ";
-				s += Environment.NewLine;
-			}
-			return s;
-		}
 		#endregion
 		
 		#region Overrides & Operators
@@ -2333,7 +2316,7 @@ namespace Comirva.Audio.Util.Maths
 			logFrequenciesIndex = new int[logBins + 1];
 			logFrequencies = new float[logBins + 1];
 			double accDelta = 0;
-			for (int i = 0; i <= logBins; ++i)
+			for (int i = 0; i < logBins; ++i)
 			{
 				float freq = (float) Math.Pow(logarithmicBase, logMin + accDelta);
 				logFrequencies[i] = freq;

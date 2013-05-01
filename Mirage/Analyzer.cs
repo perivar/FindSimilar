@@ -134,7 +134,7 @@ namespace Mirage
 			
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				WriteAscii(audiodata, name + "_audiodata.ascii.txt");
+				WriteF3Formatted(audiodata, name + "_audiodata.ascii.txt");
 			}
 			#endif
 			
@@ -175,10 +175,17 @@ namespace Mirage
 				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			}
 			
-			// Test inverse Stft
-			//double[] audiodata3 = stftMirage.InverseStft(stftdata);
-			//WriteAscii(audiodata3, name + "_audiodata3.ascii.txt");
-			//DrawGraph(audiodata3, name + "_audiodata3.png");
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				// Test inverse stft
+				double[] audiodata_inverse_stft = stftMirage.InverseStft(stftdata);
+				MathUtils.Divide(ref audiodata_inverse_stft, AUDIO_MULTIPLIER);
+				WriteF3Formatted(audiodata_inverse_stft, name + "_audiodata_inverse_stft.ascii.txt");
+				DrawGraph(audiodata_inverse_stft, name + "_audiodata_inverse_stft.png");
+				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
+				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_stft), name + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
+			}
+			#endif
 			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
@@ -187,7 +194,7 @@ namespace Mirage
 			// 5. Take Logarithm
 			// 6. DCT (Discrete Cosine Transform)
 			// It seems the Mirage way of applying the DCT is slightly faster than the
-			// Comirva way
+			// Comirva way due to less loops
 			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
 			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 
@@ -199,18 +206,19 @@ namespace Mirage
 			#endif
 
 			#if DEBUG
-			//if (Analyzer.DEBUG_INFO_VERBOSE) {
-			// try to do an inverse mfcc and inverse stft
-			// see http://stackoverflow.com/questions/1230906/reverse-spectrogram-a-la-aphex-twin-in-matlab
-			Comirva.Audio.Util.Maths.Matrix stftdata2 = mfccMirage.InverseMfcc(ref mfccdata);
-			stftdata2.DrawMatrixImageLogY(name + "_specgramlog2.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
-			double[] audiodata2 = stftMirage.InverseStft(stftdata2);
-			MathUtils.Divide(ref audiodata2, AUDIO_MULTIPLIER);
-			//MathUtils.Normalize(ref audiodata2);
-			DrawGraph(audiodata2, name + "_audiodata2.png");
-			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
-			bass.SaveFile(MathUtils.DoubleToFloat(audiodata2), name + "_2.wav", Analyzer.SAMPLING_RATE);
-			//}
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				// try to do an inverse mfcc
+				// see http://stackoverflow.com/questions/1230906/reverse-spectrogram-a-la-aphex-twin-in-matlab
+				Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMfcc(ref mfccdata);
+				stftdata_inverse_mfcc.DrawMatrixImageLogY(name + "_specgramlog_inverse_mfcc.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+				double[] audiodata_inverse_mfcc = stftMirage.InverseStft(stftdata_inverse_mfcc);
+				//MathUtils.Divide(ref audiodata2, AUDIO_MULTIPLIER);
+				//MathUtils.Normalize(ref audiodata_inverse_mfcc);
+				WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.ascii.txt");
+				DrawGraph(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.png");
+				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
+				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), name + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
+			}
 			#endif
 			
 			// Store in a Statistical Cluster Model Similarity class.
@@ -303,7 +311,34 @@ namespace Mirage
 			for(int i = 0; i < data.Length; i++)
 			{
 				pw.Write(" {0}\r", data[i].ToString("#.00000000e+000", CultureInfo.InvariantCulture));
-				//pw.Write(" {0}\r", data[i].ToString("F3").PadLeft(8) + " ");
+			}
+			pw.Close();
+		}
+		
+		/// <summary>
+		/// Write matrix to file using F3 formatting
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public static void WriteF3Formatted(float[] data, string filename) {
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i < data.Length; i++)
+			{
+				pw.Write("{0}", data[i].ToString("F3", CultureInfo.InvariantCulture).PadLeft(10) + " ");
+				pw.Write("\r");
+			}
+			pw.Close();
+		}
+		
+		/// <summary>
+		/// Write matrix to file using F3 formatting
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public static void WriteF3Formatted(double[] data, string filename) {
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i < data.Length; i++)
+			{
+				pw.Write("{0}", data[i].ToString("F3", CultureInfo.InvariantCulture).PadLeft(10) + " ");
+				pw.Write("\r");
 			}
 			pw.Close();
 		}

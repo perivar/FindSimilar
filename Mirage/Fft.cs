@@ -91,8 +91,6 @@ namespace Mirage
 			Marshal.Copy(data, 0, fftwData, fftsize);
 			fftwf_execute(fftwPlan);
 			Marshal.Copy(fftwData, fft, 0, fftsize);
-			
-			//Analyzer.WriteAscii(fft, "mirage_fft_orig.ascii.txt");
 
 			m.d[0, j] = (float) Math.Sqrt(fft[0]*fft[0]);
 			for (int i = 1; i < winsize/2; i++) {
@@ -116,14 +114,11 @@ namespace Mirage
 			fftwf_execute(fftwPlan);
 			Marshal.Copy(fftwData, fft, 0, fftsize);
 			
-			//Analyzer.WriteAscii(fft, "comirva_fft_orig.ascii.txt");
-			
 			// fft input will now contain the FFT values in a Half Complex format
 			// r0, r1, r2, ..., rn/2, i(n+1)/2-1, ..., i2, i1
 			// Here, rk is the real part of the kth output, and ikis the imaginary part. (Division by 2 is rounded down.)
 			// For a halfcomplex array hc[n], the kth component thus has its real part in hc[k] and its imaginary part in hc[n-k],
 			// with the exception of k == 0 or n/2 (the latter only if n is even)—in these two cases, the imaginary part is zero due to symmetries of the real-input DFT, and is not stored.
-
 			m.MatrixData[0][j] = Math.Sqrt(fft[0] * fft[0]);
 			for (int i = 1; i < winsize/2; i++) {
 				// amplitude (or magnitude) is the square root of the power spectrum
@@ -146,11 +141,8 @@ namespace Mirage
 			Array.Copy(data, fft, data.Length/2);
 			lomonFFT.RealFFT(fft, true);
 			
-			//Analyzer.WriteAscii(fft, "comirva_fft_lomont.realfft.ascii.txt");
-
 			// fft input will now contain the FFT values
 			// r0, r(n/2), r1, i1, r2, i2 ...
-
 			m.MatrixData[0][column] = Math.Sqrt(fft[0] * fft[0] * winsize);
 			m.MatrixData[winsize/2-1][column] = Math.Sqrt(fft[1] * fft[1] * winsize);
 			for (int row = 1; row < winsize/2; row++) {
@@ -179,16 +171,14 @@ namespace Mirage
 				m.MatrixData[row][column] = Math.Sqrt( (re*re + img*img) * complexSignal.Length/2);
 				row++;
 			}
-			
-			//m.WriteAscii("fft_lomont.tablefft.ascii.txt");
 		}
 		
 		public void ComputeInverseComirvaMatrixUsingLomontRealFFT(Comirva.Audio.Util.Maths.Matrix m, int column, ref Comirva.Audio.Util.Maths.Matrix signal) {
 
-			// NOTE! THIS DOES NOT WORK?!
+			// NOTE! THIS METHOD DOES NOT WORK?!
+			throw new NotImplementedException("Lomont Inverse RealFFT is not implemented. Cannot get it to work?! Try the Inverse TableFFT instead.");
 			
 			double[] spectrogramWindow = m.GetColumn(column);
-			
 			int winsize = MathUtils.NextPowerOfTwo(spectrogramWindow.Length);
 
 			// ifft input must contain the FFT values
@@ -213,16 +203,16 @@ namespace Mirage
 		public void ComputeInverseComirvaMatrixUsingLomontTableFFT(Comirva.Audio.Util.Maths.Matrix m, int column, ref Comirva.Audio.Util.Maths.Matrix signal) {
 
 			double[] spectrogramWindow = m.GetColumn(column);
+
 			double[] complexSignal = FFTUtilsLomont.DoubleToComplexDouble(spectrogramWindow);
 			lomonFFT.TableFFT(complexSignal, false);
 			
-			for (int row = 0; row < complexSignal.Length/2; row++) {
+			// According to Dave Gamble the first and last entry should be ignored
+			for (int row = 1; row < complexSignal.Length/2 - 1; row++) {
 				double re = complexSignal[2*row];
 				//double img = complexSignal[2*row + 1];
 				signal.MatrixData[row][column] = re / Math.Sqrt(winsize/2);
 			}
-			
-			//signal.WriteAscii("ifft_lomont.ascii.txt");
 		}
 		
 		~Fft()

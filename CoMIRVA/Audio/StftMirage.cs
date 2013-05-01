@@ -55,7 +55,7 @@ namespace Comirva.Audio {
 			Matrix stft = new Matrix(winsize/2, hops);
 			
 			for (int i = 0; i < hops; i++) {
-				// Lomont RealFFT has proven much faster than fftw in all instances?!
+				// Lomont RealFFT seems to be the fastest option
 				//fft.ComputeComirvaMatrixUsingFftw(ref stft, i, audiodata, i*hopsize);
 				//fft.ComputeComirvaMatrixUsingLomontTableFFT(ref stft, i, audiodata, i*hopsize);
 				fft.ComputeComirvaMatrixUsingLomontRealFFT(ref stft, i, audiodata, i*hopsize);
