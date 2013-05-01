@@ -267,6 +267,8 @@ namespace Mirage
 		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
 		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
 			
+			Stopwatch stopWatch = Stopwatch.StartNew();
+			
 			FAILED_FILES_LOG.Delete();
 			WARNING_FILES_LOG.Delete();
 			
@@ -326,6 +328,8 @@ namespace Mirage
 			{
 				Console.WriteLine(PathEx.Message);
 			}
+
+			Console.WriteLine("Time used: {0}", stopWatch.Elapsed);
 		}
 
 		#region Testing Methods
@@ -604,7 +608,6 @@ namespace Mirage
 		private static void StartGUI() {
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			//Application.Run(new MainForm());
 			Application.Run(new FindSimilarClientForm());
 		}
 		

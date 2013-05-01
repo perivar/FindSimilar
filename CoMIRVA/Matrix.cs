@@ -1837,6 +1837,23 @@ namespace Comirva.Audio.Util.Maths
 			}
 			pw.Close();
 		}
+
+		/// <summary>
+		/// Write matrix to file using F3 formatting
+		/// </summary>
+		/// <param name="filename">filename</param>
+		public void WriteF3Formatted(string filename) {
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i< rowCount; i++)
+			{
+				for(int j = 0; j < columnCount; j++)
+				{
+					pw.Write("{0}", matrixData[i][j].ToString("F3", CultureInfo.InvariantCulture).PadLeft(10) + " ");
+				}
+				pw.Write("\r");
+			}
+			pw.Close();
+		}
 		
 		/// <summary>
 		/// Write matrix to file
@@ -2032,6 +2049,7 @@ namespace Comirva.Audio.Util.Maths
 		/// </summary>
 		/// <param name="fileName">filename</param>
 		/// <param name="flipYscale">bool whether to flip the y scale</param>
+		/// <param name="usePowerSpectrum">bool whether to use powerspectrum (true) or amplitude/magnitude spectrum (false)</param>
 		/// <example>
 		/// This method can be used to plot a spectrogram
 		/// like the octave method:
@@ -2042,10 +2060,20 @@ namespace Comirva.Audio.Util.Maths
 		/// stft = load ('stftdata.ascii.txt', '-ascii');
 		/// imagesc (flipud(log(stft)));
 		/// </example>
-		public Image DrawMatrixImageLogValues(string fileName, bool flipYscale=false)
+		public Image DrawMatrixImageLogValues(string fileName, bool flipYscale=false, bool usePowerSpectrum=false)
 		{
+			// amplitude (or magnitude) is the square root of the power spectrum
+			// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
+			// use 20*log10(Y) to get dB from amplitude
+			// the power spectrum is the magnitude spectrum squared
+			// use 10*log10(Y) to get dB from power spectrum
 			double maxValue = Max();
-			maxValue = 10 * Math.Log10(maxValue);
+			if (usePowerSpectrum) {
+				maxValue = 10 * Math.Log10(maxValue);
+			} else {
+				maxValue = 20 * Math.Log10(maxValue);
+			}
+			
 			if (maxValue == 0.0f)
 				return null;
 
@@ -2060,7 +2088,12 @@ namespace Comirva.Audio.Util.Maths
 				for(int column = 0; column < columnCount; column++)
 				{
 					double val = this.MatrixData[row][column];
-					val = 10 * Math.Log10(val);
+					if (usePowerSpectrum) {
+						val = 10 * Math.Log10(val);
+					} else {
+						val = 20 * Math.Log10(val);
+					}
+					
 					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
 					Brush brush = new SolidBrush(color);
 					
@@ -2169,7 +2202,7 @@ namespace Comirva.Audio.Util.Maths
 			for (int i = 0; i < matrix.MatrixData.Length; ++i)
 			{
 				for (int j = 0; j < matrix.MatrixData[i].Length; ++j)
-					s += matrix.MatrixData[i][j].ToString("F3").PadLeft(8) + " ";
+					s += matrix.MatrixData[i][j].ToString("F3", CultureInfo.InvariantCulture).PadLeft(10) + " ";
 				s += Environment.NewLine;
 			}
 			return s;

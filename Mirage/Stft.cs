@@ -68,7 +68,7 @@ namespace Mirage
 			Matrix stft = new Matrix(winsize/2 +1, hops);
 			
 			for (int i = 0; i < hops; i++) {
-				fft.ComputeMirageMatrix(ref stft, i, audiodata, i*hopsize);
+				fft.ComputeMirageMatrixUsingFftw(ref stft, i, audiodata, i*hopsize);
 			}
 			
 			Dbg.WriteLine("Stft (ComputeMirageMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");

@@ -484,6 +484,18 @@ namespace FindSimilar.AudioProxies
 			else
 				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 		}
+		
+		/// <summary>
+		/// Save float buffer as ieefloat wave file
+		/// </summary>
+		/// <param name="buffer">float array</param>
+		/// <param name="outFileName">filename</param>
+		/// <param name="targetSampleRate">target samplerate </param>
+		public void SaveFile(float[] buffer, string outFileName, int targetSampleRate) {
+			WaveWriter writer = new WaveWriter(outFileName, 1, targetSampleRate, 32, true);
+			writer.Write(buffer, buffer.Length);
+			writer.Close();
+		}
 		#endregion
 		
 		#region IDisposable

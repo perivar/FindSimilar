@@ -26,6 +26,7 @@ using System.Runtime.InteropServices;
 
 using Lomont;
 using CommonUtils;
+using CommonUtils.FFT;
 
 namespace Mirage
 {
@@ -63,7 +64,8 @@ namespace Mirage
 		float[] fft;
 		IWindowFunction win;
 		float[] data;
-
+		Lomont.LomontFFT lomonFFT;
+		
 		public Fft(int winsize, IWindowFunction window)
 		{
 			this.winsize = winsize;
@@ -77,9 +79,11 @@ namespace Mirage
 			window.Initialize(winsize);
 			win = window;
 			data = new float[fftsize];
+			
+			lomonFFT = new Lomont.LomontFFT();
 		}
 		
-		public void ComputeMirageMatrix(ref Matrix m, int j, float[] audiodata, int pos)
+		public void ComputeMirageMatrixUsingFftw(ref Matrix m, int j, float[] audiodata, int pos)
 		{
 			// apply the window method (e.g HammingWindow, HannWindow etc)
 			win.Apply(ref data, audiodata, pos);
@@ -90,20 +94,20 @@ namespace Mirage
 			
 			//Analyzer.WriteAscii(fft, "mirage_fft_orig.ascii.txt");
 
-			m.d[0, j] = fft[0]*fft[0];
+			m.d[0, j] = (float) Math.Sqrt(fft[0]*fft[0]);
 			for (int i = 1; i < winsize/2; i++) {
 				// amplitude (or magnitude) is the square root of the power spectrum
 				// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
 				// use 20*log10(Y) to get dB from amplitude
 				// the power spectrum is the magnitude spectrum squared
 				// use 10*log10(Y) to get dB from power spectrum
-				m.d[i, j] = (fft[i*2]*fft[i*2] +
-				             fft[fftsize-i*2]*fft[fftsize-i*2]);
+				m.d[i, j] = (float) Math.Sqrt((fft[i*2]*fft[i*2] +
+				                               fft[fftsize-i*2]*fft[fftsize-i*2]));
 			}
-			m.d[winsize/2, j] = fft[winsize]*fft[winsize];
+			m.d[winsize/2, j] = (float) Math.Sqrt(fft[winsize]*fft[winsize]);
 		}
 		
-		public void ComputeComirvaMatrix(ref Comirva.Audio.Util.Maths.Matrix m, int j, float[] audiodata, int pos)
+		public void ComputeComirvaMatrixUsingFftw(ref Comirva.Audio.Util.Maths.Matrix m, int j, float[] audiodata, int pos)
 		{
 			// apply the window method (e.g HammingWindow, HannWindow etc)
 			win.Apply(ref data, audiodata, pos);
@@ -115,61 +119,117 @@ namespace Mirage
 			//Analyzer.WriteAscii(fft, "comirva_fft_orig.ascii.txt");
 			
 			// fft input will now contain the FFT values in a Half Complex format
-			/// r0, r1, r2, ..., rn/2, i(n+1)/2-1, ..., i2, i1
-			/// Here, rk is the real part of the kth output, and ikis the imaginary part. (Division by 2 is rounded down.)
-			/// For a halfcomplex array hc[n], the kth component thus has its real part in hc[k] and its imaginary part in hc[n-k],
-			/// with the exception of k == 0 or n/2 (the latter only if n is even)—in these two cases, the imaginary part is zero due to symmetries of the real-input DFT, and is not stored.
+			// r0, r1, r2, ..., rn/2, i(n+1)/2-1, ..., i2, i1
+			// Here, rk is the real part of the kth output, and ikis the imaginary part. (Division by 2 is rounded down.)
+			// For a halfcomplex array hc[n], the kth component thus has its real part in hc[k] and its imaginary part in hc[n-k],
+			// with the exception of k == 0 or n/2 (the latter only if n is even)—in these two cases, the imaginary part is zero due to symmetries of the real-input DFT, and is not stored.
 
-			m.MatrixData[0][j] = fft[0]*fft[0];
+			m.MatrixData[0][j] = Math.Sqrt(fft[0] * fft[0]);
 			for (int i = 1; i < winsize/2; i++) {
 				// amplitude (or magnitude) is the square root of the power spectrum
 				// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
 				// use 20*log10(Y) to get dB from amplitude
 				// the power spectrum is the magnitude spectrum squared
 				// use 10*log10(Y) to get dB from power spectrum
-				m.MatrixData[i][j] = (fft[i*2]*fft[i*2] +
-				                      fft[fftsize-i*2]*fft[fftsize-i*2]);
+				m.MatrixData[i][j] = Math.Sqrt((fft[i * 2]* fft[i * 2] +
+				                                fft[fftsize - i * 2] * fft[fftsize - i * 2]));
 			}
-			m.MatrixData[winsize/2][j] = fft[winsize]*fft[winsize];
+			//m.MatrixData[winsize/2][j] = Math.Sqrt(fft[winsize] * fft[winsize]);
 		}
 		
-		public void ComputeComirvaMatrixUsingLomont(ref Comirva.Audio.Util.Maths.Matrix m, int j, float[] audiodata, int pos) {
+		public void ComputeComirvaMatrixUsingLomontRealFFT(ref Comirva.Audio.Util.Maths.Matrix m, int column, float[] audiodata, int pos) {
 
 			// apply the window method (e.g HammingWindow, HannWindow etc)
 			win.Apply(ref data, audiodata, pos);
-
-			Lomont.LomontFFT lomonFFT = new Lomont.LomontFFT();
 			
 			double[] fft = new double[data.Length/2];
 			Array.Copy(data, fft, data.Length/2);
 			lomonFFT.RealFFT(fft, true);
 			
-			//Analyzer.WriteAscii(fft, "comirva_fft_lomont.ascii.txt");
+			//Analyzer.WriteAscii(fft, "comirva_fft_lomont.realfft.ascii.txt");
 
 			// fft input will now contain the FFT values
 			// r0, r(n/2), r1, i1, r2, i2 ...
 
-			m.MatrixData[0][j] = fft[0] * fft[0];
-			m.MatrixData[winsize/2][j] = fft[1] * fft[1];
-			for (int i = 1; i < winsize/2; i++) {
+			m.MatrixData[0][column] = Math.Sqrt(fft[0] * fft[0] * winsize);
+			m.MatrixData[winsize/2-1][column] = Math.Sqrt(fft[1] * fft[1] * winsize);
+			for (int row = 1; row < winsize/2; row++) {
 				// amplitude (or magnitude) is the square root of the power spectrum
 				// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
 				// use 20*log10(Y) to get dB from amplitude
 				// the power spectrum is the magnitude spectrum squared
 				// use 10*log10(Y) to get dB from power spectrum
-				m.MatrixData[i][j] = (fft[2 * i] * fft[2 * i] +
-				                      fft[2 * i + 1] * fft[2 * i + 1]) * winsize;
+				m.MatrixData[row][column] = Math.Sqrt((fft[2 * row] * fft[2 * row] +
+				                                       fft[2 * row + 1] * fft[2 * row + 1]) * winsize);
+			}
+		}
+
+		public void ComputeComirvaMatrixUsingLomontTableFFT(ref Comirva.Audio.Util.Maths.Matrix m, int column, float[] audiodata, int pos) {
+
+			// apply the window method (e.g HammingWindow, HannWindow etc)
+			win.Apply(ref data, audiodata, pos);
+			
+			double[] complexSignal = FFTUtilsLomont.FloatToComplexDouble(data);
+			lomonFFT.TableFFT(complexSignal, true);
+			
+			int row = 0;
+			for (int i = 0; i < complexSignal.Length/4; i += 2) {
+				double re = complexSignal[2*i];
+				double img = complexSignal[2*i + 1];
+				m.MatrixData[row][column] = Math.Sqrt( (re*re + img*img) * complexSignal.Length/2);
+				row++;
+			}
+			
+			//m.WriteAscii("fft_lomont.tablefft.ascii.txt");
+		}
+		
+		public void ComputeInverseComirvaMatrixUsingLomontRealFFT(Comirva.Audio.Util.Maths.Matrix m, int column, ref Comirva.Audio.Util.Maths.Matrix signal) {
+
+			// NOTE! THIS DOES NOT WORK?!
+			
+			double[] spectrogramWindow = m.GetColumn(column);
+			
+			int winsize = MathUtils.NextPowerOfTwo(spectrogramWindow.Length);
+
+			// ifft input must contain the FFT values
+			// r0, r(n/2), r1, i1, r2, i2 ...
+
+			// Perform the ifft and take just the real part
+			//double[] signalWindow = real(ifft(spectrogramWindow));
+			double[] ifft = new double[winsize*2];
+			ifft[0] = spectrogramWindow[0];
+			ifft[1] = spectrogramWindow[winsize/2];
+			for (int i = 1; i < spectrogramWindow.Length; i++) {
+				ifft[2 * i] = spectrogramWindow[i];
+			}
+
+			lomonFFT.RealFFT(ifft, false);
+
+			for (int i = 0; i < winsize; i++) {
+				signal.MatrixData[i][column] = ifft[i] * winsize;
 			}
 		}
 		
-		public void ComputeInverseComirvaMatrixUsingLomont() {
-			// NOT IMPLEMENTED
+		public void ComputeInverseComirvaMatrixUsingLomontTableFFT(Comirva.Audio.Util.Maths.Matrix m, int column, ref Comirva.Audio.Util.Maths.Matrix signal) {
+
+			double[] spectrogramWindow = m.GetColumn(column);
+			double[] complexSignal = FFTUtilsLomont.DoubleToComplexDouble(spectrogramWindow);
+			lomonFFT.TableFFT(complexSignal, false);
+			
+			for (int row = 0; row < complexSignal.Length/2; row++) {
+				double re = complexSignal[2*row];
+				//double img = complexSignal[2*row + 1];
+				signal.MatrixData[row][column] = re / Math.Sqrt(winsize/2);
+			}
+			
+			//signal.WriteAscii("ifft_lomont.ascii.txt");
 		}
 		
 		~Fft()
 		{
 			fftwf_destroy_plan(fftwPlan);
 			fftwf_free(fftwData);
+			lomonFFT = null;
 		}
 	}
 }

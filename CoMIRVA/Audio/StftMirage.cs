@@ -48,19 +48,17 @@ namespace Comirva.Audio {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
-			int hops = (audiodata.Length - winsize)/hopsize;
+			int hops = (audiodata.Length - winsize)/ hopsize + 1;
 			
 			// Create a Matrix with "winsize" Rows and "hops" Columns
 			// Matrix[Row, Column]
-			Matrix stft = new Matrix(winsize/2 +1, hops);
+			Matrix stft = new Matrix(winsize/2, hops);
 			
 			for (int i = 0; i < hops; i++) {
-				// use fftw for bigger files and lomont for smaller
-				//if (audiodata.Length > Mirage.Analyzer.SAMPLING_RATE*Mirage.Analyzer.SECONDS_TO_ANALYZE/2) {
-				//fft.ComputeComirvaMatrix(ref stft, i, audiodata, i*hopsize);
-				//} else {
-				fft.ComputeComirvaMatrixUsingLomont(ref stft, i, audiodata, i*hopsize);
-				//}
+				// Lomont RealFFT has proven much faster than fftw in all instances?!
+				//fft.ComputeComirvaMatrixUsingFftw(ref stft, i, audiodata, i*hopsize);
+				//fft.ComputeComirvaMatrixUsingLomontTableFFT(ref stft, i, audiodata, i*hopsize);
+				fft.ComputeComirvaMatrixUsingLomontRealFFT(ref stft, i, audiodata, i*hopsize);
 			}
 			
 			Mirage.Dbg.WriteLine("stft (ComputeComirvaMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
@@ -72,22 +70,35 @@ namespace Comirva.Audio {
 		/// </summary>
 		/// <param name="stft">A matrix with the STFT</param>
 		/// <returns>Audio data</returns>
-		public float[] InverseStft(Matrix stft) {
+		/// <see cref="http://stackoverflow.com/questions/1230906/reverse-spectrogram-a-la-aphex-twin-in-matlab">Reverse Spectrogram A La Aphex Twin in MATLAB</see>
+		public Matrix Remove(Matrix stft) {
+			
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
 			// stft is a Matrix with "winsize" Rows and "hops" Columns
-			int hops = stft.Columns;
-			int audiodataLength = (hops * hopsize) + winsize;
-			float[] audiodata = new float[audiodataLength];
+			int columns = stft.Columns;
+			Matrix signal = new Matrix(stft.Rows, stft.Columns);
 			
-			//for (int i = 0; i < hops; i++) {
-			// fft.ComputeComirvaMatrixUsingLomont(ref stft, i, audiodata, i*hopsize);
-			// fft.ComputeInverseComirvaMatrixUsingLomont();
-			//}
+			// Take the ifft of each column of pixels and piece together the results.
+			for (int i = 0; i < columns; i++) {
+				fft.ComputeInverseComirvaMatrixUsingLomontTableFFT(stft, i, ref signal);
+			}
 			
 			Mirage.Dbg.WriteLine("istft (ComputeComirvaMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
-			return audiodata;
+			
+			return signal;
+		}
+		
+		/// <summary>
+		/// Perform an inverse STFT and return the audiodata
+		/// </summary>
+		/// <param name="stft">A matrix with the STFT</param>
+		/// <returns>Audio data</returns>
+		/// <see cref="http://stackoverflow.com/questions/1230906/reverse-spectrogram-a-la-aphex-twin-in-matlab">Reverse Spectrogram A La Aphex Twin in MATLAB</see>
+		public double[] InverseStft(Matrix stft) {
+			
+			return Remove(stft).GetColumnPackedCopy();
 		}
 	}
 }

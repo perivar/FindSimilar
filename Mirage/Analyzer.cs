@@ -60,6 +60,10 @@ namespace Mirage
 		public const int MFCC_COEFFICIENTS = 20; //20
 		public const int SECONDS_TO_ANALYZE = 60;
 		
+		// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
+		// Matlab multiplies with 2^15 (32768)
+		public const int AUDIO_MULTIPLIER = 32768;
+		
 		//private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		private static MfccMirage mfccMirage = new MfccMirage(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 
@@ -96,7 +100,7 @@ namespace Mirage
 			// Matlab multiplies with 2^15 (32768)
 			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
 			// if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
-			MathUtils.Multiply(ref audiodata, 32768); // 65536
+			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER); // 65536
 			
 			MandelEllisExtractor extractor = new MandelEllisExtractor(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, MEL_COEFFICIENTS);
 			AudioFeature audioFeature = extractor.Calculate(MathUtils.FloatToDouble(audiodata));
@@ -125,7 +129,7 @@ namespace Mirage
 				return null;
 			}
 
-			// name of file being processed
+			// Name of file being processed
 			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
 			
 			#if DEBUG
@@ -144,7 +148,7 @@ namespace Mirage
 			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
 			// Matlab multiplies with 2^15 (32768)
 			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
-			MathUtils.Multiply(ref audiodata, 32768); // 65536
+			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER); // 65536
 			
 			// zero pad if the audio file is too short to perform a mfcc
 			if (audiodata.Length < WINDOW_SIZE * 8)
@@ -171,6 +175,11 @@ namespace Mirage
 				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			}
 			
+			// Test inverse Stft
+			//double[] audiodata3 = stftMirage.InverseStft(stftdata);
+			//WriteAscii(audiodata3, name + "_audiodata3.ascii.txt");
+			//DrawGraph(audiodata3, name + "_audiodata3.png");
+			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
 			// reflecting similar effects in the human's subjective aural perception)
@@ -190,12 +199,18 @@ namespace Mirage
 			#endif
 
 			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				// try to do an inverse mfcc and inverse stft
-				Comirva.Audio.Util.Maths.Matrix stftdata2 = mfccMirage.InverseMfcc(ref mfccdata);
-				stftdata2.DrawMatrixImageLogY(name + "_specgramlog2.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
-				float[] audiodata2 = stftMirage.InverseStft(stftdata2);
-			}
+			//if (Analyzer.DEBUG_INFO_VERBOSE) {
+			// try to do an inverse mfcc and inverse stft
+			// see http://stackoverflow.com/questions/1230906/reverse-spectrogram-a-la-aphex-twin-in-matlab
+			Comirva.Audio.Util.Maths.Matrix stftdata2 = mfccMirage.InverseMfcc(ref mfccdata);
+			stftdata2.DrawMatrixImageLogY(name + "_specgramlog2.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+			double[] audiodata2 = stftMirage.InverseStft(stftdata2);
+			MathUtils.Divide(ref audiodata2, AUDIO_MULTIPLIER);
+			//MathUtils.Normalize(ref audiodata2);
+			DrawGraph(audiodata2, name + "_audiodata2.png");
+			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
+			bass.SaveFile(MathUtils.DoubleToFloat(audiodata2), name + "_2.wav", Analyzer.SAMPLING_RATE);
+			//}
 			#endif
 			
 			// Store in a Statistical Cluster Model Similarity class.
@@ -246,8 +261,8 @@ namespace Mirage
 			}
 			myPane.XAxis.Scale.Max = data.Length - 1;
 			myPane.XAxis.Scale.Min = 0;
-			myPane.YAxis.Scale.Max = 1;
-			myPane.YAxis.Scale.Min = -1;
+			//myPane.YAxis.Scale.Max = 1;
+			//myPane.YAxis.Scale.Min = -1;
 			
 			// add pretty stuff
 			myPane.Fill = new Fill( Color.WhiteSmoke, Color.Lavender, 0F );
@@ -288,6 +303,7 @@ namespace Mirage
 			for(int i = 0; i < data.Length; i++)
 			{
 				pw.Write(" {0}\r", data[i].ToString("#.00000000e+000", CultureInfo.InvariantCulture));
+				//pw.Write(" {0}\r", data[i].ToString("F3").PadLeft(8) + " ");
 			}
 			pw.Close();
 		}

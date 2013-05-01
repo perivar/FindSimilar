@@ -148,6 +148,7 @@
     <Compile Include="DctMethods.cs" />
     <Compile Include="DctLessOptimized.cs" />
     <Compile Include="DiscreteCosineTransform.cs" />
+    <Compile Include="FFTUtilsLomont.cs" />
     <Compile Include="FindSimilarClient\FindSimilarClientForm.cs" />
     <Compile Include="FindSimilarClient\FindSimilarClientForm.Designer.cs">
       <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
