@@ -207,6 +207,13 @@
     <Compile Include="SpeechRecognitionHMM\PreProcess.cs" />
     <Compile Include="UCRSuite\UCR_DTW.cs" />
     <Compile Include="UCRSuite\UCR_ED.cs" />
+    <Compile Include="Wavelets\Dwt.cs" />
+    <Compile Include="Wavelets\Haar.cs" />
+    <Compile Include="Wavelets\HaarWaveletDecomposition.cs" />
+    <Compile Include="Wavelets\IInvertible.cs" />
+    <Compile Include="Wavelets\IWaveletDecomposition.cs" />
+    <Compile Include="Wavelets\StandardHaarWaveletDecomposition.cs" />
+    <Compile Include="Wavelets\WaveletUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="aquila" />
@@ -236,6 +243,7 @@
     <Folder Include="NativeLibraries\ZedGraph" />
     <Folder Include="NDtw" />
     <Folder Include="NDtw\Preprocessing" />
+    <Folder Include="Wavelets" />
     <Folder Include="SoundPlayer" />
     <Folder Include="SpeechRecognitionHMM" />
     <Folder Include="UCRSuite" />

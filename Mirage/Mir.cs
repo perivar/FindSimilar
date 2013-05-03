@@ -624,6 +624,10 @@ namespace Mirage
 			//DctMethods.test2(true);
 			//DctComirva.test();
 			//TestComirvaMatrix();
+			//Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg", @"C:\Users\perivar.nerseth\Pictures\lena_color_dwt2_dwt.jpg");
+			//Wavelets.WaveletUtils.TestHaar();
+			//Wavelets.WaveletUtils.TestHaarWaveletDecomposition();
+			//Wavelets.WaveletUtils.TestDwt();
 			//Console.In.ReadLine();
 			//return;
 			

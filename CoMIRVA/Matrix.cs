@@ -2236,11 +2236,11 @@ namespace Comirva.Audio.Util.Maths
 				if (i <= 0 || j <= 0) throw new ArgumentOutOfRangeException("Indices must be real positive.");
 
 				if (i < rowCount && j < columnCount) {
-					matrixData[i][j] = value;
+					matrixData[i-1][j-1] = value;
 				}
 			}
 			get {
-				if (i > 0 && i <= rowCount && j > 0 && j <= columnCount) return matrixData[i][j];
+				if (i > 0 && i <= rowCount && j > 0 && j <= columnCount) return matrixData[i-1][j-1];
 				else throw new ArgumentOutOfRangeException("Indices must not exceed size of matrix.");
 			}
 		}
