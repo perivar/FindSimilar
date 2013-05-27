@@ -213,6 +213,7 @@
     <Compile Include="Wavelets\IInvertible.cs" />
     <Compile Include="Wavelets\IWaveletDecomposition.cs" />
     <Compile Include="Wavelets\StandardHaarWaveletDecomposition.cs" />
+    <Compile Include="Wavelets\WaveletTransform.cs" />
     <Compile Include="Wavelets\WaveletUtils.cs" />
   </ItemGroup>
   <ItemGroup>

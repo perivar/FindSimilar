@@ -1821,6 +1821,22 @@ namespace Comirva.Audio.Util.Maths
 			#endif
 		}
 
+		/// <summary>Writes the Matrix to a comma separated file that can be read by Excel.
+		/// <param name="filename">the name of the csv file to create, e.g. "C:\\temp\\matrix.csv"</param>
+		public void WriteCSV(string filename, string columnSeparator)
+		{
+			TextWriter pw = File.CreateText(filename);
+			for(int i = 0; i< rowCount; i++)
+			{
+				for(int j = 0; j < columnCount; j++)
+				{
+					pw.Write("\"{0}\"{1}", matrixData[i][j].ToString(), columnSeparator);
+				}
+				pw.Write("\r");
+			}
+			pw.Close();
+		}		
+		
 		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
 		/// Usage in Matlab: load('filename', '-ascii');</summary>
 		/// <param name="filename">the name of the ascii file to create, e.g. "C:\\temp\\matrix.ascii"</param>

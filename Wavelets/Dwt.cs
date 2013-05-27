@@ -1,12 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using Comirva.Audio.Util.Maths;
 
 namespace Wavelets
 {
-	public class Dwt : IInvertible<IEnumerable<Matrix>, IEnumerable<Matrix>>
+	// http://dfyz-stuff.googlecode.com/svn-history/r47/trunk/ImageCompression/Task1/Dwt.cs
+	public class Dwt : IWaveletDecomposition, IInvertible<IEnumerable<Matrix>, IEnumerable<Matrix>>
 	{
+		#region IWaveletDecomposition Members
+
+		/// <summary>
+		/// Apply Haar Wavelet decomposition on the image
+		/// </summary>
+		/// <param name = "image">Image to be decomposed</param>
+		public void DecomposeImageInPlace(double[][] image)
+		{
+			Matrix matrix = new Matrix(image);
+			DWT(matrix);
+		}
+
+		#endregion
+		
+		/// <summary>
+		/// Initialize a Haar Wavelet Discrete Wavelet Transform object
+		/// </summary>
+		/// <param name="steps">number of dimensions</param>
 		public Dwt(int steps)
 		{
 			this.steps = steps;
@@ -14,15 +34,15 @@ namespace Wavelets
 
 		public IEnumerable<Matrix> Fwd(IEnumerable<Matrix> input)
 		{
-			return input.Select(x => DTW(x));
+			return input.Select(x => DWT(x));
 		}
 
 		public IEnumerable<Matrix> Back(IEnumerable<Matrix> output)
 		{
-			return output.Select(x => IDTW(x));
+			return output.Select(x => IDWT(x));
 		}
 
-		public Matrix DTW(Matrix m)
+		public Matrix DWT(Matrix m)
 		{
 			var Columns = m.Columns;
 			var rows = m.Rows;
@@ -54,7 +74,7 @@ namespace Wavelets
 			return res;
 		}
 
-		public Matrix IDTW(Matrix m)
+		public Matrix IDWT(Matrix m)
 		{
 			var res = new Matrix(m.MatrixData);
 			var sizes = new int[steps, 2];
@@ -158,8 +178,6 @@ namespace Wavelets
 			return arr[arr.Length - 1 - index];
 		}
 
-		//readonly double[] analysisLowPass = new[] { 0.0267, -0.0168, -0.0782, 0.2668, 0.6029, 0.2668, -0.0782, -0.0168, 0.0267 };
-		//readonly double[] analysisHighPass = new[] { 0.0912, -0.0575, -0.5912, 1.1150, -0.5912, -0.0575, 0.0912 };
 		readonly double[] analysisLowPass = DivBySqrt2(new double[] { 1, 1 });
 		readonly double[] analysisHighPass = DivBySqrt2(new double[] { -1, 1 });
 		readonly double[] synthesisLowPass = DivBySqrt2(new double[] { 1, 1 });

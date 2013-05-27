@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Wavelets
 {
 	/// <summary>
-	///   Standart Haar wavelet decomposition algorithm.
+	///   Standard Haar wavelet decomposition algorithm.
 	///   According to Fast Multi-Resolution Image Query paper, Haar wavelet decomposition with standard basis function works better in image querying
 	/// </summary>
 	/// <remarks>

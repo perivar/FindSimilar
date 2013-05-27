@@ -4,6 +4,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+
 using Comirva.Audio.Util.Maths;
 
 namespace Wavelets
@@ -13,7 +14,7 @@ namespace Wavelets
 	/// </summary>
 	public static class WaveletUtils
 	{
-		public static void SaveWaveletImage(string imageInPath, string imageOutPath) {
+		public static void SaveWaveletImage(string imageInPath, string imageOutPath, bool useStandardHaarWaveletDecomposition) {
 			Image img = Image.FromFile(imageInPath);
 			Bitmap bmp = new Bitmap(img);
 			double[][] argb = new double[bmp.Height][];
@@ -23,23 +24,31 @@ namespace Wavelets
 				for (int j = 0; j < bmp.Width; j++) argb[i][j] = bmp.GetPixel(j, i).ToArgb();
 			}
 
-			Image image = GetWaveletTransformedImage(argb, new StandardHaarWaveletDecomposition());
+			Matrix argbMatrix = new Matrix(argb);
+			argbMatrix.WriteCSV("test.csv", ";");
+			
+			Image image = GetWaveletTransformedImage(argb, useStandardHaarWaveletDecomposition);
 			image.Save(imageOutPath, ImageFormat.Jpeg);
 			img.Dispose();
 			bmp.Dispose();
 			image.Dispose();
 		}
 		
-		public static Image GetWaveletTransformedImage(double[][] image, IWaveletDecomposition wavelet)
+		public static Image GetWaveletTransformedImage(double[][] image, bool useStandardHaarWaveletDecomposition)
 		{
 			int width = image[0].Length;
 			int height = image.Length;
-			
-			//wavelet.DecomposeImageInPlace(image);
-			
-			Matrix matrix = new Matrix(image);
-			Wavelets.Dwt dwt = new Wavelets.Dwt(2);
-			Matrix dwtMatrix = dwt.DTW(matrix);
+
+			Matrix dwtMatrix = null;
+			if (useStandardHaarWaveletDecomposition) {
+				IWaveletDecomposition haar = new StandardHaarWaveletDecomposition();
+				haar.DecomposeImageInPlace(image);
+				dwtMatrix = new Matrix(image);
+			} else {
+				Matrix matrix = new Matrix(image);
+				Wavelets.Dwt dwt = new Wavelets.Dwt(2);
+				dwtMatrix = dwt.DWT(matrix);
+			}
 			
 			Bitmap transformed = new Bitmap(width, height, PixelFormat.Format16bppRgb565);
 			for (int i = 0; i < transformed.Height; i++)
@@ -53,6 +62,9 @@ namespace Wavelets
 			return transformed;
 		}
 		
+		/*
+		 * mat = [5, 6, 1, 2; 4, 2, 5, 5; 3, 1, 7, 1; 6, 3, 5, 1]
+		 */
 		private static double[][] Get2DTestData() {
 			
 			double[][] mat = new double[4][];
@@ -81,8 +93,8 @@ namespace Wavelets
 			
 			return mat;
 		}
-		
-		public static void TestHaar() {
+
+		public static void TestHaar1d() {
 			
 			int i = 0;
 			double[] vec3 = { 4, 2, 5, 5 };
@@ -97,7 +109,10 @@ namespace Wavelets
 				Console.Write(" ");
 			}
 			Console.Write("\n");
-
+		}
+		
+		public static void TestHaar2d() {
+			
 			Console.Write("\n\nThe 2D Haar Transform: ");
 			Console.Write("\n");
 			
@@ -125,30 +140,35 @@ namespace Wavelets
 		
 		public static void TestDwt() {
 			
-			
 			double[][] mat = Get2DTestData();
 			Matrix matrix = new Matrix(mat);
 			Wavelets.Dwt dwt = new Wavelets.Dwt(2);
 
 			Console.Write("\n\nThe 2D DWT method: ");
 			Console.Write("\n");
-			Matrix dwtMatrix = dwt.DTW(matrix);
+			Matrix dwtMatrix = dwt.DWT(matrix);
 			dwtMatrix.Print();
 			
 			Console.Write("\n\nThe 2D IDWT method: ");
 			Console.Write("\n");
-			Matrix idwtMatrix = dwt.IDTW(dwtMatrix);
+			Matrix idwtMatrix = dwt.IDWT(dwtMatrix);
 			idwtMatrix.Print();
+		}
+		
+		public static void TestWaveletTransform() {
+
+			double[] vec3 = { 4, 2, 5, 5 };
+			WaveletFilter filter = new WaveletFilter("haar");
 			
-			/*
-			List<Matrix> matrices = new List<Matrix>();
-			matrices.Add(matrix);
-			IEnumerable<Matrix> dwt_result = dwt.Fwd(matrices);
-			dwt_result.First().Print();
+			WaveletTransform transform = new WaveletTransform(filter);
+			double[,] Xout;
+			transform.decompose(vec3, vec3.Length, 2, WaveletTransformType.MODWT, WaveletBoundaryCondition.Period, out Xout);
 			
-			IEnumerable<Matrix> idwt_result = dwt.Back(dwt_result);
-			idwt_result.First().Print();
-			 */
+			int N = vec3.Length;
+			double[] Wout = new double[N];
+			double[] Vout = new double[N];
+			WaveletTransform.dwt(vec3, N, filter, Wout, Vout);
+			
 		}
 	}
 }
