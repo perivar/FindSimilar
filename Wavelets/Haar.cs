@@ -2,6 +2,8 @@
 
 namespace Wavelets
 {
+	// c++ version can be found here:
+	// http://www.cs.ucf.edu/~mali/haar/haar.cpp
 	public static class Haar
 	{
 		/** The 1D Haar Transform **/

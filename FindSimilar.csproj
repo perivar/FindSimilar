@@ -209,6 +209,8 @@
     <Compile Include="UCRSuite\UCR_ED.cs" />
     <Compile Include="Wavelets\Dwt.cs" />
     <Compile Include="Wavelets\Haar.cs" />
+    <Compile Include="Wavelets\HaarTransform.cs" />
+    <Compile Include="Wavelets\HaarTransformTest.cs" />
     <Compile Include="Wavelets\HaarWaveletDecomposition.cs" />
     <Compile Include="Wavelets\IInvertible.cs" />
     <Compile Include="Wavelets\IWaveletDecomposition.cs" />
