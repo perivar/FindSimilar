@@ -21,7 +21,9 @@ namespace Wavelets
 			for (int i = 0; i < bmp.Height; i++)
 			{
 				argb[i] = new double[bmp.Width];
-				for (int j = 0; j < bmp.Width; j++) argb[i][j] = bmp.GetPixel(j, i).ToArgb();
+				for (int j = 0; j < bmp.Width; j++) {
+					argb[i][j] = bmp.GetPixel(j, i).ToArgb();
+				}
 			}
 
 			Matrix argbMatrix = new Matrix(argb);

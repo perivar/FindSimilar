@@ -883,12 +883,12 @@ namespace Wavelets
 			int x;
 			int y;
 
-			for (y =0; y < SIZE; y++)
-				for (x =0; x < SIZE; x++)
+			for (y = 0; y < SIZE; y++)
+				for (x = 0; x < SIZE; x++)
 					if (Math.Abs(data[y, x]) <= amount)
 						num_thrown++;
 
-			return (double)(100 *num_thrown) / (double)(SIZE * SIZE);
+			return (double)(100 * num_thrown) / (double)(SIZE * SIZE);
 		}
 
 		// throw away weakest <percentage>% of coefficients
@@ -911,17 +911,18 @@ namespace Wavelets
 						high = Math.Abs(data[j, i]);
 
 			// binary search
-			for (i =0; i < MAX_ITER; i++)
+			for (i = 0; i < MAX_ITER; i++)
 			{
 				thresh = (low+high)/2.0;
 				loss = percent_under(data, thresh);
 
 				Console.Write("binary search: " + "iteration={0,4:D}, thresh={1,4:f}, loss={2,3:f2}%\r", i+1, thresh, loss);
 				
-				if (loss < percentage)
+				if (loss < percentage) {
 					low = thresh;
-				else
+				} else {
 					high = thresh;
+				}
 
 				if (Math.Abs(loss - percentage) < 0.01)
 					i = MAX_ITER;
@@ -930,8 +931,8 @@ namespace Wavelets
 			}
 
 			// zero out anything too low
-			for (j =0; j < SIZE; j++)
-				for (i =0; i < SIZE; i++)
+			for (j = 0; j < SIZE; j++)
+				for (i = 0; i < SIZE; i++)
 					if (Math.Abs(data[j, i]) < thresh)
 						data[j, i] = 0.0;
 
