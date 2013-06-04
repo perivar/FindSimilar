@@ -1,0 +1,46 @@
+format short g; % set console to output human readable numbers
+
+% Write the matrix X to the file FILENAME in comma-separated-value format.
+% csvwrite (FILENAME, X, DLM_OPTS)
+
+% This function is equivalent to
+% dlmwrite (FILENAME, X, ",", ...)
+
+% Write to delimited file
+dlmwrite('image.csv', image, ';'); % works with Norwegian Excel
+
+% Read the comma-separated-value file FILENAME into the matrix X.
+X = csvread (FILENAME)
+% X = csvread (FILENAME, DLM_OPTS)
+
+% This function is equivalent to
+X = dlmread (FILENAME, "," , ...)
+
+% Read image
+image = imread('C:\Users\perivar.nerseth\Pictures\lena_color.jpg');
+image = double(image); 	% convert to double precision			
+image = image(:,:,3); 	% if image has color, use only one of the rgb color's
+
+% Display
+% subplot (nrows,ncols,plot_number)
+clf;
+subplot(3,2,1);
+imagesc(image_normalized);
+title('original image');
+colormap (gray);
+axis image off;
+set(gcf,'position', get(0,'screensize'));
+
+% Write to Binary File
+dct_f = fopen(dctfile, 'w');
+fwrite(dct_f, size(dct, 1), 'int32');
+fwrite(dct_f, size(dct, 2), 'int32');
+fwrite(dct_f, dct', 'float32');
+fclose(dct_f);
+
+% Read from Binary File
+dct_f = fopen(dctfile, 'r');
+dct_nr = fread(dct_f, 1, 'int32');
+dct_nc = fread(dct_f, 1, 'int32');
+dct2 = fread(dct_f, [dct_nr, dct_nc], 'float32');
+fclose(dct_f);
