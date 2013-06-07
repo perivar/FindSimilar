@@ -157,20 +157,25 @@ namespace Wavelets
 			idwtMatrix.Print();
 		}
 		
-		public static void TestWaveletTransform() {
+		public static void TestHaarTransform() {
+			
+			double[][] mat = Get2DTestData();
+			Matrix matrix = new Matrix(mat);
+			//matrix.Print();
+			
+			double[] packed = matrix.GetColumnPackedCopy();
+			HaarTransform.r8mat_print (matrix.Rows, matrix.Columns, packed, "  Input array packed:");
 
-			double[] vec3 = { 4, 2, 5, 5 };
-			WaveletFilter filter = new WaveletFilter("haar");
+			HaarTransform.haar_2d(matrix.Rows, matrix.Columns, packed);
+			HaarTransform.r8mat_print (matrix.Rows, matrix.Columns, packed, "  Transformed array packed:");
 			
-			WaveletTransform transform = new WaveletTransform(filter);
-			double[,] Xout;
-			transform.decompose(vec3, vec3.Length, 2, WaveletTransformType.MODWT, WaveletBoundaryCondition.Period, out Xout);
+			double[] w = HaarTransform.r8mat_copy_new(matrix.Rows, matrix.Columns, packed);
+
+			HaarTransform.haar_2d_inverse (matrix.Rows, matrix.Columns, w);
+			HaarTransform.r8mat_print (matrix.Rows, matrix.Columns, w, "  Recovered array W:");
 			
-			int N = vec3.Length;
-			double[] Wout = new double[N];
-			double[] Vout = new double[N];
-			WaveletTransform.dwt(vec3, N, filter, Wout, Vout);
-			
+			Matrix m = new Matrix(w, matrix.Rows);
+			//m.Print();
 		}
 	}
 }
