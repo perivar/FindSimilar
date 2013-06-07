@@ -8,9 +8,7 @@ namespace Wavelets
 	/// http://people.sc.fsu.edu/~jburkardt/cpp_src/haar/haar.html
 	public static class HaarTransform
 	{
-		public const int INCX = 5;
-		public const int SIZE = 256;
-		public const int MAX_ITER = 250;
+		public const int INCX = 5; // Print the columns of the matrix, in strips of 5.
 		
 		/// <summary>
 		/// HAAR_1D computes the Haar transform of a vector.
@@ -872,70 +870,6 @@ namespace Wavelets
 		{
 			DateTime now = DateTime.Now;
 			Console.WriteLine(now.ToString("dd-MMM-yyyy HH:mm:ss", CultureInfo.InvariantCulture));
-		}
-		
-		// returns the percentage of coefficients under <amount>
-		// Copyright (c) 2003 Emil Mikulic.
-		// http://dmr.ath.cx/
-		public static double percent_under(double[,] data, double amount)
-		{
-			int num_thrown = 0;
-			int x;
-			int y;
-
-			for (y = 0; y < SIZE; y++)
-				for (x = 0; x < SIZE; x++)
-					if (Math.Abs(data[y, x]) <= amount)
-						num_thrown++;
-
-			return (double)(100 * num_thrown) / (double)(SIZE * SIZE);
-		}
-
-		// throw away weakest <percentage>% of coefficients
-		// Copyright (c) 2003 Emil Mikulic.
-		// http://dmr.ath.cx/
-		public static void throw_away(double[,] data, double percentage)
-		{
-			double low;
-			double high;
-			double thresh = 0;
-			double loss;
-			int i;
-			int j;
-
-			// find max
-			low = high = 0.0;
-			for (j =0; j < SIZE; j++)
-				for (i =0; i < SIZE; i++)
-					if (Math.Abs(data[j, i]) > high)
-						high = Math.Abs(data[j, i]);
-
-			// binary search
-			for (i = 0; i < MAX_ITER; i++)
-			{
-				thresh = (low+high)/2.0;
-				loss = percent_under(data, thresh);
-
-				Console.Write("binary search: " + "iteration={0,4:D}, thresh={1,4:f}, loss={2,3:f2}%\r", i+1, thresh, loss);
-				
-				if (loss < percentage) {
-					low = thresh;
-				} else {
-					high = thresh;
-				}
-
-				if (Math.Abs(loss - percentage) < 0.01)
-					i = MAX_ITER;
-				if (Math.Abs(low - high) < 0.0000001)
-					i = MAX_ITER;
-			}
-
-			// zero out anything too low
-			for (j = 0; j < SIZE; j++)
-				for (i = 0; i < SIZE; i++)
-					if (Math.Abs(data[j, i]) < thresh)
-						data[j, i] = 0.0;
-
 		}
 	}
 }
