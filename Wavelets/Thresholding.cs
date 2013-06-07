@@ -107,30 +107,12 @@ namespace Wavelets
 			{
 				double[] row = x[rowIndex];
 				
-				/*
-				// Find top S numbers by doing an absolute value sort
-				var topSNumbers = (from t in row.Select((n, i) => new { Index = i, Value = n })
-				                   orderby Math.Abs(t.Value) descending
-				                   select t).Take(s);
-				 */
-				// Find top S number-indexes by doing an absolute value sort
+				// Find top S coefficients-indexes by doing an absolute value sort
 				int[] topIndexes = (from t in row.Select((n, i) => new { Index = i, Value = n })
 				                    orderby Math.Abs(t.Value) descending
 				                    select t.Index).Take(s).ToArray();
-				
-				int[] bottomIndexes = (from t in row.Select((n, i) => new { Index = i, Value = n })
-				                       select t.Index).Except(topIndexes).ToArray();
-				
-				int[] bottomIndexes2 = row
-					.Select((n, i) => new { Index = i, Value = n })
-					.Where(e => !topIndexes.Contains(e.Index))
-					.Select(e => e.Index).ToArray();
 
-				int rowLength = row.Length;
-				int[] bottom = (from t in row.Select((n, i) => new { Index = i, Value = n })
-				                orderby Math.Abs(t.Value) ascending
-				                select t.Index).Take(rowLength-s).ToArray();
-				
+				// Empty all values except the top S coefficients
 				y[rowIndex] = new double[row.Length];
 				for (int i = 0; i < row.Length; i++) {
 					if (topIndexes.Contains(i)) {
@@ -241,21 +223,6 @@ namespace Wavelets
 					.ToArray();
 				
 				I[rowIndex] = indices;
-				
-				/*
-				var betweenThresholds =
-					row
-					.Select((a, i) => new { Value = a, Index = i })
-					.Where(b => (Math.Abs((double)b.Value) >= thresh1 && Math.Abs((double)b.Value) < thresh2) );
-				
-				I[rowIndex] = new int[betweenThresholds.Count()];
-				int count = 0;
-				foreach (var t in betweenThresholds)
-				{
-					I[rowIndex][count] = t.Index;
-					count++;
-				}
-				 */
 			}
 
 			double threshold = thresh2/(thresh2-thresh1);
@@ -291,7 +258,8 @@ namespace Wavelets
 			// plot(v, perform_thresholding(v,T,'soft'), 'r--');
 			// plot(v, perform_thresholding(v,[T 2*T],'semisoft'), 'g');
 			// plot(v, perform_thresholding(v,[T 4*T],'semisoft'), 'g:');
-			// legend('hard', 'soft', 'semisoft, \mu=2', 'semisoft, \mu=4');
+			// plot(v, perform_thresholding(v',400,'strict'), 'r:');
+			// legend('hard', 'soft', 'semisoft, \mu=2', 'semisoft, \mu=4', 'strict, 400');
 			// hold('off');
 			
 			// linspace in c#
