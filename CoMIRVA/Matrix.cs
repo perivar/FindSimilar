@@ -1835,7 +1835,7 @@ namespace Comirva.Audio.Util.Maths
 				pw.Write("\r");
 			}
 			pw.Close();
-		}		
+		}
 		
 		/// <summary>Writes the Matrix to an ascii-textfile that can be read by Matlab.
 		/// Usage in Matlab: load('filename', '-ascii');</summary>
@@ -2022,7 +2022,11 @@ namespace Comirva.Audio.Util.Maths
 		/// Imitating Matlabs imagesc(M), where M is the matrix
 		/// </summary>
 		/// <param name="fileName">filename</param>
-		public Image DrawMatrixImage(string fileName) {
+		/// <param name="forceWidth">force pixel width (default=600). To ignore use 0 or -1</param>
+		/// <param name="forceHeight">force pixel height (default=400). To ignore use 0 or -1</param>
+		/// <param name="colorize">colorize (default=true) or use black and white (false)</param>
+		/// <returns>an image</returns>
+		public Image DrawMatrixImage(string fileName, int forceWidth=600, int forceHeight=400, bool colorize=true) {
 			
 			double maxValue = Max();
 			if (maxValue == 0.0f)
@@ -2035,10 +2039,8 @@ namespace Comirva.Audio.Util.Maths
 				for(int j = 0; j < columnCount; j++)
 				{
 					double val = this.MatrixData[i][j];
-					val /= maxValue;
-
-					//byte color = (byte) MathUtils.ConvertAndMainainRatio(Math.Abs(val), 0, 1, 0, 255);
-					byte color = (byte) (Math.Abs(val) * 255);
+					val /= maxValue; // Convert to range between [0 - 1]
+					byte color = (byte) (Math.Abs(val) * 255); // convert to between 0 - 255
 					
 					// Pixel data is ARGB, 1 byte for alpha, 1 for red, 1 for green, 1 for blue.
 					// On a little-endian machine, like yours and many others,
@@ -2052,9 +2054,19 @@ namespace Comirva.Audio.Util.Maths
 					rgb.Add(255); 	// A
 				}
 			}
+			
+			// Convert to image
 			Image img = ImageUtils.ByteArrayToImage(rgb.ToArray(), columnCount, rowCount, PixelFormat.Format32bppArgb);
-			img = ImageUtils.Resize(img, 600, 400, false);
-			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
+			
+			// Should we resize?
+			if (forceHeight > 0 && forceWidth > 0) {
+				img = ImageUtils.Resize(img, forceWidth, forceHeight, false);
+			}
+			
+			// Should we colorize?
+			if (colorize) img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
+			
+			// Save and return the image
 			img.Save(fileName, ImageFormat.Png);
 			return img;
 		}
@@ -2066,6 +2078,10 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="fileName">filename</param>
 		/// <param name="flipYscale">bool whether to flip the y scale</param>
 		/// <param name="usePowerSpectrum">bool whether to use powerspectrum (true) or amplitude/magnitude spectrum (false)</param>
+		/// <param name="forceWidth">force pixel width (default=600). To ignore use 0 or -1</param>
+		/// <param name="forceHeight">force pixel height (default=400). To ignore use 0 or -1</param>
+		/// <param name="colorize">colorize (default=true) or use black and white (false)</param>
+		/// <returns>an image</returns>
 		/// <example>
 		/// This method can be used to plot a spectrogram
 		/// like the octave method:
@@ -2076,8 +2092,8 @@ namespace Comirva.Audio.Util.Maths
 		/// stft = load ('stftdata.ascii.txt', '-ascii');
 		/// imagesc (flipud(log(stft)));
 		/// </example>
-		public Image DrawMatrixImageLogValues(string fileName, bool flipYscale=false, bool usePowerSpectrum=false)
-		{
+		public Image DrawMatrixImageLogValues(string fileName, bool flipYscale=false, bool usePowerSpectrum=false, int forceWidth=600, int forceHeight=400, bool colorize=true) {
+			
 			// amplitude (or magnitude) is the square root of the power spectrum
 			// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
 			// use 20*log10(Y) to get dB from amplitude
@@ -2114,19 +2130,24 @@ namespace Comirva.Audio.Util.Maths
 					Brush brush = new SolidBrush(color);
 					
 					if (flipYscale) {
-						//img.SetPixel(column, rowCount-row-1, color);
 						// draw a small square
 						graphics.FillRectangle(brush, column*blockSizeX, (rowCount-row)*blockSizeY, blockSizeX, blockSizeY);
 					} else {
-						//img.SetPixel(column, row, color);
 						// draw a small square
 						graphics.FillRectangle(brush, column*blockSizeX, row*blockSizeY, blockSizeX, blockSizeY);
 					}
 				}
 			}
 			
-			img = (Bitmap) ImageUtils.Resize(img, 600, 400, false);
-			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
+			// Should we resize?
+			if (forceHeight > 0 && forceWidth > 0) {
+				img = (Bitmap) ImageUtils.Resize(img, forceWidth, forceHeight, false);
+			}
+			
+			// Should we colorize?
+			if (colorize) img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
+
+			// Save and return the image
 			img.Save(fileName, ImageFormat.Png);
 			return img;
 		}
@@ -2141,8 +2162,11 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="maxFreq">Max frequency</param>
 		/// <param name="logBins">Number of logarithmically spaced bins</param>
 		/// <param name="fftSize">FFT Size</param>
-		public Image DrawMatrixImageLogY(string fileName, double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize)
-		{
+		/// <param name="forceWidth">force pixel width (default=600). To ignore use 0 or -1</param>
+		/// <param name="forceHeight">force pixel height (default=400). To ignore use 0 or -1</param>
+		/// <param name="colorize">colorize (default=true) or use black and white (false)</param>
+		/// <returns>an image</returns>
+		public Image DrawMatrixImageLogY(string fileName, double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize, int forceWidth=600, int forceHeight=400, bool colorize=true) {
 			double maxValue = Max();
 			maxValue = 10 * Math.Log10(maxValue);
 			if (maxValue == 0.0f)
@@ -2175,8 +2199,15 @@ namespace Comirva.Audio.Util.Maths
 				}
 			}
 
-			img = (Bitmap) ImageUtils.Resize(img, 600, 400, false);
-			img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
+			// Should we resize?
+			if (forceHeight > 0 && forceWidth > 0) {
+				img = (Bitmap) ImageUtils.Resize(img, forceWidth, forceHeight, false);
+			}
+			
+			// Should we colorize?
+			if (colorize) img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
+
+			// Save and return the image
 			img.Save(fileName, ImageFormat.Png);
 			return img;
 		}

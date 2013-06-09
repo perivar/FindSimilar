@@ -4,8 +4,8 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-
 using Comirva.Audio.Util.Maths;
+using CommonUtils;
 
 namespace Wavelets
 {
@@ -14,26 +14,112 @@ namespace Wavelets
 	/// </summary>
 	public static class WaveletUtils
 	{
-		public static void SaveWaveletImage(string imageInPath, string imageOutPath, bool useStandardHaarWaveletDecomposition) {
+		private static Matrix HaarWaveletTransform(double[][] image) {
+			Matrix imageMatrix = new Matrix(image);
+			double[] imagePacked = imageMatrix.GetColumnPackedCopy();
+			HaarTransform.haar_2d(imageMatrix.Rows, imageMatrix.Columns, imagePacked);
+			Matrix haarMatrix = new Matrix(imagePacked, imageMatrix.Rows);
+			return haarMatrix;
+		}
+
+		private static Matrix InverseHaarWaveletTransform(double[][] image) {
+			Matrix imageMatrix = new Matrix(image);
+			double[] imagePacked = imageMatrix.GetColumnPackedCopy();
+			HaarTransform.haar_2d_inverse(imageMatrix.Rows, imageMatrix.Columns, imagePacked);
+			Matrix inverseHaarMatrix = new Matrix(imagePacked, imageMatrix.Rows);
+			return inverseHaarMatrix;
+		}
+		
+		public static void TestDenoise(string imageInPath) {
+			
+			// Read Image
 			Image img = Image.FromFile(imageInPath);
 			Bitmap bmp = new Bitmap(img);
-			double[][] argb = new double[bmp.Height][];
+			double[][] image = new double[bmp.Height][];
 			for (int i = 0; i < bmp.Height; i++)
 			{
-				argb[i] = new double[bmp.Width];
+				image[i] = new double[bmp.Width];
 				for (int j = 0; j < bmp.Width; j++) {
-					argb[i][j] = bmp.GetPixel(j, i).ToArgb();
+					//image[i][j] = bmp.GetPixel(j, i).ToArgb();
+					image[i][j] = bmp.GetPixel(j, i).B; // use only blue channel
 				}
 			}
 
-			Matrix argbMatrix = new Matrix(argb);
-			argbMatrix.WriteCSV("test.csv", ";");
+			//Matrix imageMatrix = new Matrix(image);
+			//imageMatrix.WriteCSV("lena-blue.csv", ";");
+
+			// Normalize the pixel values to the range 0..1.0. It does this by dividing all pixel values by the max value.
+			double max = image.Max((b) => b.Max((v) => Math.Abs(v)));
+			double[][] imageNormalized = image.Select(i => i.Select(j => j/max).ToArray()).ToArray();
 			
-			Image image = GetWaveletTransformedImage(argb, useStandardHaarWaveletDecomposition);
-			image.Save(imageOutPath, ImageFormat.Jpeg);
+			Matrix normalizedMatrix = new Matrix(imageNormalized);
+			//normalizedMatrix.WriteCSV("lena-normalized.csv", ";");
+			normalizedMatrix.DrawMatrixImage("lena-original.png", -1, -1, false);
+
+			// Add Noise using normally distributed pseudorandom numbers
+			// image_noisy = image_normalized + 0.1 * randn(size(image_normalized));
+			TestSimpleRNG.SimpleRNG.SetSeedFromSystemTime();
+			double[][] imageNoisy = imageNormalized.Select(i => i.Select(j => j + (0.1 * TestSimpleRNG.SimpleRNG.GetNormal())).ToArray()).ToArray();
+			Matrix matrixNoisy = new Matrix(imageNoisy);
+			matrixNoisy.DrawMatrixImage("lena-noisy.png", -1, -1, false);
+
+			// Haar Wavelet Transform
+			Matrix haarMatrix = HaarWaveletTransform(imageNoisy);
+
+			// Thresholding
+			double threshold = 0.15;
+			double[][] yHard = Thresholding.perform_hard_thresholding(haarMatrix.MatrixData, threshold);
+			double[][] ySoft = Thresholding.perform_soft_thresholding(haarMatrix.MatrixData, threshold);
+			double[][] ySemisoft = Thresholding.perform_semisoft_thresholding(haarMatrix.MatrixData, threshold, threshold*2);
+			double[][] ySemisoft2 = Thresholding.perform_semisoft_thresholding(haarMatrix.MatrixData, threshold, threshold*4);
+			double[][] yStrict = Thresholding.perform_strict_thresholding(haarMatrix.MatrixData, 20);
+			
+			// Inverse 2D Haar Wavelet Transform
+			Matrix zHard = InverseHaarWaveletTransform(yHard);
+			Matrix zSoft = InverseHaarWaveletTransform(ySoft);
+			Matrix zSemisoft = InverseHaarWaveletTransform(ySemisoft);
+			Matrix zSemisoft2 = InverseHaarWaveletTransform(ySemisoft2);
+			Matrix zStrict = InverseHaarWaveletTransform(yStrict);
+			
+			//zHard.WriteCSV("lena-thresholding-hard.csv", ";");
+
+			// Output the images
+			zHard.DrawMatrixImage("lena-thresholding-hard.png", -1, -1, false);
+			zSoft.DrawMatrixImage("lena-thresholding-soft.png", -1, -1, false);
+			zSemisoft.DrawMatrixImage("lena-thresholding-semisoft.png", -1, -1, false);
+			zSemisoft2.DrawMatrixImage("lena-thresholding-semisoft2.png", -1, -1, false);
+			zStrict.DrawMatrixImage("lena-thresholding-strict.png", -1, -1, false);
+		}
+
+		public static void SaveWaveletImage(string imageInPath, string imageOutPath, bool useStandardHaarWaveletDecomposition) {
+
+			// Read Image
+			Image img = Image.FromFile(imageInPath);
+			Bitmap bmp = new Bitmap(img);
+			double[][] image = new double[bmp.Height][];
+			for (int i = 0; i < bmp.Height; i++)
+			{
+				image[i] = new double[bmp.Width];
+				for (int j = 0; j < bmp.Width; j++) {
+					//image[i][j] = bmp.GetPixel(j, i).ToArgb();
+					image[i][j] = bmp.GetPixel(j, i).B; // use only blue channel
+				}
+			}
+
+			// Normalize the pixel values to the range 0..1.0. It does this by dividing all pixel values by the max value.
+			double max = image.Max((b) => b.Max((v) => (v)));
+			double[][] imageNormalized = image.Select(i => i.Select(j => j/max).ToArray()).ToArray();
+			Matrix normalizedMatrix = new Matrix(imageNormalized);
+			normalizedMatrix.WriteCSV("ImageNormalized.csv", ";");
+			
+			Image bitmap = GetWaveletTransformedImage(imageNormalized, useStandardHaarWaveletDecomposition);			
+			//Image bitmap = GetWaveletTransformedImage(image, useStandardHaarWaveletDecomposition);
+			
+			// Save Image
+			bitmap.Save(imageOutPath, ImageFormat.Png);
 			img.Dispose();
 			bmp.Dispose();
-			image.Dispose();
+			bitmap.Dispose();
 		}
 		
 		public static Image GetWaveletTransformedImage(double[][] image, bool useStandardHaarWaveletDecomposition)
@@ -47,11 +133,25 @@ namespace Wavelets
 				haar.DecomposeImageInPlace(image);
 				dwtMatrix = new Matrix(image);
 			} else {
-				Matrix matrix = new Matrix(image);
-				Wavelets.Dwt dwt = new Wavelets.Dwt(2);
-				dwtMatrix = dwt.DWT(matrix);
+				//Matrix matrix = new Matrix(image);
+				//Wavelets.Dwt dwt = new Wavelets.Dwt(2);
+				//dwtMatrix = dwt.DWT(matrix);
+				dwtMatrix = HaarWaveletTransform(image);
 			}
 			
+			dwtMatrix.WriteCSV("HaarImageNormalized.csv", ";");
+			
+			double[][] arrayMultiplied = dwtMatrix.MatrixData.Select(i => i.Select(j => j*5000).ToArray()).ToArray();
+			
+			double min = arrayMultiplied.Min(b => b.Min());
+			double max = arrayMultiplied.Max(b => b.Max());
+			double[][] uint8 = arrayMultiplied.Select(i => i.Select(j => j.Scale(min, max, 0, 255)).ToArray()).ToArray();
+			//double[][] normalizedList = dwtMatrix.MatrixData.Select(i => i.Select(x => (x - min) / (max - min)).ToArray()).ToArray();
+			
+			Matrix normalizedMatrix = new Matrix(uint8);
+			Image transformed = normalizedMatrix.DrawMatrixImage("1.png", -1, -1, false);
+			
+			/*
 			Bitmap transformed = new Bitmap(width, height, PixelFormat.Format16bppRgb565);
 			for (int i = 0; i < transformed.Height; i++)
 			{
@@ -60,6 +160,7 @@ namespace Wavelets
 					transformed.SetPixel(j, i, Color.FromArgb((int)dwtMatrix.MatrixData[i][j]));
 				}
 			}
+			 */
 
 			return transformed;
 		}

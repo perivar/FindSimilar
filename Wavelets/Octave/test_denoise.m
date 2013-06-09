@@ -1,3 +1,8 @@
+% Init
+clear all
+close all
+clc
+
 % One technique for denoising is wavelet thresholding (or "shrinkage"). 
 % When we decompose data using the wavelet transform, we use filters that act as averaging filters, 
 % and others that produce details. 
@@ -11,7 +16,17 @@ format short g; % set console to output human readable numbers
 % Read image
 image = imread('C:\Users\perivar.nerseth\Pictures\lena_color.jpg');
 image = double(image); 	% convert to double precision			
-image = image(:,:,3); 	% if image has color, use only one of the rgb color's
+
+% if image has color, use only one of the rgb color's
+rgbImage = image;
+
+% Extract the individual red, green, and blue color planes.
+redPlane = rgbImage(:, :, 1);
+greenPlane = rgbImage(:, :, 2);
+bluePlane = rgbImage(:, :, 3);
+
+% Use Blue plane
+image = bluePlane;
 
 % Normalize the pixel values to the range 0..1.0. It does this by dividing all pixel values by the max value.
 image_normalized = image/max(image(:));

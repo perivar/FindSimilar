@@ -16,6 +16,28 @@ X = csvread (FILENAME)
 % This function is equivalent to
 X = dlmread (FILENAME, "," , ...)
 
+% Print text
+% Using disp (The output of disp depends on the format command.)
+disp(x)
+
+% Using printf
+% The printf function displays its output on the screen. Use the sprintf to return the result in a string and fprintf to write to a file. Note that the fprintf requires one additional parameter to specify the file identifier.
+printf(format, value, ...)
+sprintf(format, value, ...)
+fprintf(fid, format, value, ...)
+
+octave:18> x = 10.1;
+octave:19> y = 5.5;
+octave:20> z = 'test';
+octave:21> printf('An integer: %i. A real: %f. This is a %s.\n', x, y, z);
+An integer: 10. A real: 5.500000. This is a test.
+
+octave:22> x = 10.34;
+octave:23> printf("x is a real number: %f (%e in scientific notation).\n", x, x);
+x is a real number: 10.340000 (1.034000e+01 in scientific notation).
+octave:24> printf("Write percentages as %i%%.\n", x);
+Write percentages as 10%
+
 % Read image
 image = imread('C:\Users\perivar.nerseth\Pictures\lena_color.jpg');
 image = double(image); 	% convert to double precision			
@@ -44,3 +66,13 @@ dct_nr = fread(dct_f, 1, 'int32');
 dct_nc = fread(dct_f, 1, 'int32');
 dct2 = fread(dct_f, [dct_nr, dct_nc], 'float32');
 fclose(dct_f);
+
+% comparing two-matrices
+tf = abs((A-B)./B)<0.05
+% This will return a logical matrix which will be true for each element if the relative difference between A and B 
+% with respect to B is less than 5 percent.
+% If you want to ask if all of these are true (they all satisfy the above condition):
+all(tf(:))
+
+% To normalize a matrix such that all values fall in the range [0, 1] use
+%inorm = (image - min(image(:)))/(max(image(:)) - min(image(:)));
