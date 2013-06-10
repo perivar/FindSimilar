@@ -45,6 +45,14 @@ haar_image_normalized = haar_2d(image_normalized);
 dlmwrite('haar_image_normalized.csv', haar_image_normalized, ';'); % works with Norwegian Excel
 printf('Wrote ''haar_image_normalized.csv''\n');
 
+haar_image_normalized5k = haar_image_normalized*5000;
+dlmwrite('haar_image_normalized5k.csv', haar_image_normalized5k, ';'); % works with Norwegian Excel
+printf('Wrote ''haar_image_normalized5k.csv''\n');
+
+uint8_haar_image_normalized5k = uint8(haar_image_normalized5k);
+dlmwrite('uint8_haar_image_normalized5k.csv', uint8_haar_image_normalized5k, ';'); % works with Norwegian Excel
+printf('Wrote ''uint8_haar_image_normalized5k.csv''\n');
+
 % 2D Inverse Haar Wavelet Transform
 inverse_haar_image_normalized = haar_2d_inverse(haar_image_normalized);
 

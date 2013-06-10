@@ -625,20 +625,17 @@ namespace Mirage
 			//DctComirva.test();
 			//TestComirvaMatrix();
 			
-			Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
+			//Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
 			                                       @"lena_color_dwt1.png", false);
-			
-			/*
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"C:\Users\perivar.nerseth\Pictures\lena_color_dwt2.jpg", false);
+			                                       @"lena_color_dwt2.png", false);
 
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"C:\Users\perivar.nerseth\Pictures\lena_gray_dwt1.jpg", true);
+			                                       @"lena_gray_dwt1.png", true);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"C:\Users\perivar.nerseth\Pictures\lena_gray_dwt2.jpg", false);
+			                                       @"lena_gray_dwt2.png", false);
 			
-			 */
 			/*
 			//Wavelets.WaveletUtils.TestHaar1d();
 			Wavelets.HaarTransformTest.RunTests();

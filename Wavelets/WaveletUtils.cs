@@ -109,20 +109,18 @@ namespace Wavelets
 			// Normalize the pixel values to the range 0..1.0. It does this by dividing all pixel values by the max value.
 			double max = image.Max((b) => b.Max((v) => (v)));
 			double[][] imageNormalized = image.Select(i => i.Select(j => j/max).ToArray()).ToArray();
-			Matrix normalizedMatrix = new Matrix(imageNormalized);
-			normalizedMatrix.WriteCSV("ImageNormalized.csv", ";");
+			//Matrix normalizedMatrix = new Matrix(imageNormalized);
+			//normalizedMatrix.WriteCSV("ImageNormalized.csv", ";");
 			
-			Image bitmap = GetWaveletTransformedImage(imageNormalized, useStandardHaarWaveletDecomposition);			
-			//Image bitmap = GetWaveletTransformedImage(image, useStandardHaarWaveletDecomposition);
-			
-			// Save Image
-			bitmap.Save(imageOutPath, ImageFormat.Png);
+			Matrix bitmap = GetWaveletTransformedMatrix(imageNormalized, useStandardHaarWaveletDecomposition);
+			bitmap.DrawMatrixImage(imageOutPath, -1, -1, false);
+
 			img.Dispose();
 			bmp.Dispose();
-			bitmap.Dispose();
+			bitmap = null;
 		}
 		
-		public static Image GetWaveletTransformedImage(double[][] image, bool useStandardHaarWaveletDecomposition)
+		public static Matrix GetWaveletTransformedMatrix(double[][] image, bool useStandardHaarWaveletDecomposition)
 		{
 			int width = image[0].Length;
 			int height = image.Length;
@@ -139,30 +137,32 @@ namespace Wavelets
 				dwtMatrix = HaarWaveletTransform(image);
 			}
 			
-			dwtMatrix.WriteCSV("HaarImageNormalized.csv", ";");
+			//dwtMatrix.WriteCSV("HaarImageNormalized.csv", ";");
 			
-			double[][] arrayMultiplied = dwtMatrix.MatrixData.Select(i => i.Select(j => j*5000).ToArray()).ToArray();
+			// increase all values
+			double[][] haarImageNormalized5k = dwtMatrix.MatrixData.Select(i => i.Select(j => j*5000).ToArray()).ToArray();
+			//Matrix haarImageNormalized5kMatrix = new Matrix(haarImageNormalized5k);
+			//haarImageNormalized5kMatrix.WriteCSV("HaarImageNormalized5k.csv", ";");
 			
-			double min = arrayMultiplied.Min(b => b.Min());
-			double max = arrayMultiplied.Max(b => b.Max());
-			double[][] uint8 = arrayMultiplied.Select(i => i.Select(j => j.Scale(min, max, 0, 255)).ToArray()).ToArray();
-			//double[][] normalizedList = dwtMatrix.MatrixData.Select(i => i.Select(x => (x - min) / (max - min)).ToArray()).ToArray();
-			
-			Matrix normalizedMatrix = new Matrix(uint8);
-			Image transformed = normalizedMatrix.DrawMatrixImage("1.png", -1, -1, false);
-			
-			/*
-			Bitmap transformed = new Bitmap(width, height, PixelFormat.Format16bppRgb565);
-			for (int i = 0; i < transformed.Height; i++)
-			{
-				for (int j = 0; j < transformed.Width; j++)
-				{
-					transformed.SetPixel(j, i, Color.FromArgb((int)dwtMatrix.MatrixData[i][j]));
+			// convert to byte values (0 - 255)
+			double[][] uint8 = new double[haarImageNormalized5k.Length][];
+			for (int i = 0; i < haarImageNormalized5k.Length; i++) {
+				uint8[i] = new double[haarImageNormalized5k.Length];
+				for (int j = 0; j < haarImageNormalized5k[i].Length; j++) {
+					double v = haarImageNormalized5k[i][j];
+					if (v > 255) {
+						uint8[i][j] = 255;
+					} else if (v < 0) {
+						uint8[i][j] = 0;
+					} else {
+						uint8[i][j] = (byte) haarImageNormalized5k[i][j];
+					}
 				}
 			}
-			 */
-
-			return transformed;
+			
+			Matrix uint8Matrix = new Matrix(uint8);
+			//uint8Matrix.WriteCSV("Uint8HaarImageNormalized5k.csv", ";");
+			return uint8Matrix;
 		}
 		
 		/*
