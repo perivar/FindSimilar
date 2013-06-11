@@ -626,15 +626,24 @@ namespace Mirage
 			//TestComirvaMatrix();
 			
 			//Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
+			
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_dwt1.png", false);
+			                                       @"lena_color_dwt.png", Wavelets.WaveletMethod.Dwt);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_dwt2.png", false);
+			                                       @"lena_color_haar_transform.png", Wavelets.WaveletMethod.HaarTransform);
+			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+			                                       @"lena_color_haar.png", Wavelets.WaveletMethod.Haar);
+			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+			                                       @"lena_color_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
 
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_dwt1.png", true);
+			                                       @"lena_gray_dwt.png", Wavelets.WaveletMethod.Dwt);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_dwt2.png", false);
+			                                       @"lena_gray_haar_transform.png", Wavelets.WaveletMethod.HaarTransform);
+			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+			                                       @"lena_gray_haar.png", Wavelets.WaveletMethod.Haar);
+			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+			                                       @"lena_gray_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
 			
 			/*
 			//Wavelets.WaveletUtils.TestHaar1d();

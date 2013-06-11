@@ -7,7 +7,7 @@ using Comirva.Audio.Util.Maths;
 namespace Wavelets
 {
 	// http://dfyz-stuff.googlecode.com/svn-history/r47/trunk/ImageCompression/Task1/Dwt.cs
-	public class Dwt : IWaveletDecomposition, IInvertible<IEnumerable<Matrix>, IEnumerable<Matrix>>
+	public class Dwt
 	{
 		#region IWaveletDecomposition Members
 

@@ -9,6 +9,13 @@ using CommonUtils;
 
 namespace Wavelets
 {
+	public enum WaveletMethod : int {
+		Dwt = 1,
+		Haar = 2,
+		HaarTransform = 3,
+		HaarWaveletDecomposition = 4,
+	}
+	
 	/// <summary>
 	/// Description of WaveletUtils.
 	/// </summary>
@@ -91,7 +98,8 @@ namespace Wavelets
 			zStrict.DrawMatrixImage("lena-thresholding-strict.png", -1, -1, false);
 		}
 
-		public static void SaveWaveletImage(string imageInPath, string imageOutPath, bool useStandardHaarWaveletDecomposition) {
+		//Func<int, int, double> window
+		public static void SaveWaveletImage(string imageInPath, string imageOutPath, WaveletMethod waveletMethod) {
 
 			// Read Image
 			Image img = Image.FromFile(imageInPath);
@@ -112,7 +120,7 @@ namespace Wavelets
 			//Matrix normalizedMatrix = new Matrix(imageNormalized);
 			//normalizedMatrix.WriteCSV("ImageNormalized.csv", ";");
 			
-			Matrix bitmap = GetWaveletTransformedMatrix(imageNormalized, useStandardHaarWaveletDecomposition);
+			Matrix bitmap = GetWaveletTransformedMatrix(imageNormalized, waveletMethod);
 			bitmap.DrawMatrixImage(imageOutPath, -1, -1, false);
 
 			img.Dispose();
@@ -120,23 +128,33 @@ namespace Wavelets
 			bitmap = null;
 		}
 		
-		public static Matrix GetWaveletTransformedMatrix(double[][] image, bool useStandardHaarWaveletDecomposition)
+		public static Matrix GetWaveletTransformedMatrix(double[][] image, WaveletMethod waveletMethod)
 		{
 			int width = image[0].Length;
 			int height = image.Length;
 
 			Matrix dwtMatrix = null;
-			if (useStandardHaarWaveletDecomposition) {
-				IWaveletDecomposition haar = new StandardHaarWaveletDecomposition();
-				haar.DecomposeImageInPlace(image);
-				dwtMatrix = new Matrix(image);
-			} else {
-				//Matrix matrix = new Matrix(image);
-				//Wavelets.Dwt dwt = new Wavelets.Dwt(2);
-				//dwtMatrix = dwt.DWT(matrix);
-				dwtMatrix = HaarWaveletTransform(image);
+			switch(waveletMethod) {
+				case WaveletMethod.Dwt:
+					Wavelets.Dwt dwt = new Wavelets.Dwt(2);
+					Matrix imageMatrix = new Matrix(image);
+					dwtMatrix = dwt.DWT(imageMatrix);
+					break;
+				case WaveletMethod.Haar:
+					Haar.Haar2d(image, height, width);
+					dwtMatrix = new Matrix(image);
+					break;
+				case WaveletMethod.HaarTransform:
+					dwtMatrix = HaarWaveletTransform(image);
+					break;
+				case WaveletMethod.HaarWaveletDecomposition:
+					StandardHaarWaveletDecomposition haar = new StandardHaarWaveletDecomposition();
+					haar.DecomposeImageInPlace(image);
+					dwtMatrix = new Matrix(image);
+					break;
+				default:
+					break;
 			}
-			
 			//dwtMatrix.WriteCSV("HaarImageNormalized.csv", ";");
 			
 			// increase all values
@@ -145,6 +163,7 @@ namespace Wavelets
 			//haarImageNormalized5kMatrix.WriteCSV("HaarImageNormalized5k.csv", ";");
 			
 			// convert to byte values (0 - 255)
+			// duplicate the octave/ matlab method uint8
 			double[][] uint8 = new double[haarImageNormalized5k.Length][];
 			for (int i = 0; i < haarImageNormalized5k.Length; i++) {
 				uint8[i] = new double[haarImageNormalized5k.Length];
@@ -231,7 +250,7 @@ namespace Wavelets
 			Console.Write("\n\nThe 2D HaarWaveletDecomposition method: ");
 			Console.Write("\n");
 			
-			IWaveletDecomposition haar = new StandardHaarWaveletDecomposition();
+			StandardHaarWaveletDecomposition haar = new StandardHaarWaveletDecomposition();
 			
 			double[][] mat = Get2DTestData();
 			

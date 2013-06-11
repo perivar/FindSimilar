@@ -213,8 +213,6 @@
     <Compile Include="Wavelets\HaarTransform.cs" />
     <Compile Include="Wavelets\HaarTransformTest.cs" />
     <Compile Include="Wavelets\HaarWaveletDecomposition.cs" />
-    <Compile Include="Wavelets\IInvertible.cs" />
-    <Compile Include="Wavelets\IWaveletDecomposition.cs" />
     <Compile Include="Wavelets\StandardHaarWaveletDecomposition.cs" />
     <Compile Include="Wavelets\Thresholding.cs" />
     <Compile Include="Wavelets\WaveletUtils.cs" />

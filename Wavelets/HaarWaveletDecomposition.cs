@@ -2,7 +2,7 @@
 
 namespace Wavelets
 {
-	public abstract class HaarWaveletDecomposition : IWaveletDecomposition
+	public abstract class HaarWaveletDecomposition
 	{
 		public abstract void DecomposeImageInPlace(double[][] image);
 
