@@ -620,6 +620,16 @@ namespace Mirage
 		[STAThread]
 		public static void Main(string[] args) {
 
+			/* 
+ 			// Wavelet Tests
+			Wavelets.WaveletUtils.TestJWave();
+			Wavelets.WaveletUtils.TestHaar2d();
+			Wavelets.WaveletUtils.TestHaarWaveletDecomposition();
+			Wavelets.WaveletUtils.TestDwt();
+			Wavelets.WaveletUtils.TestHaarTransform();
+			//Wavelets.Thresholding.RunTests();
+			 */
+			
 			//Imghash.Program.HashTester(args);
 			//DctMethods.test2(true);
 			//DctComirva.test();
@@ -635,6 +645,8 @@ namespace Mirage
 			                                       @"lena_color_haar.png", Wavelets.WaveletMethod.Haar);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
 			                                       @"lena_color_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
+			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+			                                       @"lena_color_jwave.png", Wavelets.WaveletMethod.JWave);
 
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
 			                                       @"lena_gray_dwt.png", Wavelets.WaveletMethod.Dwt);
@@ -644,16 +656,9 @@ namespace Mirage
 			                                       @"lena_gray_haar.png", Wavelets.WaveletMethod.Haar);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
 			                                       @"lena_gray_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
+			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+			                                       @"lena_gray_jwave.png", Wavelets.WaveletMethod.JWave);
 			
-			/*
-			//Wavelets.WaveletUtils.TestHaar1d();
-			Wavelets.HaarTransformTest.RunTests();
-			Wavelets.WaveletUtils.TestHaar2d();
-			Wavelets.WaveletUtils.TestHaarWaveletDecomposition();
-			Wavelets.WaveletUtils.TestDwt();
-			Wavelets.WaveletUtils.TestHaarTransform();
-			//Wavelets.Thresholding.RunTests();
-			 */
 			Console.In.ReadLine();
 			return;
 			

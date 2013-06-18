@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Comirva.Audio.Util.Maths;
 using CommonUtils;
+using math.transform.jwave;
+using math.transform.jwave.handlers;
+using math.transform.jwave.handlers.wavelets;
 
 namespace Wavelets
 {
@@ -14,6 +17,7 @@ namespace Wavelets
 		Haar = 2,
 		HaarTransform = 3,
 		HaarWaveletDecomposition = 4,
+		JWave = 5
 	}
 	
 	/// <summary>
@@ -136,9 +140,9 @@ namespace Wavelets
 			Matrix dwtMatrix = null;
 			switch(waveletMethod) {
 				case WaveletMethod.Dwt:
-					Wavelets.Dwt dwt = new Wavelets.Dwt(2);
+					Wavelets.Dwt dwt = new Wavelets.Dwt(8);
 					Matrix imageMatrix = new Matrix(image);
-					dwtMatrix = dwt.DWT(imageMatrix);
+					dwtMatrix = dwt.Transform(imageMatrix);
 					break;
 				case WaveletMethod.Haar:
 					Haar.Haar2d(image, height, width);
@@ -151,6 +155,18 @@ namespace Wavelets
 					StandardHaarWaveletDecomposition haar = new StandardHaarWaveletDecomposition();
 					haar.DecomposeImageInPlace(image);
 					dwtMatrix = new Matrix(image);
+					break;
+				case WaveletMethod.JWave:
+					WaveletInterface wavelet = null;
+					wavelet = new Haar02();
+					//wavelet = new Daub02();
+					TransformInterface bWave = null;
+					bWave = new FastWaveletTransform(wavelet);
+					//bWave = new WaveletPacketTransform(wavelet);
+					//bWave = new DiscreteWaveletTransform(wavelet);
+					Transform t = new Transform(bWave); // perform all steps
+					double[][] dwtArray = t.forward(image);
+					dwtMatrix = new Matrix(dwtArray);
 					break;
 				default:
 					break;
@@ -268,12 +284,39 @@ namespace Wavelets
 
 			Console.Write("\n\nThe 2D DWT method: ");
 			Console.Write("\n");
-			Matrix dwtMatrix = dwt.DWT(matrix);
+			Matrix dwtMatrix = dwt.Transform(matrix);
 			dwtMatrix.Print();
 			
 			Console.Write("\n\nThe 2D IDWT method: ");
 			Console.Write("\n");
-			Matrix idwtMatrix = dwt.IDWT(dwtMatrix);
+			Matrix idwtMatrix = dwt.TransformBack(dwtMatrix);
+			idwtMatrix.Print();
+		}
+		
+		public static void TestJWave() {
+
+			double[][] mat = Get2DTestData();
+
+			WaveletInterface wavelet = null;
+			wavelet = new Haar02();
+			TransformInterface bWave = null;
+			//bWave = new FastWaveletTransform(wavelet);
+			//bWave = new WaveletPacketTransform(wavelet);
+			bWave = new DiscreteWaveletTransform(wavelet);
+			Transform t = new Transform(bWave); // perform all steps
+			
+			Console.Write("\n\nThe 2D JWave Haar02 Dwt method: ");
+			Console.Write("\n");
+			double[][] dwtArray = t.forward(mat);
+			
+			Matrix dwtMatrix = new Matrix(dwtArray);
+			dwtMatrix.Print();
+			
+			Console.Write("\n\nThe 2D JWave Haar02 Inverse Dwt method: ");
+			Console.Write("\n");
+			double[][] idwtArray = t.reverse(dwtArray);
+
+			Matrix idwtMatrix = new Matrix(idwtArray);
 			idwtMatrix.Print();
 		}
 		

@@ -37,7 +37,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects" -resetdb</StartArguments>
+    <StartArguments>FWT daub04</StartArguments>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -213,6 +213,40 @@
     <Compile Include="Wavelets\HaarTransform.cs" />
     <Compile Include="Wavelets\HaarTransformTest.cs" />
     <Compile Include="Wavelets\HaarWaveletDecomposition.cs" />
+    <Compile Include="Wavelets\jwave\blocks\Block.cs" />
+    <Compile Include="Wavelets\jwave\blocks\BlockController.cs" />
+    <Compile Include="Wavelets\jwave\blocks\BlockDummy.cs" />
+    <Compile Include="Wavelets\jwave\blocks\BlockFull.cs" />
+    <Compile Include="Wavelets\jwave\blocks\BlockIndex.cs" />
+    <Compile Include="Wavelets\jwave\blocks\BlockType.cs" />
+    <Compile Include="Wavelets\jwave\blocks\exc\BlockError.cs" />
+    <Compile Include="Wavelets\jwave\blocks\exc\BlockException.cs" />
+    <Compile Include="Wavelets\jwave\blocks\exc\BlockFailure.cs" />
+    <Compile Include="Wavelets\jwave\exc\JWaveError.cs" />
+    <Compile Include="Wavelets\jwave\exc\JWaveException.cs" />
+    <Compile Include="Wavelets\jwave\exc\JWaveFailure.cs" />
+    <Compile Include="Wavelets\jwave\handlers\AncientEgyptianDecomposition.cs" />
+    <Compile Include="Wavelets\jwave\handlers\BasicTransform.cs" />
+    <Compile Include="Wavelets\jwave\handlers\DiscreteFourierTransform.cs" />
+    <Compile Include="Wavelets\jwave\handlers\DiscreteWaveletTransform.cs" />
+    <Compile Include="Wavelets\jwave\handlers\FastWaveletTransform.cs" />
+    <Compile Include="Wavelets\jwave\handlers\TransformInterface.cs" />
+    <Compile Include="Wavelets\jwave\handlers\WaveletPacketTransform.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Coif06.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Daub02.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Daub03.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Daub04.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Haar02.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Haar02Orthogonal.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Lege02.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Lege04.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Lege06.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\Wavelet.cs" />
+    <Compile Include="Wavelets\jwave\handlers\wavelets\WaveletInterface.cs" />
+    <Compile Include="Wavelets\jwave\handlers\WaveletTransform.cs" />
+    <Compile Include="Wavelets\jwave\JWave.cs" />
+    <Compile Include="Wavelets\jwave\Transform.cs" />
+    <Compile Include="Wavelets\jwave\types\Complex.cs" />
     <Compile Include="Wavelets\StandardHaarWaveletDecomposition.cs" />
     <Compile Include="Wavelets\Thresholding.cs" />
     <Compile Include="Wavelets\WaveletUtils.cs" />
@@ -249,6 +283,13 @@
     <Folder Include="SoundPlayer" />
     <Folder Include="SpeechRecognitionHMM" />
     <Folder Include="UCRSuite" />
+    <Folder Include="Wavelets\jwave" />
+    <Folder Include="Wavelets\jwave\blocks" />
+    <Folder Include="Wavelets\jwave\blocks\exc" />
+    <Folder Include="Wavelets\jwave\exc" />
+    <Folder Include="Wavelets\jwave\handlers" />
+    <Folder Include="Wavelets\jwave\handlers\wavelets" />
+    <Folder Include="Wavelets\jwave\types" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NativeLibraries\faad\faad.exe">

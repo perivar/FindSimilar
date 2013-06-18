@@ -6,77 +6,61 @@ using Comirva.Audio.Util.Maths;
 
 namespace Wavelets
 {
+	// Discreete Haar Wavelet Transform
 	// http://dfyz-stuff.googlecode.com/svn-history/r47/trunk/ImageCompression/Task1/Dwt.cs
 	public class Dwt
 	{
-		#region IWaveletDecomposition Members
-
-		/// <summary>
-		/// Apply Haar Wavelet decomposition on the image
-		/// </summary>
-		/// <param name = "image">Image to be decomposed</param>
-		public void DecomposeImageInPlace(double[][] image)
-		{
-			Matrix matrix = new Matrix(image);
-			DWT(matrix);
-		}
-
-		#endregion
-		
-		/// <summary>
-		/// Initialize a Haar Wavelet Discrete Wavelet Transform object
-		/// </summary>
-		/// <param name="steps">number of dimensions</param>
 		public Dwt(int steps)
 		{
 			this.steps = steps;
+			this.padding = Math.Max(analysisLowPass.Length, analysisHighPass.Length);
 		}
 
 		public IEnumerable<Matrix> Fwd(IEnumerable<Matrix> input)
 		{
-			return input.Select(x => DWT(x));
+			return input.Select(Transform);
 		}
 
 		public IEnumerable<Matrix> Back(IEnumerable<Matrix> output)
 		{
-			return output.Select(x => IDWT(x));
+			return output.Select(TransformBack);
 		}
 
-		public Matrix DWT(Matrix m)
+		public Matrix Transform(Matrix m)
 		{
-			var Columns = m.Columns;
+			var cols = m.Columns;
 			var rows = m.Rows;
-			var res = new Matrix(m.MatrixData);
+			var res = m.Copy();
 			var stepsLeft = steps;
 			while (stepsLeft-- > 0)
 			{
 				for (var r = 0; r < rows; r++)
 				{
-					var tempIn = new double[Columns];
-					for (var c = 0; c < Columns; c++)
+					var tempIn = new double[cols + padding];
+					for (var c = 0; c < cols; c++)
 						tempIn[c] = res.MatrixData[r][c];
-					var tempOut = TransformStep(tempIn);
-					for (var c = 0; c < Columns; c++)
+					var tempOut = TransformStep(tempIn, cols);
+					for (var c = 0; c < cols; c++)
 						res.MatrixData[r][c] = tempOut[c];
 				}
-				for (var c = 0; c < Columns; c++)
+				for (var c = 0; c < cols; c++)
 				{
-					var tempIn = new double[rows];
+					var tempIn = new double[rows + padding];
 					for (var r = 0; r < rows; r++)
 						tempIn[r] = res.MatrixData[r][c];
-					var tempOut = TransformStep(tempIn);
+					var tempOut = TransformStep(tempIn, rows);
 					for (var r = 0; r < rows; r++)
 						res.MatrixData[r][c] = tempOut[r];
 				}
-				Columns /= 2;
+				cols /= 2;
 				rows /= 2;
 			}
 			return res;
 		}
 
-		public Matrix IDWT(Matrix m)
+		public Matrix TransformBack(Matrix m)
 		{
-			var res = new Matrix(m.MatrixData);
+			var res = m.Copy();
 			var sizes = new int[steps, 2];
 			sizes[0, 0] = m.Rows;
 			sizes[0, 1] = m.Columns;
@@ -89,8 +73,8 @@ namespace Wavelets
 			while (stepsLeft-- > 0)
 			{
 				var rows = sizes[stepsLeft, 0];
-				var Columns = sizes[stepsLeft, 1];
-				for (var c = 0; c < Columns; c++)
+				var cols = sizes[stepsLeft, 1];
+				for (var c = 0; c < cols; c++)
 				{
 					var tempIn = new double[rows];
 					for (var r = 0; r < rows; r++)
@@ -101,31 +85,28 @@ namespace Wavelets
 				}
 				for (var r = 0; r < rows; r++)
 				{
-					var tempIn = new double[Columns];
-					for (var c = 0; c < Columns; c++)
+					var tempIn = new double[cols];
+					for (var c = 0; c < cols; c++)
 						tempIn[c] = res.MatrixData[r][c];
 					var tempOut = TransformBackStep(tempIn);
-					for (var c = 0; c < Columns; c++)
+					for (var c = 0; c < cols; c++)
 						res.MatrixData[r][c] = tempOut[c];
 				}
 			}
 			return res;
 		}
 
-		double[] TransformStep(double[] _input)
+		double[] TransformStep(double[] input, int signalSize)
 		{
-			var signalSize = _input.Length;
-			var input = new double[signalSize*2];
-			Array.Copy(_input, input, signalSize);
 			ExtendPeriodically(input, signalSize);
 			var halfSignalSize = signalSize/2;
 			var res = new double[signalSize];
 			for (var i = 0; i < halfSignalSize; i++)
 			{
 				for (var j = 0; j < analysisLowPass.Length; j++)
-					res[i] += input[2*i + j] * GetElementReversed(analysisLowPass, j);
+					res[i] += input[2*i + j]*GetElementReversed(analysisLowPass, j);
 				for (var j = 0; j < analysisHighPass.Length; j++)
-					res[i + halfSignalSize] += input[2*i + j] * GetElementReversed(analysisHighPass, j);
+					res[i + halfSignalSize] += input[2*i + j]*GetElementReversed(analysisHighPass, j);
 			}
 			return res;
 		}
@@ -147,18 +128,17 @@ namespace Wavelets
 			for (var i = 0; i < signalSize; i++)
 			{
 				for (var j = 0; j < analysisLowPass.Length; j++)
-					b[i] += lowPart[i + j] * GetElementReversed(synthesisLowPass, j);
+					b[i] += lowPart[i + j]*GetElementReversed(synthesisLowPass, j);
 			}
 			var c = new double[signalSize];
 			for (var i = 0; i < signalSize; i++)
 			{
 				for (var j = 0; j < analysisLowPass.Length; j++)
-					c[i] += highPart[i + j] * GetElementReversed(synthesisHighPass, j);
+					c[i] += highPart[i + j]*GetElementReversed(synthesisHighPass, j);
 			}
 			var res = new double[signalSize];
-			res[0] = b[signalSize - 1] + c[signalSize - 1];
-			for (var i = 0; i + 1 < signalSize; i++)
-				res[i + 1] = b[i] + c[i];
+			for (var i = 0; i < signalSize; i++)
+				res[i] = b[i] + c[i];
 			return res;
 		}
 
@@ -178,10 +158,13 @@ namespace Wavelets
 			return arr[arr.Length - 1 - index];
 		}
 
+		//readonly double[] analysisLowPass = new[] { 0.0267, -0.0168, -0.0782, 0.2668, 0.6029, 0.2668, -0.0782, -0.0168, 0.0267 };
+		//readonly double[] analysisHighPass = new[] { 0.0912, -0.0575, -0.5912, 1.1150, -0.5912, -0.0575, 0.0912 };
 		readonly double[] analysisLowPass = DivBySqrt2(new double[] { 1, 1 });
 		readonly double[] analysisHighPass = DivBySqrt2(new double[] { -1, 1 });
 		readonly double[] synthesisLowPass = DivBySqrt2(new double[] { 1, 1 });
 		readonly double[] synthesisHighPass = DivBySqrt2(new double[] { 1, -1 });
+		readonly int padding;
 		readonly int steps;
 	}
 }
