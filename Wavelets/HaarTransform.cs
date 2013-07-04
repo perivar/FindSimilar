@@ -122,7 +122,9 @@ namespace Wavelets
 		}
 
 		/// <summary>
-		/// HAAR_2D computes the Haar transform of an array.
+		/// HAAR_2D computes the Haar transform of an array using the tensor product layout.
+		/// Tensor corresponds to doing a FWT along each dimension of the matrix in contrast to
+		/// the behaviour of the JPEG 2000 standard.
 		/// </summary>
 		/// <remarks>
 		///  Licensing:
@@ -214,7 +216,9 @@ namespace Wavelets
 		}
 
 		/// <summary>
-		/// HAAR_2D_INVERSE inverts the Haar transform of an array.
+		/// HAAR_2D_INVERSE inverts the Haar transform of an array using the tensor product layout.
+		/// Tensor corresponds to doing a FWT along each dimension of the matrix in contrast to
+		/// the behaviour of the JPEG 2000 standard.
 		/// </summary>
 		/// <remarks>
 		///  Licensing:

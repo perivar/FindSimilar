@@ -15,9 +15,11 @@ namespace Wavelets
 	public enum WaveletMethod : int {
 		Dwt = 1,
 		Haar = 2,
-		HaarTransform = 3,
-		HaarWaveletDecomposition = 4,
-		JWave = 5
+		HaarTransformTensor = 3,
+		HaarWaveletDecompositionTensor = 4,
+		HaarWaveletDecomposition = 5,
+		NonStandardHaarWaveletDecomposition = 6,
+		JWaveTensor = 7
 	}
 	
 	/// <summary>
@@ -148,15 +150,25 @@ namespace Wavelets
 					Haar.Haar2d(image, height, width);
 					dwtMatrix = new Matrix(image);
 					break;
-				case WaveletMethod.HaarTransform:
+				case WaveletMethod.HaarTransformTensor: // This is using the tensor product layout
 					dwtMatrix = HaarWaveletTransform(image);
 					break;
-				case WaveletMethod.HaarWaveletDecomposition:
+				case WaveletMethod.HaarWaveletDecompositionTensor: // This is using the tensor product layout
 					StandardHaarWaveletDecomposition haar = new StandardHaarWaveletDecomposition();
 					haar.DecomposeImageInPlace(image);
 					dwtMatrix = new Matrix(image);
 					break;
-				case WaveletMethod.JWave:
+				case WaveletMethod.HaarWaveletDecomposition:
+					StandardHaarWaveletDecomposition haarNew = new StandardHaarWaveletDecomposition(false);
+					haarNew.DecomposeImageInPlace(image);
+					dwtMatrix = new Matrix(image);
+					break;
+				case WaveletMethod.NonStandardHaarWaveletDecomposition:
+					NonStandardHaarWaveletDecomposition haarNonStandard = new NonStandardHaarWaveletDecomposition();
+					haarNonStandard.DecomposeImageInPlace(image);
+					dwtMatrix = new Matrix(image);
+					break;
+				case WaveletMethod.JWaveTensor: // This is using the tensor product layout
 					WaveletInterface wavelet = null;
 					wavelet = new Haar02();
 					//wavelet = new Daub02();
@@ -263,7 +275,7 @@ namespace Wavelets
 		
 		public static void TestHaarWaveletDecomposition() {
 			
-			Console.Write("\n\nThe 2D HaarWaveletDecomposition method: ");
+			Console.Write("\n\nThe Standard 2D HaarWaveletDecomposition method: ");
 			Console.Write("\n");
 			
 			StandardHaarWaveletDecomposition haar = new StandardHaarWaveletDecomposition();
@@ -274,6 +286,28 @@ namespace Wavelets
 
 			Matrix result = new Matrix(mat);
 			result.Print();
+
+			Console.Write("\n\nThe New Standard 2D HaarWaveletDecomposition method: ");
+			Console.Write("\n");
+			
+			StandardHaarWaveletDecomposition haarNew = new StandardHaarWaveletDecomposition(false);
+			
+			mat = Get2DTestData();
+			haarNew.DecomposeImageInPlace(mat);
+
+			Matrix resultNew = new Matrix(mat);
+			resultNew.Print();
+
+			Console.Write("\n\nThe Non Standard 2D HaarWaveletDecomposition method: ");
+			Console.Write("\n");
+			
+			NonStandardHaarWaveletDecomposition haarNonStandard = new NonStandardHaarWaveletDecomposition();
+			
+			mat = Get2DTestData();
+			haarNonStandard.DecomposeImageInPlace(mat);
+
+			Matrix resultNonStandard = new Matrix(mat);
+			resultNonStandard.Print();
 		}
 		
 		public static void TestDwt() {

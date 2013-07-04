@@ -247,6 +247,7 @@
     <Compile Include="Wavelets\jwave\JWave.cs" />
     <Compile Include="Wavelets\jwave\Transform.cs" />
     <Compile Include="Wavelets\jwave\types\Complex.cs" />
+    <Compile Include="Wavelets\NonStandardHaarWaveletDecomposition.cs" />
     <Compile Include="Wavelets\StandardHaarWaveletDecomposition.cs" />
     <Compile Include="Wavelets\Thresholding.cs" />
     <Compile Include="Wavelets\WaveletUtils.cs" />

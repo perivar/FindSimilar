@@ -22,6 +22,8 @@ namespace Wavelets
 			{
 				array[i] = temp[i];
 			}
+			
+			temp = null;
 		}
 	}
 }
