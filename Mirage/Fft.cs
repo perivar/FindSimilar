@@ -173,45 +173,74 @@ namespace Mirage
 			}
 		}
 		
-		public void ComputeInverseComirvaMatrixUsingLomontRealFFT(Comirva.Audio.Util.Maths.Matrix m, int column, ref Comirva.Audio.Util.Maths.Matrix signal) {
-
-			// NOTE! THIS METHOD DOES NOT WORK?!
-			throw new NotImplementedException("Lomont Inverse RealFFT is not implemented. Cannot get it to work?! Try the Inverse TableFFT instead.");
+		public void ComputeInverseComirvaMatrixUsingLomontRealFFT(Comirva.Audio.Util.Maths.Matrix m, int column, ref double[] signal, int winsize, int hopsize) {
 			
 			double[] spectrogramWindow = m.GetColumn(column);
-			int winsize = MathUtils.NextPowerOfTwo(spectrogramWindow.Length);
+
+			// extend window with the inverse duplicate array
+			int len = spectrogramWindow.Length;
+			double[] extendedWindow = new double[len * 2];
+			Array.Copy(spectrogramWindow, extendedWindow, len);
+			for (int i = 1; i < len; i++) {
+				extendedWindow[len+i] = spectrogramWindow[len-i];
+			}
 
 			// ifft input must contain the FFT values
 			// r0, r(n/2), r1, i1, r2, i2 ...
 
 			// Perform the ifft and take just the real part
-			//double[] signalWindow = real(ifft(spectrogramWindow));
 			double[] ifft = new double[winsize*2];
-			ifft[0] = spectrogramWindow[0];
-			ifft[1] = spectrogramWindow[winsize/2];
-			for (int i = 1; i < spectrogramWindow.Length; i++) {
-				ifft[2 * i] = spectrogramWindow[i];
+			ifft[0] = extendedWindow[0];
+			ifft[1] = extendedWindow[winsize/2];
+			for (int i = 1; i < extendedWindow.Length; i++) {
+				ifft[2 * i] = extendedWindow[i];
 			}
 
 			lomonFFT.RealFFT(ifft, false);
 
-			for (int i = 0; i < winsize; i++) {
-				signal.MatrixData[i][column] = ifft[i] * winsize;
+			float[] window = win.GetWindow();
+
+			// multiply by window w/ overlap-add
+			int N = ifft.Length / 2;
+			double[] returnArray = new double[N];
+			for (int j = 0; j < N; j++) {
+				double re = ifft[2*j] / Math.Sqrt(winsize);
+				returnArray[j] = re * window[j];
+				
+				// overlap-add method
+				// scale with 5 just because the volume got so much lower when using a second smoothing filter when reconstrcting
+				signal[j+hopsize*column] = signal[j+hopsize*column] + returnArray[j] * 5;
 			}
 		}
 		
-		public void ComputeInverseComirvaMatrixUsingLomontTableFFT(Comirva.Audio.Util.Maths.Matrix m, int column, ref Comirva.Audio.Util.Maths.Matrix signal) {
+		public void ComputeInverseComirvaMatrixUsingLomontTableFFT(Comirva.Audio.Util.Maths.Matrix m, int column, ref double[] signal, int winsize, int hopsize) {
 
 			double[] spectrogramWindow = m.GetColumn(column);
 
-			double[] complexSignal = FFTUtilsLomont.DoubleToComplexDouble(spectrogramWindow);
+			// extend window with the inverse duplicate array
+			int len = spectrogramWindow.Length;
+			double[] extendedWindow = new double[len * 2];
+			Array.Copy(spectrogramWindow, extendedWindow, len);
+			for (int i = 1; i < len; i++) {
+				extendedWindow[len+i] = spectrogramWindow[len-i];
+			}
+			
+			double[] complexSignal = FFTUtilsLomont.DoubleToComplexDouble(extendedWindow);
 			lomonFFT.TableFFT(complexSignal, false);
 			
-			// According to Dave Gamble the first and last entry should be ignored
-			for (int row = 1; row < complexSignal.Length/2 - 1; row++) {
-				double re = complexSignal[2*row];
-				//double img = complexSignal[2*row + 1];
-				signal.MatrixData[row][column] = re / Math.Sqrt(winsize/2);
+			float[] window = win.GetWindow();
+
+			// multiply by window w/ overlap-add
+			int N = complexSignal.Length / 2;
+			double[] returnArray = new double[N];
+			for (int j = 0; j < N; j++) {
+				double re = complexSignal[2*j] / Math.Sqrt(winsize);
+				//double img = complexSignal[2*j + 1];
+				returnArray[j] = re * window[j];
+				
+				// overlap-add method
+				// scale with 5 just because the volume got so much lower when using a second smoothing filter when reconstrcting
+				signal[j+hopsize*column] = signal[j+hopsize*column] + returnArray[j] * 5;
 			}
 		}
 		

@@ -107,7 +107,7 @@ namespace Mirage
 			}
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				covarMatrixInv.WriteAscii(name + "_inverse_covariance.txt");
+				covarMatrixInv.WriteAscii(name + "_inverse_covariance.ascii");
 				covarMatrixInv.DrawMatrixGraph(name + "_inverse_covariance.png");
 			}
 			#endif

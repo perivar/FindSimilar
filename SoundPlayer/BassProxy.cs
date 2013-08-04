@@ -493,7 +493,7 @@ namespace FindSimilar.AudioProxies
 		/// <param name="targetSampleRate">target samplerate </param>
 		public void SaveFile(float[] buffer, string outFileName, int targetSampleRate) {
 			WaveWriter writer = new WaveWriter(outFileName, 1, targetSampleRate, 32, true);
-			writer.Write(buffer, buffer.Length);
+			writer.Write(buffer, buffer.Length << 2);
 			writer.Close();
 		}
 		#endregion

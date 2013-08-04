@@ -72,6 +72,21 @@ namespace Mirage
 		//private static MFCC mfccComirva = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, SAMPLING_RATE/2, MEL_COEFFICIENTS);
 		#endif
 		
+		// http://www.codeproject.com/Articles/206507/Duplicates-detector-via-audio-fingerprinting
+		// The parameters used in the Duplicates-detector-via-audio-fingerprinting transformation steps
+		// is equal to those that have been found work well in other audio fingerprinting studies
+		// (specifically in A Highly Robust Audio Fingerprinting System):
+		// audio frames that are 371 ms long (2048 samples), taken every 11.6 ms (64 samples),
+		// thus having an overlap of 31/32
+		//
+		// parameters: samplerate: 5512 hz, overlap: 31/32, window length: 2048
+		// slice (window) size: 2048 / 5512 * 1000 =  371 ms
+		// distance between slices: 64 / 5512 * 1000 =  11.6 ms
+
+		// parameters: samplerate: 44100 hz, overlap: 1024 samples, window length: 2048
+		// slice (window) size: 2048 / 44100 * 1000 =  46.44 ms
+		// distance between slices: 1024 / 44100 * 1000 =  23.22 ms
+		
 		// Create the STFS object with 50% overlap (half of the window size);
 		//private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
@@ -134,7 +149,8 @@ namespace Mirage
 			
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				WriteF3Formatted(audiodata, name + "_audiodata.ascii.txt");
+				WriteAscii(audiodata, name + "_audiodata.ascii");
+				WriteF3Formatted(audiodata, name + "_audiodata.txt");
 			}
 			#endif
 			
@@ -163,7 +179,7 @@ namespace Mirage
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				stftdata.WriteAscii(name + "_stftdata.ascii.txt");
+				stftdata.WriteAscii(name + "_stftdata.ascii");
 				stftdata.DrawMatrixGraph(name + "_stftdata.png");
 
 				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
@@ -180,7 +196,10 @@ namespace Mirage
 				// Test inverse stft
 				double[] audiodata_inverse_stft = stftMirage.InverseStft(stftdata);
 				MathUtils.Divide(ref audiodata_inverse_stft, AUDIO_MULTIPLIER);
-				WriteF3Formatted(audiodata_inverse_stft, name + "_audiodata_inverse_stft.ascii.txt");
+
+				WriteAscii(audiodata_inverse_stft, name + "_audiodata_inverse_stft.ascii");
+				WriteF3Formatted(audiodata_inverse_stft, name + "_audiodata_inverse_stft.txt");
+				
 				DrawGraph(audiodata_inverse_stft, name + "_audiodata_inverse_stft.png");
 				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
 				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_stft), name + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
@@ -200,7 +219,7 @@ namespace Mirage
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				mfccdata.WriteAscii(name + "_mfccdata.ascii.txt");
+				mfccdata.WriteAscii(name + "_mfccdata.ascii");
 				mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
 			}
 			#endif
@@ -212,9 +231,8 @@ namespace Mirage
 				Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMfcc(ref mfccdata);
 				stftdata_inverse_mfcc.DrawMatrixImageLogY(name + "_specgramlog_inverse_mfcc.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 				double[] audiodata_inverse_mfcc = stftMirage.InverseStft(stftdata_inverse_mfcc);
-				//MathUtils.Divide(ref audiodata2, AUDIO_MULTIPLIER);
-				//MathUtils.Normalize(ref audiodata_inverse_mfcc);
-				WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.ascii.txt");
+
+				WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.txt");
 				DrawGraph(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.png");
 				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
 				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), name + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);

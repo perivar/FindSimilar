@@ -30,6 +30,8 @@ namespace Mirage
 		void Initialize(int winsize);
 
 		void Apply(ref float[] data, float[] audiodata, int offset);
+		
+		float[] GetWindow();
 	}
 
 
@@ -37,6 +39,10 @@ namespace Mirage
 	{
 		int winsize;
 		float[] win;
+		
+		public float[] GetWindow() {
+			return win;
+		}
 		
 		public void Initialize(int winsize)
 		{
@@ -50,8 +56,9 @@ namespace Mirage
 		
 		public void Apply(ref float[] data, float[] audiodata, int offset)
 		{
-			for (int i = 0; i < winsize; i++)
+			for (int i = 0; i < winsize; i++) {
 				data[i] = win[i] * audiodata[i+offset];
+			}
 		}
 	}
 
@@ -60,6 +67,10 @@ namespace Mirage
 		int winsize;
 		float[] win;
 		
+		public float[] GetWindow() {
+			return win;
+		}
+
 		public void Initialize(int winsize)
 		{
 			this.winsize = winsize;
@@ -72,8 +83,9 @@ namespace Mirage
 		
 		public void Apply(ref float[] data, float[] audiodata, int offset)
 		{
-			for (int i = 0; i < winsize; i++)
+			for (int i = 0; i < winsize; i++) {
 				data[i] = win[i] * audiodata[i+offset];
+			}
 		}
 	}
 }

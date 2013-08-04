@@ -35,17 +35,20 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+
 using Comirva.Audio.Feature;
 using NDtw;
 using CommonUtils;
 using FindSimilar;
+
+using FindSimilar.AudioProxies; // BassProxy
 
 // Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.8";
+		public static string VERSION = "1.0.9";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -268,7 +271,8 @@ namespace Mirage
 		/// <param name="path">path to directory</param>
 		/// <param name="db">database</param>
 		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
-		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod) {
+		/// <param name="skipDurationAboveSeconds">skip files with duration longer than this number of seconds (0 or less disables this)</param>
+		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod, double skipDurationAboveSeconds) {
 			
 			Stopwatch stopWatch = Stopwatch.StartNew();
 			
@@ -299,328 +303,352 @@ namespace Mirage
 
 				int fileCounter = filesProcessed.Count;
 				
+				#if !DEBUG
+				Console.Out.WriteLine("Running in multi-threaded mode!");
 				Parallel.ForEach(filesRemaining, file =>
 				                 {
-				                 	FileInfo fileInfo = new FileInfo(file);
-				                 	
-				                 	AudioFeature feature = null;
-				                 	switch (analysisMethod) {
-				                 		case Analyzer.AnalysisMethod.MandelEllis:
-				                 			feature = Analyzer.AnalyzeMandelEllis(fileInfo);
-				                 			break;
-				                 		case Analyzer.AnalysisMethod.SCMS:
-				                 			feature = Analyzer.AnalyzeScms(fileInfo);
-				                 			break;
+				                 	#else
+				                 	Console.Out.WriteLine("Running in single-threaded mode!");
+				                 	foreach (string file in filesRemaining)
+				                 	{
+				                 		#endif
+
+				                 		FileInfo fileInfo = new FileInfo(file);
+
+				                 		// Try to use Un4Seen Bass to check duration
+				                 		BassProxy bass = BassProxy.Instance;
+				                 		double duration = bass.GetDurationInSeconds(fileInfo.FullName);
+
+				                 		// check if we should skip files longer than x seconds
+				                 		if ( (skipDurationAboveSeconds > 0 && duration > 0 && duration < skipDurationAboveSeconds)
+				                 		    || skipDurationAboveSeconds <= 0
+				                 		    || duration < 0) {
+
+				                 			AudioFeature feature = null;
+				                 			switch (analysisMethod) {
+				                 				case Analyzer.AnalysisMethod.MandelEllis:
+				                 					feature = Analyzer.AnalyzeMandelEllis(fileInfo);
+				                 					break;
+				                 				case Analyzer.AnalysisMethod.SCMS:
+				                 					feature = Analyzer.AnalyzeScms(fileInfo);
+				                 					break;
+				                 			}
+				                 			if (feature != null) {
+				                 				db.AddTrack(fileCounter, feature);
+				                 				fileCounter++;
+				                 				Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms) (Thread: {4})", fileInfo.Name, fileCounter, filesRemaining.Count, feature.Duration, Thread.CurrentThread.ManagedThreadId);
+				                 				feature = null;
+				                 			} else {
+				                 				Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
+				                 				IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
+				                 			}
+				                 		} else {
+				                 			Console.Out.WriteLine("Skipping {0} since duration exceeds limit ({1:0.00} > {2:0.00} sec.)", fileInfo.Name, duration, skipDurationAboveSeconds);
+				                 		}
+				                 		
+				                 		fileInfo = null;
 				                 	}
 				                 	
-				                 	if (feature != null) {
-				                 		db.AddTrack(fileCounter, feature);
-				                 		fileCounter++;
-				                 		Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms) (Thread: {4})", fileInfo.Name, fileCounter, filesRemaining.Count, feature.Duration, Thread.CurrentThread.ManagedThreadId);
-				                 		feature = null;
-				                 	} else {
-				                 		Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
-				                 		IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
-				                 	}
-				                 	fileInfo = null;
-				                 });
-				Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, filesAll.Count());
+				                 	#if !DEBUG
+				                 	);
+				                 	#endif
+				                 	Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, filesAll.Count());
+				                 }
+				                 catch (UnauthorizedAccessException UAEx)
+				                 {
+				                 	Console.WriteLine(UAEx.Message);
+				                 }
+				                 catch (PathTooLongException PathEx)
+				                 {
+				                 	Console.WriteLine(PathEx.Message);
+				                 }
+
+				                 Console.WriteLine("Time used: {0}", stopWatch.Elapsed);
+				}
+
+			#region Testing Methods
+			private static void TestSpeechRecognitionHMM() {
+				
+				string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+				
+				int SAMPLERATE = 22050;
+				//int SAMPLESPERFRAME = 44100 * 20 / 1000;
+				int SAMPLEPERFRAME = 30;
+				float[] audiodata = AudioFileReader.Decode(path1, SAMPLERATE, 120);
+				SpeechRecognitionHMM.PreProcess pre = new SpeechRecognitionHMM.PreProcess(audiodata, SAMPLEPERFRAME, SAMPLERATE);
+				float[][] framedSignal = pre.framedSignal;
+				SpeechRecognitionHMM.MFCC mfcc = new SpeechRecognitionHMM.MFCC(SAMPLEPERFRAME, SAMPLERATE, 40);
+				
+				double[][] mfccFeature = new double[pre.noOfFrames][];
+				for (int i = 0; i < pre.noOfFrames; i++) {
+					// for each frame i, make mfcc from current framed signal
+					mfccFeature[i] = mfcc.doMFCC(framedSignal[i]);// 2D data
+					SpeechRecognitionHMM.ArrayWriter.PrintDoubleArrayToConsole(mfccFeature[i]);
+				}
+				return;
 			}
-			catch (UnauthorizedAccessException UAEx)
+			
+			private static void TestDCTandMelfilters() {
+				
+				Comirva.Audio.Util.Maths.Matrix dct = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\dct2.filter");
+				#if DEBUG
+				dct.DrawMatrixImage("dct-matlab.png");
+				#endif
+
+				Comirva.Audio.Util.Maths.Matrix melfilter = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\filterweights2.filter");
+				#if DEBUG
+				melfilter.DrawMatrixImage("melfilters-matlab.png");
+				#endif
+				
+				Comirva.Audio.Util.Maths.Matrix melfilter2 = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true).Matrix;
+				#if DEBUG
+				melfilter2.DrawMatrixImage("melfilters-matchbox.png");
+				#endif
+			}
+			
+			private static Aquila.Extractor ReadIntoAquilaExtractor(string filename)
 			{
-				Console.WriteLine(UAEx.Message);
+				Aquila.WaveFile wav = new Aquila.WaveFile(20, 0.66);
+				wav.Load(filename);
+				Aquila.Extractor extractor = new Aquila.MfccExtractor(20, 10);
+				//Aquila.Extractor extractor = new Aquila.EnergyExtractor(20);
+				//Aquila.Extractor extractor = new Aquila.PowerExtractor(20);
+				Aquila.TransformOptions options = new Aquila.TransformOptions();
+				// Set to 0 if no pre-emphasis should be performed
+				options.PreemphasisFactor = 0; // 0.9375;
+				options.WindowType = Aquila.WindowType.WIN_HANN;
+				options.ZeroPaddedLength = wav.GetSamplesPerFrameZP();
+				Aquila.ConsoleProcessingIndicator cpi = new Aquila.ConsoleProcessingIndicator();
+				extractor.SetProcessingIndicator(cpi);
+				Console.WriteLine("Extracting {0} features from file {1} ...", extractor.GetType(), filename);
+				extractor.Process(wav, options);
+				return extractor;
 			}
-			catch (PathTooLongException PathEx)
-			{
-				Console.WriteLine(PathEx.Message);
-			}
 
-			Console.WriteLine("Time used: {0}", stopWatch.Elapsed);
-		}
+			private static void TestAquila() {
+				
+				//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
+				//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
+				string path1 = @"aquila\examples\test.wav";
+				string path2 = @"aquila\examples\test2.wav";
+				
+				Aquila.Extractor from = ReadIntoAquilaExtractor(path1);
+				from.Save(new Aquila.TextFeatureWriter("from.txt"));
+				Aquila.Extractor to = ReadIntoAquilaExtractor(path2);
+				to.Save(new Aquila.TextFeatureWriter("to.txt"));
 
-		#region Testing Methods
-		private static void TestSpeechRecognitionHMM() {
-			
-			string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
-			
-			int SAMPLERATE = 22050;
-			//int SAMPLESPERFRAME = 44100 * 20 / 1000;
-			int SAMPLEPERFRAME = 30;
-			float[] audiodata = AudioFileReader.Decode(path1, SAMPLERATE, 120);
-			SpeechRecognitionHMM.PreProcess pre = new SpeechRecognitionHMM.PreProcess(audiodata, SAMPLEPERFRAME, SAMPLERATE);
-			float[][] framedSignal = pre.framedSignal;
-			SpeechRecognitionHMM.MFCC mfcc = new SpeechRecognitionHMM.MFCC(SAMPLEPERFRAME, SAMPLERATE, 40);
-			
-			double[][] mfccFeature = new double[pre.noOfFrames][];
-			for (int i = 0; i < pre.noOfFrames; i++) {
-				// for each frame i, make mfcc from current framed signal
-				mfccFeature[i] = mfcc.doMFCC(framedSignal[i]);// 2D data
-				SpeechRecognitionHMM.ArrayWriter.PrintDoubleArrayToConsole(mfccFeature[i]);
-			}
-			return;
-		}
-		
-		private static void TestDCTandMelfilters() {
-			
-			Comirva.Audio.Util.Maths.Matrix dct = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\dct2.filter");
-			#if DEBUG
-			dct.DrawMatrixImage("dct-matlab.png");
-			#endif
-
-			Comirva.Audio.Util.Maths.Matrix melfilter = Comirva.Audio.Util.Maths.Matrix.Load(@"C:\Users\perivar.nerseth\Documents\My Projects\Code\FindSimilar\Mirage\Resources\filterweights2.filter");
-			#if DEBUG
-			melfilter.DrawMatrixImage("melfilters-matlab.png");
-			#endif
-			
-			Comirva.Audio.Util.Maths.Matrix melfilter2 = new MatchBox.MelFilterBank(20, 22050/2, 40, 2048/2, 22050, true).Matrix;
-			#if DEBUG
-			melfilter2.DrawMatrixImage("melfilters-matchbox.png");
-			#endif
-		}
-		
-		private static Aquila.Extractor ReadIntoAquilaExtractor(string filename)
-		{
-			Aquila.WaveFile wav = new Aquila.WaveFile(20, 0.66);
-			wav.Load(filename);
-			Aquila.Extractor extractor = new Aquila.MfccExtractor(20, 10);
-			//Aquila.Extractor extractor = new Aquila.EnergyExtractor(20);
-			//Aquila.Extractor extractor = new Aquila.PowerExtractor(20);
-			Aquila.TransformOptions options = new Aquila.TransformOptions();
-			// Set to 0 if no pre-emphasis should be performed
-			options.PreemphasisFactor = 0; // 0.9375;
-			options.WindowType = Aquila.WindowType.WIN_HANN;
-			options.ZeroPaddedLength = wav.GetSamplesPerFrameZP();
-			Aquila.ConsoleProcessingIndicator cpi = new Aquila.ConsoleProcessingIndicator();
-			extractor.SetProcessingIndicator(cpi);
-			Console.WriteLine("Extracting {0} features from file {1} ...", extractor.GetType(), filename);
-			extractor.Process(wav, options);
-			return extractor;
-		}
-
-		private static void TestAquila() {
-			
-			//string path1 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Hat.wav";
-			//string path2 = @"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\!Tutorials\Electro Dance tutorial by Phil Doon\DNC_Kick.wav";
-			string path1 = @"aquila\examples\test.wav";
-			string path2 = @"aquila\examples\test2.wav";
-			
-			Aquila.Extractor from = ReadIntoAquilaExtractor(path1);
-			from.Save(new Aquila.TextFeatureWriter("from.txt"));
-			Aquila.Extractor to = ReadIntoAquilaExtractor(path2);
-			to.Save(new Aquila.TextFeatureWriter("to.txt"));
-
-			Console.WriteLine("Calculating DTW distance...");
-			Aquila.Dtw dtw = new Aquila.Dtw(from);
-			double distance = dtw.GetDistance(to);
-			Console.WriteLine("Finished, distance = {0}", distance);
-			
-			System.Console.ReadLine();
-			return;
-		}
-		
-		private static void TestNDtw() {
-			
-			bool UseBoundaryConstraintStart = true;
-			bool UseBoundaryConstraintEnd = true;
-			Dtw dtw = new Dtw(
-				new[] { 4.0, 4.0, 4.5, 4.5, 5.0, 5.0, 5.0, 4.5, 4.5, 4.0, 4.0, 3.5 },
-				new[] { 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 3.0, 2.5, 2.0, 2.0, 2.0, 1.5 },
-				DistanceMeasure.Euclidean,
-				UseBoundaryConstraintStart,
-				UseBoundaryConstraintEnd,
-				null,
-				null,
-				null);
-			
-			double cost = dtw.GetCost();
-			Console.Out.WriteLine(String.Format("DTW: {0}", cost));
-
-			System.Console.ReadLine();
-			return;
-		}
-		
-		private static void TestComirvaMatrix() {
-
-			// http://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
-
-			// Tested in:
-			// octave-3.2.4.exe or
-			// octave3.6.2_gcc4.6.2
-			
-			// > format short g
-			// > X = [4, 2, 0.6; 4.2, 2.1, .59; 3.9, 2, .58; 4.3, 2.1, 0.6; 4.1, 2.2, 0.63]
-			
-			// > mean (X)
-			// ans =
-			// 	4.1        2.08         0.6
-			
-			// 	> mean (X')
-			// 	ans =
-			// 		2.2      2.2967        2.16      2.3333        2.31
-			
-			// > cov (X)
-			//	ans =
-			// 	 	0.025     0.0075   	0.00075
-			// 		0.0075    0.007    	0.00125
-			// 		0.00075   0.00125  	0.00035
-
-			// 	> cov (X')
-			// 	ans =
-			// 		2.92       3.098       2.846        3.18       2.966
-			// 		3.098       3.287      3.0199      3.3737      3.1479
-			// 		2.846      3.0199      2.7748       3.099      2.8933
-			// 		3.18      3.3737       3.099      3.4633       3.229
-			// 		2.966      3.1479      2.8933       3.229      3.0193
-			
-			// > inverse ( cov (X) )
-			// 	ans =
-			// 		 70.297 	-133.66     326.73
-			// 	   -133.66     	 648.51   -2029.7
-			// 		326.73 	   -2029.7     9405.9
-			
-			// > inverse (cov (X'))
-			// warning: inverse: matrix singular to machine precision, rcond = 2.41562e-018
-			// ans =
-			//   -1.1505e+015  6.7533e+014   1.9306e+015  -4.7521e+014  -9.1573e+014
-			//   -7.9177e+015 -9.2709e+015   1.0708e+016   7.809e+015   -1.1689e+015
-			//    3.8489e+015  1.4136e+015  -3.5083e+015  -2.405e+015    6.7916e+014
-			//    4.7087e+015  5.3658e+015  -7.4667e+015  -4.0211e+015   1.2355e+015
-			//    6.6107e+014  1.9093e+015  -1.7135e+015  -1.0698e+015   1.4605e+014
-			
-			long start, stop;
-			double elapsed;
-			
-			double[][] x = new double[][] {
-				new double[] {4.00000, 2.00000, 0.60000},
-				new double[] {4.20000, 2.10000, 0.59000},
-				new double[] {3.90000, 2.00000, 0.58000},
-				new double[] {4.30000, 2.10000, 0.60000},
-				new double[] {4.10000, 2.20000, 0.63000}
-			};
-			Comirva.Audio.Util.Maths.Matrix X = new Comirva.Audio.Util.Maths.Matrix(5, 3);
-			X.MatrixData = x;
-			
-			X.Print();
-
-			X.Mean(1).Print();
-			X.Transpose().Mean(1).Print(); // or X.Mean(2).Transpose().Print();
-
-			X.Cov().Print();
-			X.Transpose().Cov().Print(); // or X.Cov(X.Mean(2)).Print();
-
-			X.Cov().Inverse().Print();
-			//X.Transpose().Cov().Inverse().Print();
-			//X.Transpose().Cov().InverseGausJordan().Print();
-			
-			Comirva.Audio.Util.Maths.Matrix A = Comirva.Audio.Util.Maths.Matrix.Random(500,500);
-			Comirva.Audio.Util.Maths.Matrix B = Comirva.Audio.Util.Maths.Matrix.Random(500,500);
-			
-			start = DateTime.Now.Ticks;
-			Comirva.Audio.Util.Maths.Matrix C0 = A * B;
-			stop = DateTime.Now.Ticks;
-			elapsed = (stop - start) / 1000.0 / 10000;
-			Console.WriteLine("Standards Multiply:  " + elapsed + " seconds");
-
-			start = DateTime.Now.Ticks;
-			Comirva.Audio.Util.Maths.Matrix C1 = Comirva.Audio.Util.Maths.Matrix.MatrixProductParallel(A, B);
-			stop = DateTime.Now.Ticks;
-			elapsed = (stop - start) / 1000.0 / 10000;
-			Console.WriteLine("MatrixProductParallel:  " + elapsed + " seconds");
-			
-			start = DateTime.Now.Ticks;
-			Comirva.Audio.Util.Maths.Matrix C2 = Comirva.Audio.Util.Maths.Matrix.MatrixProductFast(A, B);
-			stop = DateTime.Now.Ticks;
-			elapsed = (stop - start) / 1000.0 / 10000;
-			Console.WriteLine("MatrixProductFast:  " + elapsed + " seconds");
-			
-			if (C0 == C1 && C0 == C2) {
-				Console.WriteLine("C0, C1 and C2 are Equal");
+				Console.WriteLine("Calculating DTW distance...");
+				Aquila.Dtw dtw = new Aquila.Dtw(from);
+				double distance = dtw.GetDistance(to);
+				Console.WriteLine("Finished, distance = {0}", distance);
+				
+				System.Console.ReadLine();
+				return;
 			}
 			
-			Console.In.ReadLine();
-			return;
-		}
-		
-		private static void TestMirageMatrix() {
+			private static void TestNDtw() {
+				
+				bool UseBoundaryConstraintStart = true;
+				bool UseBoundaryConstraintEnd = true;
+				Dtw dtw = new Dtw(
+					new[] { 4.0, 4.0, 4.5, 4.5, 5.0, 5.0, 5.0, 4.5, 4.5, 4.0, 4.0, 3.5 },
+					new[] { 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 3.0, 2.5, 2.0, 2.0, 2.0, 1.5 },
+					DistanceMeasure.Euclidean,
+					UseBoundaryConstraintStart,
+					UseBoundaryConstraintEnd,
+					null,
+					null,
+					null);
+				
+				double cost = dtw.GetCost();
+				Console.Out.WriteLine(String.Format("DTW: {0}", cost));
 
-			// http://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
+				System.Console.ReadLine();
+				return;
+			}
+			
+			private static void TestComirvaMatrix() {
 
-			// Tested in:
-			// octave-3.2.4.exe or
-			// octave3.6.2_gcc4.6.2
-			
-			// > format short g
-			// > X = [4, 2, 0.6; 4.2, 2.1, .59; 3.9, 2, .58; 4.3, 2.1, 0.6; 4.1, 2.2, 0.63]
-			
-			// > mean (X)
-			// ans =
-			// 	4.1        2.08         0.6
-			
-			// 	> mean (X')
-			// 	ans =
-			// 		2.2      2.2967        2.16      2.3333        2.31
-			
-			// > cov (X)
-			//	ans =
-			// 	 	0.025     0.0075   	0.00075
-			// 		0.0075    0.007    	0.00125
-			// 		0.00075   0.00125  	0.00035
+				// http://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
 
-			// 	> cov (X')
-			// 	ans =
-			// 		2.92       3.098       2.846        3.18       2.966
-			// 		3.098       3.287      3.0199      3.3737      3.1479
-			// 		2.846      3.0199      2.7748       3.099      2.8933
-			// 		3.18      3.3737       3.099      3.4633       3.229
-			// 		2.966      3.1479      2.8933       3.229      3.0193
-			
-			// > inverse ( cov (X) )
-			// 	ans =
-			// 		 70.297 	-133.66     326.73
-			// 	   -133.66     	 648.51   -2029.7
-			// 		326.73 	   -2029.7     9405.9
-			
-			// > inverse (cov (X'))
-			// warning: inverse: matrix singular to machine precision, rcond = 2.41562e-018
-			// ans =
-			//   -1.1505e+015  6.7533e+014   1.9306e+015  -4.7521e+014  -9.1573e+014
-			//   -7.9177e+015 -9.2709e+015   1.0708e+016   7.809e+015   -1.1689e+015
-			//    3.8489e+015  1.4136e+015  -3.5083e+015  -2.405e+015    6.7916e+014
-			//    4.7087e+015  5.3658e+015  -7.4667e+015  -4.0211e+015   1.2355e+015
-			//    6.6107e+014  1.9093e+015  -1.7135e+015  -1.0698e+015   1.4605e+014
-			
-			double[][] x = new double[][] {
-				new double[] {4.00000, 2.00000, 0.60000},
-				new double[] {4.20000, 2.10000, 0.59000},
-				new double[] {3.90000, 2.00000, 0.58000},
-				new double[] {4.30000, 2.10000, 0.60000},
-				new double[] {4.10000, 2.20000, 0.63000}
-			};
-			Mirage.Matrix X = new Matrix(x);
-			
-			X.Print();
-			Vector mean = X.Mean();
-			mean.Print();
-			Matrix cov = X.Covariance(mean);
-			cov.Print();
-			Matrix icov = cov.Inverse();
-			icov.Print();
-			
-			Console.In.ReadLine();
-			return;
-		}
-		#endregion
-		
-		private static void StartGUI() {
-			Application.EnableVisualStyles();
-			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new FindSimilarClientForm());
-		}
-		
-		[STAThread]
-		public static void Main(string[] args) {
+				// Tested in:
+				// octave-3.2.4.exe or
+				// octave3.6.2_gcc4.6.2
+				
+				// > format short g
+				// > X = [4, 2, 0.6; 4.2, 2.1, .59; 3.9, 2, .58; 4.3, 2.1, 0.6; 4.1, 2.2, 0.63]
+				
+				// > mean (X)
+				// ans =
+				// 	4.1        2.08         0.6
+				
+				// 	> mean (X')
+				// 	ans =
+				// 		2.2      2.2967        2.16      2.3333        2.31
+				
+				// > cov (X)
+				//	ans =
+				// 	 	0.025     0.0075   	0.00075
+				// 		0.0075    0.007    	0.00125
+				// 		0.00075   0.00125  	0.00035
 
-			/* 
+				// 	> cov (X')
+				// 	ans =
+				// 		2.92       3.098       2.846        3.18       2.966
+				// 		3.098       3.287      3.0199      3.3737      3.1479
+				// 		2.846      3.0199      2.7748       3.099      2.8933
+				// 		3.18      3.3737       3.099      3.4633       3.229
+				// 		2.966      3.1479      2.8933       3.229      3.0193
+				
+				// > inverse ( cov (X) )
+				// 	ans =
+				// 		 70.297 	-133.66     326.73
+				// 	   -133.66     	 648.51   -2029.7
+				// 		326.73 	   -2029.7     9405.9
+				
+				// > inverse (cov (X'))
+				// warning: inverse: matrix singular to machine precision, rcond = 2.41562e-018
+				// ans =
+				//   -1.1505e+015  6.7533e+014   1.9306e+015  -4.7521e+014  -9.1573e+014
+				//   -7.9177e+015 -9.2709e+015   1.0708e+016   7.809e+015   -1.1689e+015
+				//    3.8489e+015  1.4136e+015  -3.5083e+015  -2.405e+015    6.7916e+014
+				//    4.7087e+015  5.3658e+015  -7.4667e+015  -4.0211e+015   1.2355e+015
+				//    6.6107e+014  1.9093e+015  -1.7135e+015  -1.0698e+015   1.4605e+014
+				
+				long start, stop;
+				double elapsed;
+				
+				double[][] x = new double[][] {
+					new double[] {4.00000, 2.00000, 0.60000},
+					new double[] {4.20000, 2.10000, 0.59000},
+					new double[] {3.90000, 2.00000, 0.58000},
+					new double[] {4.30000, 2.10000, 0.60000},
+					new double[] {4.10000, 2.20000, 0.63000}
+				};
+				Comirva.Audio.Util.Maths.Matrix X = new Comirva.Audio.Util.Maths.Matrix(5, 3);
+				X.MatrixData = x;
+				
+				X.Print();
+
+				X.Mean(1).Print();
+				X.Transpose().Mean(1).Print(); // or X.Mean(2).Transpose().Print();
+
+				X.Cov().Print();
+				X.Transpose().Cov().Print(); // or X.Cov(X.Mean(2)).Print();
+
+				X.Cov().Inverse().Print();
+				//X.Transpose().Cov().Inverse().Print();
+				//X.Transpose().Cov().InverseGausJordan().Print();
+				
+				Comirva.Audio.Util.Maths.Matrix A = Comirva.Audio.Util.Maths.Matrix.Random(500,500);
+				Comirva.Audio.Util.Maths.Matrix B = Comirva.Audio.Util.Maths.Matrix.Random(500,500);
+				
+				start = DateTime.Now.Ticks;
+				Comirva.Audio.Util.Maths.Matrix C0 = A * B;
+				stop = DateTime.Now.Ticks;
+				elapsed = (stop - start) / 1000.0 / 10000;
+				Console.WriteLine("Standards Multiply:  " + elapsed + " seconds");
+
+				start = DateTime.Now.Ticks;
+				Comirva.Audio.Util.Maths.Matrix C1 = Comirva.Audio.Util.Maths.Matrix.MatrixProductParallel(A, B);
+				stop = DateTime.Now.Ticks;
+				elapsed = (stop - start) / 1000.0 / 10000;
+				Console.WriteLine("MatrixProductParallel:  " + elapsed + " seconds");
+				
+				start = DateTime.Now.Ticks;
+				Comirva.Audio.Util.Maths.Matrix C2 = Comirva.Audio.Util.Maths.Matrix.MatrixProductFast(A, B);
+				stop = DateTime.Now.Ticks;
+				elapsed = (stop - start) / 1000.0 / 10000;
+				Console.WriteLine("MatrixProductFast:  " + elapsed + " seconds");
+				
+				if (C0 == C1 && C0 == C2) {
+					Console.WriteLine("C0, C1 and C2 are Equal");
+				}
+				
+				Console.In.ReadLine();
+				return;
+			}
+			
+			private static void TestMirageMatrix() {
+
+				// http://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
+
+				// Tested in:
+				// octave-3.2.4.exe or
+				// octave3.6.2_gcc4.6.2
+				
+				// > format short g
+				// > X = [4, 2, 0.6; 4.2, 2.1, .59; 3.9, 2, .58; 4.3, 2.1, 0.6; 4.1, 2.2, 0.63]
+				
+				// > mean (X)
+				// ans =
+				// 	4.1        2.08         0.6
+				
+				// 	> mean (X')
+				// 	ans =
+				// 		2.2      2.2967        2.16      2.3333        2.31
+				
+				// > cov (X)
+				//	ans =
+				// 	 	0.025     0.0075   	0.00075
+				// 		0.0075    0.007    	0.00125
+				// 		0.00075   0.00125  	0.00035
+
+				// 	> cov (X')
+				// 	ans =
+				// 		2.92       3.098       2.846        3.18       2.966
+				// 		3.098       3.287      3.0199      3.3737      3.1479
+				// 		2.846      3.0199      2.7748       3.099      2.8933
+				// 		3.18      3.3737       3.099      3.4633       3.229
+				// 		2.966      3.1479      2.8933       3.229      3.0193
+				
+				// > inverse ( cov (X) )
+				// 	ans =
+				// 		 70.297 	-133.66     326.73
+				// 	   -133.66     	 648.51   -2029.7
+				// 		326.73 	   -2029.7     9405.9
+				
+				// > inverse (cov (X'))
+				// warning: inverse: matrix singular to machine precision, rcond = 2.41562e-018
+				// ans =
+				//   -1.1505e+015  6.7533e+014   1.9306e+015  -4.7521e+014  -9.1573e+014
+				//   -7.9177e+015 -9.2709e+015   1.0708e+016   7.809e+015   -1.1689e+015
+				//    3.8489e+015  1.4136e+015  -3.5083e+015  -2.405e+015    6.7916e+014
+				//    4.7087e+015  5.3658e+015  -7.4667e+015  -4.0211e+015   1.2355e+015
+				//    6.6107e+014  1.9093e+015  -1.7135e+015  -1.0698e+015   1.4605e+014
+				
+				double[][] x = new double[][] {
+					new double[] {4.00000, 2.00000, 0.60000},
+					new double[] {4.20000, 2.10000, 0.59000},
+					new double[] {3.90000, 2.00000, 0.58000},
+					new double[] {4.30000, 2.10000, 0.60000},
+					new double[] {4.10000, 2.20000, 0.63000}
+				};
+				Mirage.Matrix X = new Matrix(x);
+				
+				X.Print();
+				Vector mean = X.Mean();
+				mean.Print();
+				Matrix cov = X.Covariance(mean);
+				cov.Print();
+				Matrix icov = cov.Inverse();
+				icov.Print();
+				
+				Console.In.ReadLine();
+				return;
+			}
+			#endregion
+			
+			private static void StartGUI() {
+				Application.EnableVisualStyles();
+				Application.SetCompatibleTextRenderingDefault(false);
+				Application.Run(new FindSimilarClientForm());
+			}
+			
+			[STAThread]
+			public static void Main(string[] args) {
+
+				/* 
  			// Wavelet Tests
 			Wavelets.WaveletUtils.TestJWave();
 			Wavelets.WaveletUtils.TestHaar2d();
@@ -628,14 +656,13 @@ namespace Mirage
 			Wavelets.WaveletUtils.TestDwt();
 			Wavelets.WaveletUtils.TestHaarTransform();
 			//Wavelets.Thresholding.RunTests();
-			 */
 			
 			//Imghash.Program.HashTester(args);
 			//DctMethods.test2(true);
 			//DctComirva.test();
 			//TestComirvaMatrix();
 			
-			//Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
+			Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
 			
 			
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
@@ -656,11 +683,11 @@ namespace Mirage
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
 			                                       @"lena_gray_dwt.png", Wavelets.WaveletMethod.Dwt);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_haar_transform_tensor.png", Wavelets.WaveletMethod.HaarTransformTensor); 
+			                                       @"lena_gray_haar_transform_tensor.png", Wavelets.WaveletMethod.HaarTransformTensor);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
 			                                       @"lena_gray_haar.png", Wavelets.WaveletMethod.Haar);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_haar_decomposition_tensor.png", Wavelets.WaveletMethod.HaarWaveletDecompositionTensor); 
+			                                       @"lena_gray_haar_decomposition_tensor.png", Wavelets.WaveletMethod.HaarWaveletDecompositionTensor);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
 			                                       @"lena_gray_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
 			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
@@ -671,159 +698,165 @@ namespace Mirage
 			
 			Console.In.ReadLine();
 			return;
-			
-			Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
-			//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
-			
-			string scanPath = "";
-			string queryPath = "";
-			int queryId = -1;
-			int numToTake = 20;
-			double percentage = 0.4; // percentage below and above when querying
-			bool resetdb = false;
-			AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
-			
-			// Command line parsing
-			Arguments CommandLine = new Arguments(args);
-			if(CommandLine["match"] != null) {
-				queryPath = CommandLine["match"];
-			}
-			if(CommandLine["matchid"] != null) {
-				string matchId = CommandLine["matchid"];
-				queryId = int.Parse(matchId);
-			}
-			if(CommandLine["scandir"] != null) {
-				scanPath = CommandLine["scandir"];
-			}
-			if(CommandLine["num"] != null) {
-				string num = CommandLine["num"];
-				numToTake = int.Parse(num);
-			}
-			if(CommandLine["percentage"] != null) {
-				double.TryParse(CommandLine["percentage"], NumberStyles.Number,CultureInfo.InvariantCulture, out percentage);
-			}
-			if(CommandLine["type"] != null) {
-				string type = CommandLine["type"];
-				if (type.Equals("kl", StringComparison.InvariantCultureIgnoreCase)) {
+				 */
+				
+				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+				
+				string scanPath = "";
+				double skipDurationAboveSeconds = -1; // less than zero disables this
+				string queryPath = "";
+				int queryId = -1;
+				int numToTake = 20;
+				double percentage = 0.4; // percentage below and above when querying
+				bool resetdb = false;
+				AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
+				
+				// Command line parsing
+				Arguments CommandLine = new Arguments(args);
+				if(CommandLine["match"] != null) {
+					queryPath = CommandLine["match"];
+				}
+				if(CommandLine["matchid"] != null) {
+					string matchId = CommandLine["matchid"];
+					queryId = int.Parse(matchId);
+				}
+				if(CommandLine["scandir"] != null) {
+					scanPath = CommandLine["scandir"];
+				}
+				if(CommandLine["skipduration"] != null) {
+					double.TryParse(CommandLine["skipduration"], NumberStyles.Number,CultureInfo.InvariantCulture, out skipDurationAboveSeconds);
+				}
+				if(CommandLine["num"] != null) {
+					string num = CommandLine["num"];
+					numToTake = int.Parse(num);
+				}
+				if(CommandLine["percentage"] != null) {
+					double.TryParse(CommandLine["percentage"], NumberStyles.Number,CultureInfo.InvariantCulture, out percentage);
+				}
+				if(CommandLine["type"] != null) {
+					string type = CommandLine["type"];
+					if (type.Equals("kl", StringComparison.InvariantCultureIgnoreCase)) {
+						distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
+					} else if (type.StartsWith("dtw", StringComparison.InvariantCultureIgnoreCase)) {
+						if (type.Equals("dtwe", StringComparison.InvariantCultureIgnoreCase)) {
+							distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
+						} else if (type.Equals("dtwe2", StringComparison.InvariantCultureIgnoreCase)) {
+							distanceType = AudioFeature.DistanceType.Dtw_SquaredEuclidean;
+						} else if (type.Equals("dtwman", StringComparison.InvariantCultureIgnoreCase)) {
+							distanceType = AudioFeature.DistanceType.Dtw_Manhattan;
+						} else if (type.Equals("dtwmax", StringComparison.InvariantCultureIgnoreCase)) {
+							distanceType = AudioFeature.DistanceType.Dtw_Maximum;
+						} else if (type.Equals("ucrdtw", StringComparison.InvariantCultureIgnoreCase)) {
+							distanceType = AudioFeature.DistanceType.UCR_Dtw;
+						} else {
+							distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
+						}
+					}
+				}
+				if(CommandLine["dtw"] != null || CommandLine["dtwe"] != null) {
+					distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
+				}
+				if(CommandLine["dtwe2"] != null) {
+					distanceType = AudioFeature.DistanceType.Dtw_SquaredEuclidean;
+				}
+				if(CommandLine["dtwman"] != null) {
+					distanceType = AudioFeature.DistanceType.Dtw_Manhattan;
+				}
+				if(CommandLine["dtwmax"] != null) {
+					distanceType = AudioFeature.DistanceType.Dtw_Maximum;
+				}
+				if(CommandLine["kl"] != null) {
 					distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
-				} else if (type.StartsWith("dtw", StringComparison.InvariantCultureIgnoreCase)) {
-					if (type.Equals("dtwe", StringComparison.InvariantCultureIgnoreCase)) {
-						distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
-					} else if (type.Equals("dtwe2", StringComparison.InvariantCultureIgnoreCase)) {
-						distanceType = AudioFeature.DistanceType.Dtw_SquaredEuclidean;
-					} else if (type.Equals("dtwman", StringComparison.InvariantCultureIgnoreCase)) {
-						distanceType = AudioFeature.DistanceType.Dtw_Manhattan;
-					} else if (type.Equals("dtwmax", StringComparison.InvariantCultureIgnoreCase)) {
-						distanceType = AudioFeature.DistanceType.Dtw_Maximum;
-					} else if (type.Equals("ucrdtw", StringComparison.InvariantCultureIgnoreCase)) {
-						distanceType = AudioFeature.DistanceType.UCR_Dtw;
+				}
+				if(CommandLine["ucrdtw"] != null) {
+					distanceType = AudioFeature.DistanceType.UCR_Dtw;
+				}
+				if(CommandLine["resetdb"] != null) {
+					resetdb = true;
+				}
+				if(CommandLine["?"] != null) {
+					PrintUsage();
+					return;
+				}
+				if(CommandLine["help"] != null) {
+					PrintUsage();
+					return;
+				}
+				if(CommandLine["gui"] != null) {
+					StartGUI();
+					return;
+				}
+				if (queryPath == "" && queryId == -1 && scanPath == "") {
+					PrintUsage();
+					return;
+				}
+				
+				Db db = new Db();
+
+				if (scanPath != "") {
+					if (IOUtils.IsDirectory(scanPath)) {
+						if (resetdb) {
+							db.RemoveTable();
+							db.AddTable();
+						}
+						ScanDirectory(scanPath, db, analysisMethod, skipDurationAboveSeconds);
 					} else {
-						distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
+						Console.Out.WriteLine("No directory found {0}!", scanPath);
 					}
 				}
-			}
-			if(CommandLine["dtw"] != null || CommandLine["dtwe"] != null) {
-				distanceType = AudioFeature.DistanceType.Dtw_Euclidean;
-			}
-			if(CommandLine["dtwe2"] != null) {
-				distanceType = AudioFeature.DistanceType.Dtw_SquaredEuclidean;
-			}
-			if(CommandLine["dtwman"] != null) {
-				distanceType = AudioFeature.DistanceType.Dtw_Manhattan;
-			}
-			if(CommandLine["dtwmax"] != null) {
-				distanceType = AudioFeature.DistanceType.Dtw_Maximum;
-			}
-			if(CommandLine["kl"] != null) {
-				distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
-			}
-			if(CommandLine["ucrdtw"] != null) {
-				distanceType = AudioFeature.DistanceType.UCR_Dtw;
-			}
-			if(CommandLine["resetdb"] != null) {
-				resetdb = true;
-			}
-			if(CommandLine["?"] != null) {
-				PrintUsage();
-				return;
-			}
-			if(CommandLine["help"] != null) {
-				PrintUsage();
-				return;
-			}
-			if(CommandLine["gui"] != null) {
-				StartGUI();
-				return;
-			}
-			if (queryPath == "" && queryId == -1 && scanPath == "") {
-				PrintUsage();
-				return;
-			}
-			
-			Db db = new Db();
 
-			if (scanPath != "") {
-				if (IOUtils.IsDirectory(scanPath)) {
-					if (resetdb) {
-						db.RemoveTable();
-						db.AddTable();
+				if (queryPath != "") {
+					FileInfo fi = new FileInfo(queryPath);
+					if (fi.Exists) {
+						FindSimilar(queryPath, db, analysisMethod, numToTake, percentage, distanceType);
+					} else {
+						Console.Out.WriteLine("No file found {0}!", queryPath);
 					}
-					ScanDirectory(scanPath, db, analysisMethod);
-				} else {
-					Console.Out.WriteLine("No directory found {0}!", scanPath);
 				}
-			}
-
-			if (queryPath != "") {
-				FileInfo fi = new FileInfo(queryPath);
-				if (fi.Exists) {
-					FindSimilar(queryPath, db, analysisMethod, numToTake, percentage, distanceType);
-				} else {
-					Console.Out.WriteLine("No file found {0}!", queryPath);
+				
+				if (queryId != -1) {
+					FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake, percentage, distanceType);
 				}
+				
+				System.Console.ReadLine();
 			}
 			
-			if (queryId != -1) {
-				FindSimilar(new int[] { queryId }, db, analysisMethod, numToTake, percentage, distanceType);
+			private static void PrintUsage() {
+				Console.WriteLine("FindSimilar. Version {0}.", VERSION);
+				Console.WriteLine("Copyright (C) 2012-2013 Per Ivar Nerseth.");
+				Console.WriteLine();
+				Console.WriteLine("Usage: FindSimilar.exe <Arguments>");
+				Console.WriteLine();
+				Console.WriteLine("Arguments:");
+				Console.WriteLine("\t-scandir=<scan directory path and create audio fingerprints - ignore existing files>");
+				Console.WriteLine("\t-match=<path to the wave file to find matches for>");
+				Console.WriteLine("\t-matchid=<database id to the wave file to find matches for>");
+				Console.WriteLine();
+				Console.WriteLine("Optional Arguments:");
+				Console.WriteLine("\t-gui\t<open up the Find Similar Client GUI>");
+				Console.WriteLine("\t-resetdb\t<clean database, used together with scandir>");
+				Console.WriteLine("\t-skipduration=x.x <skip files longer than x seconds, used together with scandir>");
+				Console.WriteLine("\t-num=<number of matches to return when querying>");
+				Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
+				Console.WriteLine("\t-type=<distance method to use when querying. Choose between:>");
+				Console.WriteLine("\t\tkl\t=Kullback Leibler Divergence/ Distance (default)");
+				Console.WriteLine("\t\tdtw\t=Dynamic Time Warping - Euclidean");
+				Console.WriteLine("\t\tdtwe\t=Dynamic Time Warping - Euclidean");
+				Console.WriteLine("\t\tdtwe2\t=Dynamic Time Warping - Squared Euclidean");
+				Console.WriteLine("\t\tdtwman\t=Dynamic Time Warping - Manhattan");
+				Console.WriteLine("\t\tdtwmax\t=Dynamic Time Warping - Maximum");
+				Console.WriteLine("\t\tucrdtw\t=Dynamic Time Warping - UCR Suite (fast)");
+				Console.WriteLine("\t\tOr use the distance method directly:");
+				Console.WriteLine("\t-kl\t<Use Kullback Leibler Divergence/ Distance (default)>");
+				Console.WriteLine("\t-dtw\t<Use Dynamic Time Warping - Euclidean>");
+				Console.WriteLine("\t-dtwe\t<Use Dynamic Time Warping - Euclidean>");
+				Console.WriteLine("\t-dtwe2\t<Use Dynamic Time Warping - Squared Euclidean>");
+				Console.WriteLine("\t-dtwman\t<Use Dynamic Time Warping - Manhattan>");
+				Console.WriteLine("\t-dtwmax\t<Use Dynamic Time Warping - Maximum>");
+				Console.WriteLine("\t-ucrdtw\t<Use Dynamic Time Warping - UCR Suite (fast)>");
+				Console.WriteLine();
+				Console.WriteLine("\t-? or -help=show this usage help>");
 			}
-			
-			System.Console.ReadLine();
-		}
-		
-		private static void PrintUsage() {
-			Console.WriteLine("FindSimilar. Version {0}.", VERSION);
-			Console.WriteLine("Copyright (C) 2012-2013 Per Ivar Nerseth.");
-			Console.WriteLine();
-			Console.WriteLine("Usage: FindSimilar.exe <Arguments>");
-			Console.WriteLine();
-			Console.WriteLine("Arguments:");
-			Console.WriteLine("\t-scandir=<scan directory path and create audio fingerprints - ignore existing files>");
-			Console.WriteLine("\t-match=<path to the wave file to find matches for>");
-			Console.WriteLine("\t-matchid=<database id to the wave file to find matches for>");
-			Console.WriteLine();
-			Console.WriteLine("Optional Arguments:");
-			Console.WriteLine("\t-gui\t<open up the Find Similar Client GUI>");
-			Console.WriteLine("\t-resetdb\t<clean database, used together with scandir>");
-			Console.WriteLine("\t-num=<number of matches to return when querying>");
-			Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
-			Console.WriteLine("\t-type=<distance method to use when querying. Choose between:>");
-			Console.WriteLine("\t\tkl\t=Kullback Leibler Divergence/ Distance (default)");
-			Console.WriteLine("\t\tdtw\t=Dynamic Time Warping - Euclidean");
-			Console.WriteLine("\t\tdtwe\t=Dynamic Time Warping - Euclidean");
-			Console.WriteLine("\t\tdtwe2\t=Dynamic Time Warping - Squared Euclidean");
-			Console.WriteLine("\t\tdtwman\t=Dynamic Time Warping - Manhattan");
-			Console.WriteLine("\t\tdtwmax\t=Dynamic Time Warping - Maximum");
-			Console.WriteLine("\t\tucrdtw\t=Dynamic Time Warping - UCR Suite (fast)");
-			Console.WriteLine("\t\tOr use the distance method directly:");
-			Console.WriteLine("\t-kl\t<Use Kullback Leibler Divergence/ Distance (default)>");
-			Console.WriteLine("\t-dtw\t<Use Dynamic Time Warping - Euclidean>");
-			Console.WriteLine("\t-dtwe\t<Use Dynamic Time Warping - Euclidean>");
-			Console.WriteLine("\t-dtwe2\t<Use Dynamic Time Warping - Squared Euclidean>");
-			Console.WriteLine("\t-dtwman\t<Use Dynamic Time Warping - Manhattan>");
-			Console.WriteLine("\t-dtwmax\t<Use Dynamic Time Warping - Maximum>");
-			Console.WriteLine("\t-ucrdtw\t<Use Dynamic Time Warping - UCR Suite (fast)>");
-			Console.WriteLine();
-			Console.WriteLine("\t-? or -help=show this usage help>");
 		}
 	}
-}

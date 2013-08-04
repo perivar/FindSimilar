@@ -4,8 +4,12 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+
+using System.Diagnostics;
+
 using Comirva.Audio.Util.Maths;
 using CommonUtils;
+
 using math.transform.jwave;
 using math.transform.jwave.handlers;
 using math.transform.jwave.handlers.wavelets;
@@ -27,7 +31,14 @@ namespace Wavelets
 	/// </summary>
 	public static class WaveletUtils
 	{
-		private static Matrix HaarWaveletTransform(double[][] image) {
+		/// <summary>
+		/// Haar Transform of a 2D image to a Matrix.
+		/// This is using the tensor product layout.
+		/// Performance is also quite fast.
+		/// </summary>
+		/// <param name="image">2D array</param>
+		/// <returns>Matrix with haar transform</returns>
+		public static Matrix HaarWaveletTransform(double[][] image) {
 			Matrix imageMatrix = new Matrix(image);
 			double[] imagePacked = imageMatrix.GetColumnPackedCopy();
 			HaarTransform.haar_2d(imageMatrix.Rows, imageMatrix.Columns, imagePacked);
@@ -35,7 +46,14 @@ namespace Wavelets
 			return haarMatrix;
 		}
 
-		private static Matrix InverseHaarWaveletTransform(double[][] image) {
+		/// <summary>
+		/// Inverse Haar Transform of a 2D image to a Matrix.
+		/// This is using the tensor product layout.
+		/// Performance is also quite fast.
+		/// </summary>
+		/// <param name="image">2D array</param>
+		/// <returns>Matrix with inverse haar transform</returns>
+		public static Matrix InverseHaarWaveletTransform(double[][] image) {
 			Matrix imageMatrix = new Matrix(image);
 			double[] imagePacked = imageMatrix.GetColumnPackedCopy();
 			HaarTransform.haar_2d_inverse(imageMatrix.Rows, imageMatrix.Columns, imagePacked);
@@ -140,6 +158,10 @@ namespace Wavelets
 			int height = image.Length;
 
 			Matrix dwtMatrix = null;
+
+			Stopwatch stopWatch = Stopwatch.StartNew();
+			long startS = stopWatch.ElapsedTicks;
+
 			switch(waveletMethod) {
 				case WaveletMethod.Dwt:
 					Wavelets.Dwt dwt = new Wavelets.Dwt(8);
@@ -183,6 +205,10 @@ namespace Wavelets
 				default:
 					break;
 			}
+
+			long endS = stopWatch.ElapsedTicks;
+			Console.WriteLine("WaveletMethod: {0} Time in ticks: {1}", Enum.GetName(typeof(WaveletMethod), waveletMethod), (endS - startS));
+
 			//dwtMatrix.WriteCSV("HaarImageNormalized.csv", ";");
 			
 			// increase all values
