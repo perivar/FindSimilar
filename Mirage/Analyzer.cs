@@ -41,13 +41,19 @@ using ZedGraph;
 using System.Drawing;
 using System.Drawing.Imaging;
 
+using Wavelets;
+using math.transform.jwave;
+using math.transform.jwave.handlers;
+using math.transform.jwave.handlers.wavelets;
+
 // Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
 	public class Analyzer
 	{
-		public const bool DEBUG_INFO_VERBOSE = false;
-		public const bool DEFAULT_DEBUG_INFO = false;
+		public const bool DEBUG_INFO_VERBOSE = true;
+		public const bool DEBUG_OUTPUT_TEXT = true;
+		public const bool DEFAULT_DEBUG_INFO = true;
 		
 		public enum AnalysisMethod {
 			SCMS = 1,
@@ -149,8 +155,8 @@ namespace Mirage
 			
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				WriteAscii(audiodata, name + "_audiodata.ascii");
-				WriteF3Formatted(audiodata, name + "_audiodata.txt");
+				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, name + "_audiodata.ascii");
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, name + "_audiodata.txt");
 			}
 			#endif
 			
@@ -179,9 +185,11 @@ namespace Mirage
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				stftdata.WriteAscii(name + "_stftdata.ascii");
-				stftdata.DrawMatrixGraph(name + "_stftdata.png");
+				if (DEBUG_OUTPUT_TEXT) stftdata.WriteAscii(name + "_stftdata.ascii");
+				//stftdata.DrawMatrixGraph(name + "_stftdata.png");
 
+				//stftdata.WriteCSV(name + "_stftdata.csv", ";");
+				
 				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
 				stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
 			}
@@ -197,14 +205,105 @@ namespace Mirage
 				double[] audiodata_inverse_stft = stftMirage.InverseStft(stftdata);
 				MathUtils.Divide(ref audiodata_inverse_stft, AUDIO_MULTIPLIER);
 
-				WriteAscii(audiodata_inverse_stft, name + "_audiodata_inverse_stft.ascii");
-				WriteF3Formatted(audiodata_inverse_stft, name + "_audiodata_inverse_stft.txt");
+				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata_inverse_stft, name + "_audiodata_inverse_stft.ascii");
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_stft, name + "_audiodata_inverse_stft.txt");
 				
 				DrawGraph(audiodata_inverse_stft, name + "_audiodata_inverse_stft.png");
+				
+				float[] audiodata_inverse_float = MathUtils.DoubleToFloat(audiodata_inverse_stft);
 				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
-				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_stft), name + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
+				bass.SaveFile(audiodata_inverse_float, name + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
+
+				/*
+				MathUtils.Multiply(ref audiodata_inverse_float, AUDIO_MULTIPLIER); // 65536
+				Comirva.Audio.Util.Maths.Matrix stftdataInverse = stftMirage.Apply(audiodata_inverse_float);
+
+				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
+				stftdataInverse.DrawMatrixImageLogValues(name + "_inverse_specgram.png", true);
+				stftdataInverse.DrawMatrixImageLogY(name + "_inverse_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+				 */
 			}
 			#endif
+
+			Comirva.Audio.Util.Maths.Matrix mellog = mfccMirage.ApplyMelScaleAndLog(ref stftdata);
+			mellog.DrawMatrixImage(name + "_mel_log.png", 600, 400, true, true);
+			Comirva.Audio.Util.Maths.Matrix inverse_mellog = mfccMirage.InverseMelScaleAndLog(ref mellog);
+			inverse_mellog.DrawMatrixImageLogValues(name + "_mel_log_inverse.png", true);
+			
+			/*
+			Comirva.Audio.Util.Maths.Matrix waveletdata = mfccMirage.ApplyWavelet(ref stftdata);
+
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (DEBUG_OUTPUT_TEXT) waveletdata.WriteAscii(name + "_waveletdata.ascii");
+				waveletdata.DrawMatrixImageLogValues(name + "_wavelet_specgram.png", true);
+			}
+			#endif
+			 */
+			
+			// Haar Wavelet Transform
+			Comirva.Audio.Util.Maths.Matrix haarMatrix = WaveletUtils.HaarWaveletTransform(stftdata.MatrixData);
+			haarMatrix.DrawMatrixImageLogValues(name + "_wavelet.png", true);
+			Comirva.Audio.Util.Maths.Matrix haarInverseMatrix = WaveletUtils.InverseHaarWaveletTransform(haarMatrix.MatrixData);
+			haarInverseMatrix.DrawMatrixImageLogValues(name + "_inverse_wavelet.png", true);
+
+			/*
+			Wavelets.Dwt dwt = new Wavelets.Dwt(8);
+			Comirva.Audio.Util.Maths.Matrix haarMatrix = dwt.Transform(stftdata);
+			haarMatrix.DrawMatrixImageLogValues(name + "_wavelet.png", true);
+			Comirva.Audio.Util.Maths.Matrix haarInverseMatrix = dwt.TransformBack(haarMatrix);
+			haarInverseMatrix.DrawMatrixImageLogValues(name + "_inverse_wavelet.png", true);
+			
+			WaveletInterface wavelet = null;
+			wavelet = new Haar02();
+			TransformInterface bWave = null;
+			bWave = new FastWaveletTransform(wavelet);
+			Transform trans = new Transform(bWave); // perform all steps
+			double[][] dwtArray = trans.forward(stftdata.MatrixData);
+			Comirva.Audio.Util.Maths.Matrix haarMatrix = new Comirva.Audio.Util.Maths.Matrix(dwtArray);
+			haarMatrix.DrawMatrixImageLogValues(name + "_wavelet.png", true);
+			double[][] idwtArray = trans.reverse(haarMatrix.MatrixData);
+			Comirva.Audio.Util.Maths.Matrix haarInverseMatrix = new Comirva.Audio.Util.Maths.Matrix(idwtArray);
+			haarInverseMatrix.DrawMatrixImageLogValues(name + "_inverse_wavelet.png", true);
+			 */
+			
+			// Wavelet thresholding
+			double threshold = 0.15;
+			double[][] yHard = Thresholding.perform_hard_thresholding(haarMatrix.MatrixData, threshold);
+			double[][] ySoft = Thresholding.perform_soft_thresholding(haarMatrix.MatrixData, threshold);
+			double[][] ySemisoft = Thresholding.perform_semisoft_thresholding(haarMatrix.MatrixData, threshold, threshold*2);
+			double[][] ySemisoft2 = Thresholding.perform_semisoft_thresholding(haarMatrix.MatrixData, threshold, threshold*4);
+			double[][] yStrict = Thresholding.perform_strict_thresholding(haarMatrix.MatrixData, 20);
+			
+			// Inverse 2D Haar Wavelet Transform
+			Comirva.Audio.Util.Maths.Matrix zHard = WaveletUtils.InverseHaarWaveletTransform(yHard);
+			Comirva.Audio.Util.Maths.Matrix zSoft = WaveletUtils.InverseHaarWaveletTransform(ySoft);
+			Comirva.Audio.Util.Maths.Matrix zSemisoft = WaveletUtils.InverseHaarWaveletTransform(ySemisoft);
+			Comirva.Audio.Util.Maths.Matrix zSemisoft2 = WaveletUtils.InverseHaarWaveletTransform(ySemisoft2);
+			Comirva.Audio.Util.Maths.Matrix zStrict = WaveletUtils.InverseHaarWaveletTransform(yStrict);
+			
+			// Output the images
+			zHard.DrawMatrixImageLogValues(name + "_wavelet-thresholding-hard.png", true);
+			zSoft.DrawMatrixImageLogValues(name + "_wavelet-thresholding-soft.png", true);
+			zSemisoft.DrawMatrixImageLogValues(name + "_wavelet-thresholding-semisoft.png", true);
+			zSemisoft2.DrawMatrixImageLogValues(name + "_wavelet-thresholding-semisoft2.png", true);
+			zStrict.DrawMatrixImageLogValues(name + "_wavelet-thresholding-strict.png", true);
+			
+			/*
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				// try to do an inverse wavelet transform
+				Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseWavelet(ref waveletdata);
+				stftdata_inverse_wavelet.DrawMatrixImageLogY(name + "_specgramlog_inverse_wavelet.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+				double[] audiodata_inverse_wavelet = stftMirage.InverseStft(stftdata_inverse_wavelet);
+
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_wavelet, name + "_audiodata_inverse_wavelet.txt");
+				DrawGraph(audiodata_inverse_wavelet, name + "_audiodata_inverse_wavelet.png");
+				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
+				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_wavelet), name + "_inverse_wavelet.wav", Analyzer.SAMPLING_RATE);
+			}
+			#endif
+			 */
 			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
@@ -219,7 +318,7 @@ namespace Mirage
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				mfccdata.WriteAscii(name + "_mfccdata.ascii");
+				if (DEBUG_OUTPUT_TEXT) mfccdata.WriteAscii(name + "_mfccdata.ascii");
 				mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
 			}
 			#endif
@@ -232,7 +331,7 @@ namespace Mirage
 				stftdata_inverse_mfcc.DrawMatrixImageLogY(name + "_specgramlog_inverse_mfcc.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 				double[] audiodata_inverse_mfcc = stftMirage.InverseStft(stftdata_inverse_mfcc);
 
-				WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.txt");
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.txt");
 				DrawGraph(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.png");
 				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
 				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), name + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);

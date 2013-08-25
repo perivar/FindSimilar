@@ -768,6 +768,25 @@ namespace Comirva.Audio.Util.Maths
 			return this;
 		}
 
+		/// <summary>Divide matrixData matrix by matrixData scalar, C = matrixData/s</summary>
+		/// <param name="s">scalar</param>
+		/// <returns>matrixData/s</returns>
+		public Matrix Divide(double s)
+		{
+			if (s == 0) return this;
+			
+			Matrix X = new Matrix(rowCount,columnCount);
+			double[][] C = X.GetArray();
+			for (int i = 0; i < rowCount; i++)
+			{
+				for (int j = 0; j < columnCount; j++)
+				{
+					C[i][j] = matrixData[i][j] / s;
+				}
+			}
+			return X;
+		}
+		
 		/// <summary>Element-by-element right division, C = matrixData./B</summary>
 		/// <param name="B">another matrix</param>
 		/// <returns>matrixData./B</returns>
@@ -2025,8 +2044,9 @@ namespace Comirva.Audio.Util.Maths
 		/// <param name="forceWidth">force pixel width (default=600). To ignore use 0 or -1</param>
 		/// <param name="forceHeight">force pixel height (default=400). To ignore use 0 or -1</param>
 		/// <param name="colorize">colorize (default=true) or use black and white (false)</param>
+		/// <param name="flipYscale">bool whether to flip the y scale (default=false)</param>
 		/// <returns>an image</returns>
-		public Image DrawMatrixImage(string fileName, int forceWidth=600, int forceHeight=400, bool colorize=true) {
+		public Image DrawMatrixImage(string fileName, int forceWidth=600, int forceHeight=400, bool colorize=true, bool flipYscale=false) {
 			
 			double maxValue = Max();
 			if (maxValue == 0.0f)
@@ -2066,6 +2086,8 @@ namespace Comirva.Audio.Util.Maths
 			// Should we colorize?
 			if (colorize) img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
 			
+			if (flipYscale) img.RotateFlip(RotateFlipType.RotateNoneFlipY);
+			
 			// Save and return the image
 			img.Save(fileName, ImageFormat.Png);
 			return img;
@@ -2076,7 +2098,7 @@ namespace Comirva.Audio.Util.Maths
 		/// For STFT matrixes this is the linear spectrogram
 		/// </summary>
 		/// <param name="fileName">filename</param>
-		/// <param name="flipYscale">bool whether to flip the y scale</param>
+		/// <param name="flipYscale">bool whether to flip the y scale (default=false)</param>
 		/// <param name="usePowerSpectrum">bool whether to use powerspectrum (true) or amplitude/magnitude spectrum (false)</param>
 		/// <param name="forceWidth">force pixel width (default=600). To ignore use 0 or -1</param>
 		/// <param name="forceHeight">force pixel height (default=400). To ignore use 0 or -1</param>
@@ -2267,6 +2289,7 @@ namespace Comirva.Audio.Util.Maths
 		public static Matrix operator *(Matrix A, double x) { return A.Times(x); }
 		public static Matrix operator *(double x, Matrix A) { return A.Times(x); }
 		public static Matrix operator /(Matrix A, Matrix B) { return A.ArrayRightDivide(B); }
+		public static Matrix operator /(Matrix A, double x) { return A.Divide(x); }
 		public static Matrix operator ^(Matrix A, int k) { return A.Pow(k); }
 		#endregion
 		
