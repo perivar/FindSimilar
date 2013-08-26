@@ -1,7 +1,9 @@
 using System;
 using System.Runtime.Remoting.Lifetime;
 using Comirva.Audio.Util.Maths;
+
 using Wavelets;
+using CommonUtils;
 
 /// <summary>
 /// Mfcc method copied from the Mirage project:
@@ -70,9 +72,10 @@ namespace Comirva.Audio
 					}
 				}
 				
-				freqsIndex[f] = CommonUtils.MathUtils.FreqToIndex(freqs[f], srate, winsize);
+				freqsIndex[f] = MathUtils.FreqToIndex(freqs[f], srate, winsize);
 			}
 			
+			// triangle heights
 			double[] triangleh = new double[numberFilters];
 			for (int j = 0; j < triangleh.Length; j++) {
 				triangleh[j] = 2.0/(freqs[j+2] - freqs[j]);
@@ -90,7 +93,7 @@ namespace Comirva.Audio
 			m_freqs.WriteCSV("m_freqs.csv", ";");
 			Matrix m_fftFreq = new Matrix(fftFreq, fftFreq.Length);
 			m_fftFreq.WriteCSV("m_fftFreq.csv", ";");
-			Matrix m_freqsIndex = new Matrix(freqsIndex, freqsIndex.Length);
+			Matrix m_freqsIndex = new Matrix(MathUtils.IntToDouble(freqsIndex), freqsIndex.Length);
 			m_freqsIndex.WriteCSV("m_freqsIndex.csv", ";");
 			 */
 			
@@ -336,39 +339,47 @@ namespace Comirva.Audio
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
 			
 			// for each row, interpolate values to next row according to mel scale
-			for (int i = 0; i < mel.Rows-1; i++) {
-				for (int j = 0; j < mel.Columns; j++) {
+			for (int j = 0; j < mel.Columns; j++) {
+				for (int i = 0; i < mel.Rows-1; i++) {
 					double startValue = mel.MatrixData[i][j];
 					double endValue = mel.MatrixData[i+1][j];
 					
 					// what indexes in resulting matrix does this row cover?
-					Console.Out.WriteLine("Mel Row index {0} corresponds to Linear Row index {1} - {2} [{3:0.00} - {4:0.00}]", i, freqsIndex[i+1], freqsIndex[i+2]-1, startValue, endValue);
-					
-					// interpolate values
-					int partSteps =  freqsIndex[i+2] - freqsIndex[i+1];
-					for (int step = 0; step < partSteps; step ++) {
-						double p = (double) step / (double) partSteps;
+					//Console.Out.WriteLine("Mel Row index {0} corresponds to Linear Row index {1} - {2} [{3:0.00} - {4:0.00}]", i, freqsIndex[i+1], freqsIndex[i+2]-1, startValue, endValue);
 
-						// interpolate
-						double val = CommonUtils.MathUtils.Interpolate(startValue, endValue, p);
-						
-						// add to matrix data
-						m.MatrixData[freqsIndex[i+1]-1+step][j] = val;
-					}
+					// add interpolated values
+					AddInterpolatedValues(m, freqsIndex[i+1], freqsIndex[i+2], startValue, endValue, j);
 				}
+
+				// last row
+				int iLast = mel.Rows - 1;
+				double startValueLast = mel.MatrixData[iLast][j];
+				double endValueLast = 0.0;
+
+				// what indexes in resulting matrix does this row cover?
+				//Console.Out.WriteLine("Mel Row index {0} corresponds to Linear Row index {1} - {2} [{3:0.00} - {4:0.00}]", iLast, freqsIndex[iLast+1], freqsIndex[iLast+2]-1, startValueLast, endValueLast);
+
+				// add interpolated values
+				AddInterpolatedValues(m, freqsIndex[iLast+1], freqsIndex[iLast+2], startValueLast, endValueLast, j);
 			}
 
-			// last row
-			int iLast = mel.Rows - 1;
-			double startValueLast = mel.MatrixData[iLast-1][0];
-			double endValueLast = mel.MatrixData[iLast][0];;
-
-			// what indexes in resulting matrix does this row cover?
-			Console.Out.WriteLine("Mel Row index {0} corresponds to Linear Row index {1} - {2} [{3:0.00} - {4:0.00}]", iLast, freqsIndex[iLast+1], freqsIndex[iLast+2]-1, startValueLast, endValueLast);
-			
-			
 			Mirage.Dbg.WriteLine("InverseMelScaleAndLog Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
+		}
+		
+		private void AddInterpolatedValues(Matrix m, int startIndex, int endIndex, double startValue, double endValue, int columnIndex) {
+			
+			// interpolate and add values
+			int partSteps =  endIndex - startIndex;
+			for (int step = 0; step < partSteps; step ++) {
+				double p = (double) step / (double) partSteps;
+
+				// interpolate
+				double val = MathUtils.Interpolate(startValue, endValue, p);
+				
+				// add to matrix data
+				m.MatrixData[startIndex+step][columnIndex] = val;
+			}
 		}
 	}
 }

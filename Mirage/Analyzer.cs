@@ -143,6 +143,7 @@ namespace Mirage
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start ();
+			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
 
 			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
 			if (audiodata == null || audiodata.Length == 0)  {
@@ -211,7 +212,6 @@ namespace Mirage
 				DrawGraph(audiodata_inverse_stft, name + "_audiodata_inverse_stft.png");
 				
 				float[] audiodata_inverse_float = MathUtils.DoubleToFloat(audiodata_inverse_stft);
-				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
 				bass.SaveFile(audiodata_inverse_float, name + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
 
 				/*
@@ -229,6 +229,17 @@ namespace Mirage
 			mellog.DrawMatrixImage(name + "_mel_log.png", 600, 400, true, true);
 			Comirva.Audio.Util.Maths.Matrix inverse_mellog = mfccMirage.InverseMelScaleAndLog(ref mellog);
 			inverse_mellog.DrawMatrixImageLogValues(name + "_mel_log_inverse.png", true);
+			
+			double[] audiodata_inverse_mellog = stftMirage.InverseStft(inverse_mellog);
+			//MathUtils.Divide(ref audiodata_inverse_mellog, AUDIO_MULTIPLIER);
+
+			if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata_inverse_mellog, name + "_audiodata_inverse_mellog.ascii");
+			if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mellog, name + "_audiodata_inverse_mellog.txt");
+			
+			DrawGraph(audiodata_inverse_mellog, name + "_audiodata_inverse_mellog.png");
+			
+			float[] audiodata_inverse_mellog_float = MathUtils.DoubleToFloat(audiodata_inverse_mellog);
+			bass.SaveFile(audiodata_inverse_mellog_float, name + "_inverse_mellog.wav", Analyzer.SAMPLING_RATE);
 			
 			/*
 			Comirva.Audio.Util.Maths.Matrix waveletdata = mfccMirage.ApplyWavelet(ref stftdata);
@@ -333,7 +344,6 @@ namespace Mirage
 
 				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.txt");
 				DrawGraph(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.png");
-				FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
 				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), name + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
 			}
 			#endif
