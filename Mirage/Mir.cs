@@ -42,6 +42,7 @@ using CommonUtils;
 using FindSimilar;
 
 using FindSimilar.AudioProxies; // BassProxy
+using CommonUtils.Audio.NAudio; // AudioUtilsNAudio
 
 // Heavily modified by perivar@nerseth.com
 namespace Mirage
@@ -648,6 +649,22 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
+				// Generate test audio file section
+				//AudioUtilsNAudio.GenerateAudioTestFile(44100, 5, "sine-test.wav");
+
+				/*
+				int sampleRate = 44100;
+				int secondsToSample = 3;
+				int totalNumberOfSamples = sampleRate * secondsToSample;
+				float[] audioData = new float[totalNumberOfSamples];
+				BasicOscillatorProvider basic = new BasicOscillatorProvider();
+				basic.Amplitude = 0.8f;
+				basic.SetFrequency(11025);
+				basic.SetOscWaveshape(BasicOscillatorProvider.WAVESHAPE.SINE);
+				basic.Read(audioData, 0, totalNumberOfSamples);
+				AudioUtilsNAudio.WriteIEEE32WaveFileMono("sine-hi.wav", sampleRate, audioData);
+				 */
+				
 				/* 
  			// Wavelet Tests
 			Wavelets.WaveletUtils.TestJWave();

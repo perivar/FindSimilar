@@ -205,7 +205,7 @@ namespace Mirage
 			double[] returnArray = new double[N];
 			for (int j = 0; j < N; j++) {
 				double re = ifft[2*j] / Math.Sqrt(winsize);
-				returnArray[j] = re * window[j];
+				returnArray[j] = re * window[j]; // smooth yet another time (also did this when doing FFT)
 				
 				// overlap-add method
 				// scale with 5 just because the volume got so much lower when using a second smoothing filter when reconstrcting
@@ -236,11 +236,11 @@ namespace Mirage
 			for (int j = 0; j < N; j++) {
 				double re = complexSignal[2*j] / Math.Sqrt(winsize);
 				//double img = complexSignal[2*j + 1];
-				returnArray[j] = re * window[j];
+				returnArray[j] = re * window[j]; // smooth yet another time (also did this when doing FFT)
 				
 				// overlap-add method
-				// scale with 5 just because the volume got so much lower when using a second smoothing filter when reconstrcting
-				signal[j+hopsize*column] = signal[j+hopsize*column] + returnArray[j] * 5;
+				// scale with 2 just because the volume got so much lower when using a second smoothing filter when reconstrcting
+				signal[j+hopsize*column] = signal[j+hopsize*column] + returnArray[j] * 2;
 			}
 		}
 		

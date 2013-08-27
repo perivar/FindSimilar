@@ -2176,7 +2176,7 @@ namespace Comirva.Audio.Util.Maths
 		
 		/// <summary>
 		/// Draw the matrix as an image where the Y scale and the values are logarithmic
-		/// For STFT matrixes this is the logarithmic spectrogram
+		/// For STFT matrixes this is the logarithmic spectrogram (magnitude spectrum)
 		/// </summary>
 		/// <param name="fileName">filename</param>
 		/// <param name="sampleRate">Signal's sample rate</param>
@@ -2190,7 +2190,7 @@ namespace Comirva.Audio.Util.Maths
 		/// <returns>an image</returns>
 		public Image DrawMatrixImageLogY(string fileName, double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize, int forceWidth=600, int forceHeight=400, bool colorize=true) {
 			double maxValue = Max();
-			maxValue = 10 * Math.Log10(maxValue);
+			maxValue = 20 * Math.Log10(maxValue);
 			if (maxValue == 0.0f)
 				return null;
 			
@@ -2212,7 +2212,7 @@ namespace Comirva.Audio.Util.Maths
 				for(int logBin = 0; logBin < logBins; logBin++)
 				{
 					double val = avg[logBin];
-					val = 10 * Math.Log10(val);
+					val = 20 * Math.Log10(val);
 					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
 					Brush brush = new SolidBrush(color);
 					
