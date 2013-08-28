@@ -35,11 +35,19 @@ namespace Wavelets
 		/// Haar Transform of a 2D image to a Matrix.
 		/// This is using the tensor product layout.
 		/// Performance is also quite fast.
+		/// Note that the input array must be a square matrix of dimension 2n x 2n where n is an integer
 		/// </summary>
 		/// <param name="image">2D array</param>
+		/// <param name="disableMatrixDimensionCheck">True if matrix dimension check should be turned off</param>
 		/// <returns>Matrix with haar transform</returns>
-		public static Matrix HaarWaveletTransform(double[][] image) {
+		public static Matrix HaarWaveletTransform(double[][] image, bool disableMatrixDimensionCheck=false) {
 			Matrix imageMatrix = new Matrix(image);
+			
+			// Check that the input matrix is a square matrix of dimension 2n x 2n (where n is an integer)
+			if (!disableMatrixDimensionCheck && !imageMatrix.IsSymmetric() && !MathUtils.IsPowerOfTwo(image.Length)) {
+				throw new Exception("Input matrix is not symmetric or has dimensions that are a power of two!");
+			}
+			
 			double[] imagePacked = imageMatrix.GetColumnPackedCopy();
 			HaarTransform.haar_2d(imageMatrix.Rows, imageMatrix.Columns, imagePacked);
 			Matrix haarMatrix = new Matrix(imagePacked, imageMatrix.Rows);
@@ -50,15 +58,82 @@ namespace Wavelets
 		/// Inverse Haar Transform of a 2D image to a Matrix.
 		/// This is using the tensor product layout.
 		/// Performance is also quite fast.
+		/// Note that the input array must be a square matrix of dimension 2n x 2n where n is an integer
 		/// </summary>
 		/// <param name="image">2D array</param>
+		/// <param name="disableMatrixDimensionCheck">True if matrix dimension check should be turned off</param>
 		/// <returns>Matrix with inverse haar transform</returns>
-		public static Matrix InverseHaarWaveletTransform(double[][] image) {
+		public static Matrix InverseHaarWaveletTransform(double[][] image, bool disableMatrixDimensionCheck=false) {
 			Matrix imageMatrix = new Matrix(image);
+
+			// Check that the input matrix is a square matrix of dimension 2n x 2n (where n is an integer)
+			if (!disableMatrixDimensionCheck && !imageMatrix.IsSymmetric() && !MathUtils.IsPowerOfTwo(image.Length)) {
+				throw new Exception("Input matrix is not symmetric or has dimensions that are a power of two!");
+			}
+
 			double[] imagePacked = imageMatrix.GetColumnPackedCopy();
 			HaarTransform.haar_2d_inverse(imageMatrix.Rows, imageMatrix.Columns, imagePacked);
 			Matrix inverseHaarMatrix = new Matrix(imagePacked, imageMatrix.Rows);
 			return inverseHaarMatrix;
+		}
+		
+		public static void TestHaarInputOutput(string imageInPath) {
+
+			// read image
+			Image img = Image.FromFile(imageInPath);
+			
+			// make sure it's square and power of two
+			int size = (img.Height > img.Width ? img.Height : img.Width);
+			int sizePow2 = MathUtils.NextPowerOfTwo(size);
+			img = ImageUtils.Resize(img, sizePow2, sizePow2, false);
+			
+			Bitmap bmp = new Bitmap(img);
+			double[][] image = new double[bmp.Height][];
+			for (int i = 0; i < bmp.Height; i++)
+			{
+				image[i] = new double[bmp.Width];
+				for (int j = 0; j < bmp.Width; j++) {
+					
+					Color C = bmp.GetPixel(j, i);
+					image[i][j] = (C.R + C.G + C.B ) / 3;
+					
+					//image[i][j] = bmp.GetPixel(j, i).ToArgb();
+					//image[i][j] = bmp.GetPixel(j, i).B; // use only blue channel
+				}
+			}
+			
+			Matrix inputMatrix = new Matrix(image);
+			//normalizedMatrix.WriteCSV("haar-before.csv", ";");
+
+			// Haar Wavelet Transform
+			Matrix haarMatrix = HaarWaveletTransform(inputMatrix.MatrixData);
+			
+			//Wavelets.Dwt dwt = new Wavelets.Dwt(2);
+			//Matrix haarMatrix = dwt.Transform(normalizedMatrix);
+			
+			/*
+			WaveletInterface wavelet = new Haar02();
+			TransformInterface bWave = new FastWaveletTransform(wavelet);
+			Transform t = new Transform(bWave); // perform all steps
+			double[][] dwtArray = t.forward(normalizedMatrix.MatrixData);
+			Matrix haarMatrix = new Matrix(dwtArray);
+			 */
+			
+			//haarMatrix.WriteCSV("haar.csv", ";");
+
+			// Inverse 2D Haar Wavelet Transform
+			Matrix haarMatrixInverse = InverseHaarWaveletTransform(haarMatrix.MatrixData);
+			
+			//Matrix haarMatrixInverse = dwt.TransformBack(haarMatrix);
+			
+			//double[][] dwtArrayInverse = t.reverse(haarMatrix.MatrixData);
+			//Matrix haarMatrixInverse = new Matrix(dwtArrayInverse);
+			
+			//haarMatrixInverse.WriteCSV("haar-inverse.csv", ";");
+			
+			// Output the image
+			//haarMatrix.DrawMatrixImageLogValues("haar-transform.png");
+			haarMatrixInverse.DrawMatrixImage("haar-transform-back.png", -1, -1, false);
 		}
 		
 		public static void TestDenoise(string imageInPath) {
@@ -98,12 +173,12 @@ namespace Wavelets
 			Matrix haarMatrix = HaarWaveletTransform(imageNoisy);
 
 			// Thresholding
-			double threshold = 0.15;
+			double threshold = 0.15; // 0.15 seems to work well with the noise added above, 0.1
 			double[][] yHard = Thresholding.perform_hard_thresholding(haarMatrix.MatrixData, threshold);
 			double[][] ySoft = Thresholding.perform_soft_thresholding(haarMatrix.MatrixData, threshold);
 			double[][] ySemisoft = Thresholding.perform_semisoft_thresholding(haarMatrix.MatrixData, threshold, threshold*2);
 			double[][] ySemisoft2 = Thresholding.perform_semisoft_thresholding(haarMatrix.MatrixData, threshold, threshold*4);
-			double[][] yStrict = Thresholding.perform_strict_thresholding(haarMatrix.MatrixData, 20);
+			double[][] yStrict = Thresholding.perform_strict_thresholding(haarMatrix.MatrixData, 10);
 			
 			// Inverse 2D Haar Wavelet Transform
 			Matrix zHard = InverseHaarWaveletTransform(yHard);

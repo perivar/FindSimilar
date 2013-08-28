@@ -649,6 +649,11 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
+				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
+				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg");
+				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Documents\My Projects\FindSimilar\bin\Debug\sine-test_specgram.png");
+				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\Public\Pictures\Sample Pictures\Lighthouse.jpg");
+				
 				// Generate test audio file section
 				//AudioUtilsNAudio.GenerateAudioTestFile(44100, 5, "sine-test.wav");
 
@@ -678,43 +683,44 @@ namespace Mirage
 			//DctMethods.test2(true);
 			//DctComirva.test();
 			//TestComirvaMatrix();
-			
-			Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
-			
-			
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_dwt.png", Wavelets.WaveletMethod.Dwt);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_haar_transform_tensor.png", Wavelets.WaveletMethod.HaarTransformTensor);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_haar.png", Wavelets.WaveletMethod.Haar);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_haar_decomposition_tensor.png", Wavelets.WaveletMethod.HaarWaveletDecompositionTensor);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_non_standard_haar_decomposition.png", Wavelets.WaveletMethod.NonStandardHaarWaveletDecomposition);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
-			                                       @"lena_color_jwave_tensor.png", Wavelets.WaveletMethod.JWaveTensor);
+				 */
+				
+				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
+				//Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
+				
+				/*
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+				                                       @"lena_color_dwt.png", Wavelets.WaveletMethod.Dwt);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+				                                       @"lena_color_haar_transform_tensor.png", Wavelets.WaveletMethod.HaarTransformTensor);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+				                                       @"lena_color_haar.png", Wavelets.WaveletMethod.Haar);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+				                                       @"lena_color_haar_decomposition_tensor.png", Wavelets.WaveletMethod.HaarWaveletDecompositionTensor);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+				                                       @"lena_color_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+				                                       @"lena_color_non_standard_haar_decomposition.png", Wavelets.WaveletMethod.NonStandardHaarWaveletDecomposition);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+				                                       @"lena_color_jwave_tensor.png", Wavelets.WaveletMethod.JWaveTensor);
 
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_dwt.png", Wavelets.WaveletMethod.Dwt);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_haar_transform_tensor.png", Wavelets.WaveletMethod.HaarTransformTensor);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_haar.png", Wavelets.WaveletMethod.Haar);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_haar_decomposition_tensor.png", Wavelets.WaveletMethod.HaarWaveletDecompositionTensor);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_non_standard_haar_decomposition.png", Wavelets.WaveletMethod.NonStandardHaarWaveletDecomposition);
-			Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
-			                                       @"lena_gray_jwave_tensor.png", Wavelets.WaveletMethod.JWaveTensor); // tensor
-			
-			
-			Console.In.ReadLine();
-			return;
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+				                                       @"lena_gray_dwt.png", Wavelets.WaveletMethod.Dwt);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+				                                       @"lena_gray_haar_transform_tensor.png", Wavelets.WaveletMethod.HaarTransformTensor);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+				                                       @"lena_gray_haar.png", Wavelets.WaveletMethod.Haar);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+				                                       @"lena_gray_haar_decomposition_tensor.png", Wavelets.WaveletMethod.HaarWaveletDecompositionTensor);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+				                                       @"lena_gray_haar_decomposition.png", Wavelets.WaveletMethod.HaarWaveletDecomposition);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+				                                       @"lena_gray_non_standard_haar_decomposition.png", Wavelets.WaveletMethod.NonStandardHaarWaveletDecomposition);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+				                                       @"lena_gray_jwave_tensor.png", Wavelets.WaveletMethod.JWaveTensor); // tensor
+								
+				Console.In.ReadLine();
+				return;
 				 */
 				
 				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;

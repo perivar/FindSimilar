@@ -268,7 +268,16 @@ namespace Comirva.Audio
 			}
 			
 			// 6. Wavelet Transform
-			Matrix wavelet = WaveletUtils.HaarWaveletTransform(mel.MatrixData);
+			Matrix resizedMatrix;
+			if (!mel.IsSymmetric() || !MathUtils.IsPowerOfTwo(mel.Rows)) {
+				// make sure the matrix is square before transforming (by zero padding)
+				int size = (mel.Rows > mel.Columns ? mel.Rows : mel.Columns);
+				int sizePow2 = MathUtils.NextPowerOfTwo(size);
+				resizedMatrix = mel.Resize(sizePow2, sizePow2);
+			} else {
+				resizedMatrix = mel;
+			}
+			Matrix wavelet = WaveletUtils.HaarWaveletTransform(resizedMatrix.MatrixData);
 			
 			Mirage.Dbg.WriteLine("Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return wavelet;
@@ -280,6 +289,9 @@ namespace Comirva.Audio
 			
 			// 6. Perform the Inverse Wavelet Transform
 			Matrix mel = WaveletUtils.InverseHaarWaveletTransform(wavelet.MatrixData);
+			
+			// Resize (remove padding)
+			mel = mel.Resize(freqsIndex.Length - 2, wavelet.Columns);
 			
 			// 5. Take Inverse Logarithm
 			// Divide with first triangle height in order to scale properly

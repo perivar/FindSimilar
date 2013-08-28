@@ -1476,8 +1476,23 @@ namespace Comirva.Audio.Util.Maths
 		/// </summary>
 		/// <returns>True iff matrix is symmetric.</returns>
 		public bool IsSymmetric() {
-			for (int i = 1; i <= this.rowCount; i++) for (int j = 1; j <= this.columnCount; j++) if (this.matrixData[i][j] != this.matrixData[j][i]) return false;
+			for (int i = 0; i < this.rowCount; i++) for (int j = 0; j < this.columnCount; j++) if (this.matrixData[i][j] != this.matrixData[j][i]) return false;
 			return true;
+		}
+		#endregion
+		
+		#region Resize
+		public Matrix Resize(int newRows, int newColumns) {
+			
+			Matrix resizedMatrix = new Matrix(newRows, newColumns);
+			int rowCount = Math.Min(this.Rows, newRows);
+			int columnCount = Math.Min(this.Columns, newColumns);
+			for (int i = 0; i < rowCount; i++) {
+				for (int j = 0; j < columnCount; j++) {
+					resizedMatrix.MatrixData[i][j] = this.MatrixData[i][j];
+				}
+			}
+			return resizedMatrix;
 		}
 		#endregion
 		
