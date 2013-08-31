@@ -2045,8 +2045,9 @@ namespace Comirva.Audio.Util.Maths
 			}
 
 			Bitmap bm = new Bitmap( 1, 1 );
-			using ( Graphics g = Graphics.FromImage( bm ) )
+			using ( Graphics g = Graphics.FromImage( bm ) ) {
 				myPane.AxisChange( g );
+			}
 			
 			myPane.GetImage().Save(fileName, ImageFormat.Png);
 		}
@@ -2168,7 +2169,7 @@ namespace Comirva.Audio.Util.Maths
 					
 					if (flipYscale) {
 						// draw a small square
-						graphics.FillRectangle(brush, column*blockSizeX, (rowCount-row)*blockSizeY, blockSizeX, blockSizeY);
+						graphics.FillRectangle(brush, column*blockSizeX, (rowCount-row-1)*blockSizeY, blockSizeX, blockSizeY);
 					} else {
 						// draw a small square
 						graphics.FillRectangle(brush, column*blockSizeX, row*blockSizeY, blockSizeX, blockSizeY);
@@ -2232,7 +2233,7 @@ namespace Comirva.Audio.Util.Maths
 					Brush brush = new SolidBrush(color);
 					
 					// draw a small square
-					graphics.FillRectangle(brush, column*blockSizeX, (logBins-logBin)*blockSizeY, blockSizeX, blockSizeY);
+					graphics.FillRectangle(brush, column*blockSizeX, (logBins-logBin-1)*blockSizeY, blockSizeX, blockSizeY);
 				}
 			}
 

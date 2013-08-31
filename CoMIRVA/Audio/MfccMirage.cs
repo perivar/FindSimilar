@@ -243,7 +243,7 @@ namespace Comirva.Audio
 			// m=Rows: 1024, Columns: 165 (freq, time slice)
 			//Matrix m = filterWeights.Transpose() * mel;
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
-			InverseMelScale(mel, m);
+			InverseMelScaling(mel, m);
 			
 			Mirage.Dbg.WriteLine("imfcc (MfccMirage-MirageWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
@@ -316,7 +316,7 @@ namespace Comirva.Audio
 			// m=Rows: 1024, Columns: 165 (freq, time slice)
 			//Matrix m = filterWeights.Transpose() * mel;
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
-			InverseMelScale(mel, m);
+			InverseMelScaling(mel, m);
 
 			Mirage.Dbg.WriteLine("Inverse Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
@@ -350,7 +350,7 @@ namespace Comirva.Audio
 			// Compress
 			Matrix waveletCompressed = wavelet.Resize(numberCoefficients, wavelet.Columns);
 			
-			Mirage.Dbg.WriteLine("Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return waveletCompressed;
 		}
 
@@ -385,9 +385,9 @@ namespace Comirva.Audio
 			// m=Rows: 1024, Columns: 165 (freq, time slice)
 			//Matrix m = filterWeights.Transpose() * mel;
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
-			InverseMelScale(mel, m);
+			InverseMelScaling(mel, m);
 
-			Mirage.Dbg.WriteLine("Inverse Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Inverse Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
 		
@@ -441,7 +441,7 @@ namespace Comirva.Audio
 			// m=Rows: 1024, Columns: 165 (freq, time slice)
 			//Matrix m = filterWeights.Transpose() * mel;
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
-			InverseMelScale(mel, m);
+			InverseMelScaling(mel, m);
 			
 			Mirage.Dbg.WriteLine("InverseMelScaleAndLog Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
@@ -456,7 +456,7 @@ namespace Comirva.Audio
 		/// </summary>
 		/// <param name="mel"></param>
 		/// <param name="m"></param>
-		private void InverseMelScale(Matrix mel, Matrix m) {
+		private void InverseMelScaling(Matrix mel, Matrix m) {
 
 			// for each row, interpolate values to next row according to mel scale
 			for (int j = 0; j < mel.Columns; j++) {
