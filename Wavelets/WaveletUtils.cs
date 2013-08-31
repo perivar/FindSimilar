@@ -23,7 +23,8 @@ namespace Wavelets
 		HaarWaveletDecompositionTensor = 4,
 		HaarWaveletDecomposition = 5,
 		NonStandardHaarWaveletDecomposition = 6,
-		JWaveTensor = 7
+		JWaveTensor = 7,
+		HaarWaveletCompress = 8
 	}
 	
 	/// <summary>
@@ -83,9 +84,9 @@ namespace Wavelets
 			Image img = Image.FromFile(imageInPath);
 			
 			// make sure it's square and power of two
-			int size = (img.Height > img.Width ? img.Height : img.Width);
-			int sizePow2 = MathUtils.NextPowerOfTwo(size);
-			img = ImageUtils.Resize(img, sizePow2, sizePow2, false);
+			//int size = (img.Height > img.Width ? img.Height : img.Width);
+			//int sizePow2 = MathUtils.NextPowerOfTwo(size);
+			//img = ImageUtils.Resize(img, sizePow2, sizePow2, false);
 			
 			Bitmap bmp = new Bitmap(img);
 			double[][] image = new double[bmp.Height][];
@@ -103,10 +104,22 @@ namespace Wavelets
 			}
 			
 			Matrix inputMatrix = new Matrix(image);
-			//normalizedMatrix.WriteCSV("haar-before.csv", ";");
+			//inputMatrix.WriteCSV("haar-before.csv", ";");
 
+			//Wavelets.Compress.WaveletComDec.CompressDecompress2D(image, 3, 0);
+			//inputMatrix.DrawMatrixImage("haar-transform-back.png", -1, -1, false);
+			//return;
+			
 			// Haar Wavelet Transform
-			Matrix haarMatrix = HaarWaveletTransform(inputMatrix.MatrixData);
+			//Matrix haarMatrix = HaarWaveletTransform(inputMatrix.MatrixData);
+			
+			//Wavelets.Compress.HaarWaveletTransform.HaarTransform2D(image, inputMatrix.Rows, inputMatrix.Columns);
+			int lastHeight = 0;
+			int lastWidth = 0;
+			int levels = 3;
+			//Wavelets.Compress.WaveletCompress.Compress2D(image, levels, 500, out lastHeight, out lastWidth);
+			Wavelets.Compress.WaveletCompress.HaarTransform2D(image, levels, out lastHeight, out lastWidth);
+			Matrix haarMatrix = inputMatrix.Copy();
 			
 			//Wavelets.Dwt dwt = new Wavelets.Dwt(2);
 			//Matrix haarMatrix = dwt.Transform(normalizedMatrix);
@@ -118,11 +131,18 @@ namespace Wavelets
 			double[][] dwtArray = t.forward(normalizedMatrix.MatrixData);
 			Matrix haarMatrix = new Matrix(dwtArray);
 			 */
+			//int oldRows = haarMatrix.Rows;
+			//int oldColumns = haarMatrix.Columns;
+			//haarMatrix = haarMatrix.Resize(20, oldColumns);
+			haarMatrix.WriteCSV("haar.csv", ";");
 			
-			//haarMatrix.WriteCSV("haar.csv", ";");
-
 			// Inverse 2D Haar Wavelet Transform
-			Matrix haarMatrixInverse = InverseHaarWaveletTransform(haarMatrix.MatrixData);
+			//Matrix haarMatrixInverse = InverseHaarWaveletTransform(haarMatrix.MatrixData);
+			
+			Matrix haarMatrixInverse = haarMatrix.Copy();
+			//haarMatrixInverse = haarMatrixInverse.Resize(oldRows, oldColumns);
+			//Wavelets.Compress.HaarWaveletTransform.InverseHaarTransform2D(haarMatrixInverse.MatrixData, haarMatrixInverse.Rows, haarMatrixInverse.Columns);
+			Wavelets.Compress.WaveletDecompress.Decompress2D(haarMatrixInverse.MatrixData, levels, lastHeight, lastWidth);
 			
 			//Matrix haarMatrixInverse = dwt.TransformBack(haarMatrix);
 			
@@ -277,6 +297,12 @@ namespace Wavelets
 					double[][] dwtArray = t.forward(image);
 					dwtMatrix = new Matrix(dwtArray);
 					break;
+				case WaveletMethod.HaarWaveletCompress:
+					int lastHeight = 0;
+					int lastWidth = 0;
+					Compress.WaveletCompress.HaarTransform2D(image, 10000, out lastHeight, out lastWidth);
+					dwtMatrix = new Matrix(image);
+					break;
 				default:
 					break;
 			}
@@ -371,6 +397,21 @@ namespace Wavelets
 			Haar.Haar2d(mat, 4, 4);
 
 			Matrix result = new Matrix(mat);
+			result.Print();
+		}
+		
+		public static void TestHaarWaveletTransform2D() {
+			
+			Console.Write("\n\nThe Haar Wavelet Transform 2D: ");
+			Console.Write("\n");
+			
+			double[][] mat = Get2DTestData();
+			Wavelets.Compress.HaarWaveletTransform.HaarTransform2D(mat, 4, 4);
+
+			Matrix result = new Matrix(mat);
+			result.Print();
+			
+			Wavelets.Compress.HaarWaveletTransform.InverseHaarTransform2D(mat, 4, 4);
 			result.Print();
 		}
 		

@@ -52,7 +52,7 @@ namespace Mirage
 	public class Analyzer
 	{
 		public const bool DEBUG_INFO_VERBOSE = true;
-		public const bool DEBUG_OUTPUT_TEXT = false;
+		public const bool DEBUG_OUTPUT_TEXT = true;
 		public const bool DEFAULT_DEBUG_INFO = true;
 		
 		public enum AnalysisMethod {
@@ -202,7 +202,7 @@ namespace Mirage
 			}
 			
 			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE && false) {
+			if (Analyzer.DEBUG_INFO_VERBOSE & false) {
 				
 				#region Inverse STFT
 				// Test inverse stft
@@ -222,7 +222,17 @@ namespace Mirage
 				float[] audiodata_inverse_float = MathUtils.DoubleToFloat(audiodata_inverse_stft);
 				bass.SaveFile(audiodata_inverse_float, name + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
 				#endregion
+			}
+			#endif
+			
+			// 4. Mel Scale Filterbank
+			// Mel-frequency is proportional to the logarithm of the linear frequency,
+			// reflecting similar effects in the human's subjective aural perception)
+			// 5. Take Logarithm
+			// 6. DCT (Discrete Cosine Transform)
 
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE & false) {
 				#region Mel Scale Log and Inverse
 				// Test mel scale log
 				Comirva.Audio.Util.Maths.Matrix mellog = mfccMirage.ApplyMelScaleAndLog(ref stftdata);
@@ -249,23 +259,57 @@ namespace Mirage
 				#endregion In
 			}
 			#endif
-			
-			// Wavelet Transform
-			Comirva.Audio.Util.Maths.Matrix waveletdata = mfccMirage.ApplyWavelet(ref stftdata);
+
+			// It seems the Mirage way of applying the DCT is slightly faster than the
+			// Comirva way due to less loops
+			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
+			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				
-				#region Inverse Wavelet
-				if (DEBUG_OUTPUT_TEXT) waveletdata.WriteAscii(name + "_waveletdata.ascii");
-				waveletdata.DrawMatrixImageLogValues(name + "_wavelet_specgram.png", true);
+				if (DEBUG_OUTPUT_TEXT) mfccdata.WriteAscii(name + "_mfccdata.ascii");
+				//mfccdata.DrawMatrixGraph(name + "_mfccdata_graph.png", true);
+				mfccdata.DrawMatrixImageLogValues(name + "_mfccdata.png", true);
+			}
+			#endif
 
-				// perform thresholding (compress)
-				double[][] compressed = Thresholding.perform_strict_thresholding(waveletdata.MatrixData, MFCC_COEFFICIENTS);
-				Comirva.Audio.Util.Maths.Matrix waveletdataCompressed = new Comirva.Audio.Util.Maths.Matrix(compressed);
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				#region Inverse MFCC
+				// try to do an inverse mfcc
+				Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMfcc(ref mfccdata);
 				
+				if (DEBUG_OUTPUT_TEXT) stftdata_inverse_mfcc.WriteCSV(name + "_stftdata_inverse_mfcc.csv", ";");
+				stftdata_inverse_mfcc.DrawMatrixImageLogValues(name + "_specgramlog_inverse_mfcc.png", true);
+				
+				double[] audiodata_inverse_mfcc = stftMirage.InverseStft(stftdata_inverse_mfcc);
+				MathUtils.Normalize(ref audiodata_inverse_mfcc);
+
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.txt");
+				DrawGraph(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.png");
+				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), name + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
+				#endregion
+			}
+			#endif
+			
+			// Wavelet Transform
+			int lastHeight = 0;
+			int lastWidth = 0;
+			Comirva.Audio.Util.Maths.Matrix waveletdata = mfccMirage.ApplyWaveletCompression(ref stftdata, out lastHeight, out lastWidth);
+
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (DEBUG_OUTPUT_TEXT) waveletdata.WriteAscii(name + "_waveletdata.ascii");
+				//waveletdata.DrawMatrixGraph(name + "_waveletdata_graph.png", true);
+				waveletdata.DrawMatrixImageLogValues(name + "_waveletdata.png", true);
+			}
+			#endif
+
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				#region Inverse Wavelet
 				// try to do an inverse wavelet transform
-				Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseWavelet(ref waveletdataCompressed);
+				Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseWaveletCompression(ref waveletdata, lastHeight, lastWidth);
 
 				if (DEBUG_OUTPUT_TEXT) stftdata_inverse_wavelet.WriteCSV(name + "_specgramlog_inverse_wavelet.csv", ";");
 				stftdata_inverse_wavelet.DrawMatrixImageLogValues(name + "_specgramlog_inverse_wavelet.png", true);
@@ -276,40 +320,6 @@ namespace Mirage
 				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_wavelet, name + "_audiodata_inverse_wavelet.txt");
 				DrawGraph(audiodata_inverse_wavelet, name + "_audiodata_inverse_wavelet.png");
 				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_wavelet), name + "_inverse_wavelet.wav", Analyzer.SAMPLING_RATE);
-				#endregion
-			}
-			#endif
-			
-			// 4. Mel Scale Filterbank
-			// Mel-frequency is proportional to the logarithm of the linear frequency,
-			// reflecting similar effects in the human's subjective aural perception)
-			
-			// 5. Take Logarithm
-			// 6. DCT (Discrete Cosine Transform)
-			// It seems the Mirage way of applying the DCT is slightly faster than the
-			// Comirva way due to less loops
-			Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.Apply(ref stftdata);
-			//Comirva.Audio.Util.Maths.Matrix mfccdata = mfccMirage.ApplyComirvaWay(ref stftdata);
-
-			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				if (DEBUG_OUTPUT_TEXT) mfccdata.WriteAscii(name + "_mfccdata.ascii");
-				mfccdata.DrawMatrixGraph(name + "_mfccdata.png", true);
-			}
-			#endif
-
-			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE & false) {
-				#region Inverse MFCC
-				// try to do an inverse mfcc
-				// see http://stackoverflow.com/questions/1230906/reverse-spectrogram-a-la-aphex-twin-in-matlab
-				Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMfcc(ref mfccdata);
-				stftdata_inverse_mfcc.DrawMatrixImageLogY(name + "_specgramlog_inverse_mfcc.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
-				double[] audiodata_inverse_mfcc = stftMirage.InverseStft(stftdata_inverse_mfcc);
-
-				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.txt");
-				DrawGraph(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.png");
-				bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), name + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
 				#endregion
 			}
 			#endif

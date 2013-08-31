@@ -38,7 +38,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\Music" -resetdb -skipduration=10</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects" -resetdb -skipduration=10</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -250,6 +250,12 @@
     <Compile Include="Wavelets\NonStandardHaarWaveletDecomposition.cs" />
     <Compile Include="Wavelets\StandardHaarWaveletDecomposition.cs" />
     <Compile Include="Wavelets\Thresholding.cs" />
+    <Compile Include="Wavelets\wavelet-compress\HaarWaveletTransform.cs" />
+    <Compile Include="Wavelets\wavelet-compress\Quantize.cs" />
+    <Compile Include="Wavelets\wavelet-compress\VerificationResult.cs" />
+    <Compile Include="Wavelets\wavelet-compress\WaveletComDec.cs" />
+    <Compile Include="Wavelets\wavelet-compress\WaveletCompress.cs" />
+    <Compile Include="Wavelets\wavelet-compress\WaveletDecompress.cs" />
     <Compile Include="Wavelets\WaveletUtils.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -291,6 +297,7 @@
     <Folder Include="Wavelets\jwave\handlers" />
     <Folder Include="Wavelets\jwave\handlers\wavelets" />
     <Folder Include="Wavelets\jwave\types" />
+    <Folder Include="Wavelets\wavelet-compress" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NativeLibraries\faad\faad.exe">

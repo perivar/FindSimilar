@@ -638,57 +638,8 @@ namespace Mirage
 				Console.In.ReadLine();
 				return;
 			}
-			#endregion
 			
-			private static void StartGUI() {
-				Application.EnableVisualStyles();
-				Application.SetCompatibleTextRenderingDefault(false);
-				Application.Run(new FindSimilarClientForm());
-			}
-			
-			[STAThread]
-			public static void Main(string[] args) {
-
-				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
-				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg");
-				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Documents\My Projects\FindSimilar\bin\Debug\sine-test_specgram.png");
-				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\Public\Pictures\Sample Pictures\Lighthouse.jpg");
-				
-				// Generate test audio file section
-				//AudioUtilsNAudio.GenerateAudioTestFile(44100, 5, "sine-test.wav");
-
-				/*
-				int sampleRate = 44100;
-				int secondsToSample = 3;
-				int totalNumberOfSamples = sampleRate * secondsToSample;
-				float[] audioData = new float[totalNumberOfSamples];
-				BasicOscillatorProvider basic = new BasicOscillatorProvider();
-				basic.Amplitude = 0.8f;
-				basic.SetFrequency(11025);
-				basic.SetOscWaveshape(BasicOscillatorProvider.WAVESHAPE.SINE);
-				basic.Read(audioData, 0, totalNumberOfSamples);
-				AudioUtilsNAudio.WriteIEEE32WaveFileMono("sine-hi.wav", sampleRate, audioData);
-				 */
-				
-				/* 
- 			// Wavelet Tests
-			Wavelets.WaveletUtils.TestJWave();
-			Wavelets.WaveletUtils.TestHaar2d();
-			Wavelets.WaveletUtils.TestHaarWaveletDecomposition();
-			Wavelets.WaveletUtils.TestDwt();
-			Wavelets.WaveletUtils.TestHaarTransform();
-			//Wavelets.Thresholding.RunTests();
-			
-			//Imghash.Program.HashTester(args);
-			//DctMethods.test2(true);
-			//DctComirva.test();
-			//TestComirvaMatrix();
-				 */
-				
-				//Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
-				//Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
-				
-				/*
+			private static void TestWavelets() {
 				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
 				                                       @"lena_color_dwt.png", Wavelets.WaveletMethod.Dwt);
 				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
@@ -703,6 +654,8 @@ namespace Mirage
 				                                       @"lena_color_non_standard_haar_decomposition.png", Wavelets.WaveletMethod.NonStandardHaarWaveletDecomposition);
 				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
 				                                       @"lena_color_jwave_tensor.png", Wavelets.WaveletMethod.JWaveTensor);
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg",
+				                                       @"lena_color_haar_compress.png", Wavelets.WaveletMethod.HaarWaveletCompress);
 
 				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
 				                                       @"lena_gray_dwt.png", Wavelets.WaveletMethod.Dwt);
@@ -718,10 +671,61 @@ namespace Mirage
 				                                       @"lena_gray_non_standard_haar_decomposition.png", Wavelets.WaveletMethod.NonStandardHaarWaveletDecomposition);
 				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
 				                                       @"lena_gray_jwave_tensor.png", Wavelets.WaveletMethod.JWaveTensor); // tensor
-								
+				Wavelets.WaveletUtils.SaveWaveletImage(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg",
+				                                       @"lena_gray_haar_compress.png", Wavelets.WaveletMethod.HaarWaveletCompress);
+				
+
+				// Wavelet Tests
+				Wavelets.WaveletUtils.TestHaarWaveletTransform2D();
+				Wavelets.WaveletUtils.TestJWave();
+				Wavelets.WaveletUtils.TestHaar2d();
+				Wavelets.WaveletUtils.TestHaarWaveletDecomposition();
+				Wavelets.WaveletUtils.TestDwt();
+				Wavelets.WaveletUtils.TestHaarTransform();
+				Wavelets.Thresholding.RunTests();
+				
+				Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
+				Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\perivar.nerseth\Pictures\lena_gray.jpg");
+				Wavelets.WaveletUtils.TestHaarInputOutput(@"C:\Users\Public\Pictures\Sample Pictures\Lighthouse.jpg");
+
+				Wavelets.WaveletUtils.TestDenoise(@"C:\Users\perivar.nerseth\Pictures\lena_color.jpg");
+				
 				Console.In.ReadLine();
 				return;
-				 */
+			}
+
+			private static void GenerateTestAudioFiles() {
+				
+				// Generate test audio file section
+				AudioUtilsNAudio.GenerateAudioTestFile(44100, 5, "sine-test.wav");
+
+				int sampleRate = 44100;
+				int secondsToSample = 3;
+				int totalNumberOfSamples = sampleRate * secondsToSample;
+				float[] audioData = new float[totalNumberOfSamples];
+				BasicOscillatorProvider basic = new BasicOscillatorProvider();
+				basic.Amplitude = 0.8f;
+				basic.SetFrequency(11025);
+				basic.SetOscWaveshape(BasicOscillatorProvider.WAVESHAPE.SINE);
+				basic.Read(audioData, 0, totalNumberOfSamples);
+				AudioUtilsNAudio.WriteIEEE32WaveFileMono("sine-hi.wav", sampleRate, audioData);
+			}
+			#endregion
+			
+			private static void StartGUI() {
+				Application.EnableVisualStyles();
+				Application.SetCompatibleTextRenderingDefault(false);
+				Application.Run(new FindSimilarClientForm());
+			}
+			
+			[STAThread]
+			public static void Main(string[] args) {
+
+				//TestWavelets();
+				//Imghash.Program.HashTester(args);
+				//DctMethods.test2(true);
+				//DctComirva.test();
+				//TestComirvaMatrix();
 				
 				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;

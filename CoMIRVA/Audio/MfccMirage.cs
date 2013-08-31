@@ -25,11 +25,10 @@ namespace Comirva.Audio
 		public Matrix filterWeights;
 		public Matrix dct;
 		
-		private double[] freq; // store linear scale
-		private double[] freqs; // store the mel scale filter frequencies
-		private int[] freqsIndex; // store the mel scale indexes
-		private double[] triangleh; // store the mel filter triangle heights
-		private double[] fftFreq; // store the whole fft frequency range (linear)
+		private int numberCoefficients; 			// number of MFCC COEFFICIENTS. E.g. 20
+		private int[] melScaleFreqsIndex; 			// store the mel scale indexes
+		private double[] melScaleTriangleHeights; 	// store the mel filter triangle heights
+		private int numberWaveletTransforms = 2; 	// number of wavelet transform iterations, 3?
 		
 		/// <summary>
 		/// Create a Mfcc object
@@ -42,22 +41,21 @@ namespace Comirva.Audio
 		/// <param name="numberCoefficients">number of MFCC COEFFICIENTS. E.g. 20</param>
 		public MfccMirage(int winsize, int srate, int numberFilters, int numberCoefficients)
 		{
+			this.numberCoefficients = numberCoefficients;
+			
 			double[] mel = new double[srate/2 - 19];
-			//double[] freq = new double[srate/2 - 19];
-			freq = new double[srate/2 - 19];
+			double[] freq = new double[srate/2 - 19];
 			int startFreq = 20;
 			
 			// Mel Scale from StartFreq to SamplingRate/2, step every 1Hz
 			for (int f = startFreq; f <= srate/2; f++) {
-				//mel[f-startFreq] = Math.Log(1.0 + f/700.0) * 1127.01048;
 				mel[f-startFreq] = LinearToMel(f);
 				freq[f-startFreq] = f;
 			}
 			
 			// Prepare filters
-			//double[] freqs = new double[numberFilters + 2];
-			freqs = new double[numberFilters + 2];
-			freqsIndex = new int[numberFilters + 2];
+			double[] freqs = new double[numberFilters + 2];
+			melScaleFreqsIndex = new int[numberFilters + 2];
 			
 			for (int f = 0; f < freqs.Length; f++) {
 				double melIndex = 1.0 + ((mel[mel.Length - 1] - 1.0) /
@@ -73,18 +71,16 @@ namespace Comirva.Audio
 					}
 				}
 				
-				freqsIndex[f] = MathUtils.FreqToIndex(freqs[f], srate, winsize);
+				melScaleFreqsIndex[f] = MathUtils.FreqToIndex(freqs[f], srate, winsize);
 			}
 			
 			// triangle heights
-			//double[] triangleh = new double[numberFilters];
-			triangleh = new double[numberFilters];
-			for (int j = 0; j < triangleh.Length; j++) {
-				triangleh[j] = 2.0/(freqs[j+2] - freqs[j]);
+			melScaleTriangleHeights = new double[numberFilters];
+			for (int j = 0; j < melScaleTriangleHeights.Length; j++) {
+				melScaleTriangleHeights[j] = 2.0/(freqs[j+2] - freqs[j]);
 			}
 			
-			//double[] fftFreq = new double[winsize/2 + 1];
-			fftFreq = new double[winsize/2 + 1];
+			double[] fftFreq = new double[winsize/2 + 1];
 			for (int j = 0; j < fftFreq.Length; j++) {
 				fftFreq[j] = ((srate/2)/(fftFreq.Length -1.0)) * j;
 			}
@@ -105,13 +101,13 @@ namespace Comirva.Audio
 				for (int k = 0; k < fftFreq.Length; k++) {
 					if ((fftFreq[k] > freqs[j]) && (fftFreq[k] <= freqs[j+1])) {
 						
-						filterWeights.MatrixData[j][k] = (float)(triangleh[j] *
+						filterWeights.MatrixData[j][k] = (float)(melScaleTriangleHeights[j] *
 						                                         ((fftFreq[k]-freqs[j])/(freqs[j+1]-freqs[j])));
 					}
 					if ((fftFreq[k] > freqs[j+1]) &&
 					    (fftFreq[k] < freqs[j+2])) {
 						
-						filterWeights.MatrixData[j][k] += (float)(triangleh[j] *
+						filterWeights.MatrixData[j][k] += (float)(melScaleTriangleHeights[j] *
 						                                          ((freqs[j+2]-fftFreq[k])/(freqs[j+2]-freqs[j+1])));
 					}
 				}
@@ -119,7 +115,7 @@ namespace Comirva.Audio
 			#if DEBUG
 			if (Mirage.Analyzer.DEBUG_INFO_VERBOSE) {
 				if (Mirage.Analyzer.DEBUG_OUTPUT_TEXT) filterWeights.WriteAscii("melfilters-mirage-orig.ascii");
-				filterWeights.DrawMatrixGraph("melfilters-mirage-orig.png");
+				//filterWeights.DrawMatrixGraph("melfilters-mirage-orig.png");
 			}
 			#endif
 			
@@ -130,7 +126,7 @@ namespace Comirva.Audio
 			#if DEBUG
 			if (Mirage.Analyzer.DEBUG_INFO_VERBOSE) {
 				if (Mirage.Analyzer.DEBUG_OUTPUT_TEXT) dct.WriteAscii("dct-mirage-orig.ascii");
-				dct.DrawMatrixGraph("dct-mirage-orig.png");
+				//dct.DrawMatrixGraph("dct-mirage-orig.png");
 			}
 			#endif
 		}
@@ -180,7 +176,7 @@ namespace Comirva.Audio
 			// 5. Take Logarithm
 			for (int i = 0; i < mel.Rows; i++) {
 				for (int j = 0; j < mel.Columns; j++) {
-					mel.MatrixData[i][j] = (mel.MatrixData[i][j] < 1.0 ? 0 : (10.0 * Math.Log10(mel.MatrixData[i][j])));
+					mel.MatrixData[i][j] = (mel.MatrixData[i][j] < 1.0 ? 0 : (20.0 * Math.Log10(mel.MatrixData[i][j])));
 				}
 			}
 			
@@ -208,7 +204,7 @@ namespace Comirva.Audio
 
 			// 5. Take Logarithm
 			// to db
-			double log10 = 10 * (1 / Math.Log(10)); // log for base 10 and scale by factor 10
+			double log10 = 20 * (1 / Math.Log(10)); // log for base 10 and scale by factor 10
 			m.ThrunkAtLowerBoundary(1);
 			m.LogEquals();
 			m *= log10;
@@ -236,21 +232,28 @@ namespace Comirva.Audio
 			// 5. Take Inverse Logarithm
 			for (int i = 0; i < mel.Rows; i++) {
 				for (int j = 0; j < mel.Columns; j++) {
-					mel.MatrixData[i][j] = Math.Pow(10, mel.MatrixData[i][j] / 10);
+					mel.MatrixData[i][j] = Math.Pow(10, (mel.MatrixData[i][j] / 20)) / melScaleTriangleHeights[0];
 				}
 			}
 			
-			// 4. Mel Scale Filterbank
-			// Mel-frequency is proportional to the logarithm of the linear frequency,
-			// reflecting similar effects in the human's subjective aural perception)
-			// Matrix mel = new Matrix(filterWeights.Rows, m.Columns);
-			// mel = filterWeights * m;
-			Matrix m = filterWeights.Transpose() * mel;
-
+			// 4. Inverse Mel Scale using interpolation
+			// i.e. from e.g.
+			// mel=Rows: 40, Columns: 165 (average freq, time slice)
+			// to
+			// m=Rows: 1024, Columns: 165 (freq, time slice)
+			//Matrix m = filterWeights.Transpose() * mel;
+			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
+			InverseMelScale(mel, m);
+			
 			Mirage.Dbg.WriteLine("imfcc (MfccMirage-MirageWay) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
 		
+		/// <summary>
+		/// Mel Scale Haar Wavelet Transform
+		/// </summary>
+		/// <param name="m">matrix (stftdata)</param>
+		/// <returns>matrix mel scaled and wavelet'ed</returns>
 		public Matrix ApplyWavelet(ref Matrix m) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
@@ -268,21 +271,26 @@ namespace Comirva.Audio
 			}
 			
 			// 6. Wavelet Transform
+			// make sure the matrix is square before transforming (by zero padding)
 			Matrix resizedMatrix;
 			if (!mel.IsSymmetric() || !MathUtils.IsPowerOfTwo(mel.Rows)) {
-				// make sure the matrix is square before transforming (by zero padding)
 				int size = (mel.Rows > mel.Columns ? mel.Rows : mel.Columns);
 				int sizePow2 = MathUtils.NextPowerOfTwo(size);
 				resizedMatrix = mel.Resize(sizePow2, sizePow2);
 			} else {
 				resizedMatrix = mel;
 			}
-			Matrix wavelet = WaveletUtils.HaarWaveletTransform(resizedMatrix.MatrixData);
+			Matrix wavelet = WaveletUtils.HaarWaveletTransform(resizedMatrix.MatrixData, true);
 			
 			Mirage.Dbg.WriteLine("Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return wavelet;
 		}
 		
+		/// <summary>
+		/// Perform an inverse haar wavelet mel scaled transform. E.g. perform an ihaar2d and inverse Mel Filterbands and return stftdata
+		/// </summary>
+		/// <param name="wavelet">wavelet matrix</param>
+		/// <returns>matrix inverse wavelet'ed and mel removed (e.g. stftdata)</returns>
 		public Matrix InverseWavelet(ref Matrix wavelet) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
@@ -291,13 +299,13 @@ namespace Comirva.Audio
 			Matrix mel = WaveletUtils.InverseHaarWaveletTransform(wavelet.MatrixData);
 			
 			// Resize (remove padding)
-			mel = mel.Resize(freqsIndex.Length - 2, wavelet.Columns);
+			mel = mel.Resize(melScaleFreqsIndex.Length - 2, wavelet.Columns);
 			
 			// 5. Take Inverse Logarithm
 			// Divide with first triangle height in order to scale properly
 			for (int i = 0; i < mel.Rows; i++) {
 				for (int j = 0; j < mel.Columns; j++) {
-					mel.MatrixData[i][j] = Math.Pow(10, (mel.MatrixData[i][j] / 20)) / triangleh[0];
+					mel.MatrixData[i][j] = Math.Pow(10, (mel.MatrixData[i][j] / 20)) / melScaleTriangleHeights[0];
 				}
 			}
 			
@@ -306,41 +314,88 @@ namespace Comirva.Audio
 			// mel=Rows: 40, Columns: 165 (average freq, time slice)
 			// to
 			// m=Rows: 1024, Columns: 165 (freq, time slice)
-			
 			//Matrix m = filterWeights.Transpose() * mel;
-			
-			// Inverse Mel Scale using interpolation
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
+			InverseMelScale(mel, m);
+
+			Mirage.Dbg.WriteLine("Inverse Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return m;
+		}
+
+		/// <summary>
+		/// Mel Scale Haar Wavelet Transform and Compress
+		/// </summary>
+		/// <param name="m">matrix (stftdata)</param>
+		/// <returns>matrix mel scaled and wavelet'ed</returns>
+		public Matrix ApplyWaveletCompression(ref Matrix m, out int lastHeight, out int lastWidth) {
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
 			
-			// for each row, interpolate values to next row according to mel scale
-			for (int j = 0; j < mel.Columns; j++) {
-				for (int i = 0; i < mel.Rows-1; i++) {
-					double startValue = mel.MatrixData[i][j];
-					double endValue = mel.MatrixData[i+1][j];
-					
-					// what indexes in resulting matrix does this row cover?
-					//Console.Out.WriteLine("Mel Row index {0} corresponds to Linear Row index {1} - {2} [{3:0.00} - {4:0.00}]", i, freqsIndex[i+1], freqsIndex[i+2]-1, startValue, endValue);
-
-					// add interpolated values
-					AddInterpolatedValues(m, freqsIndex[i+1], freqsIndex[i+2], startValue, endValue, j);
+			// 4. Mel Scale Filterbank
+			// Mel-frequency is proportional to the logarithm of the linear frequency,
+			// reflecting similar effects in the human's subjective aural perception)
+			Matrix mel = filterWeights * m;
+			
+			// 5. Take Logarithm
+			for (int i = 0; i < mel.Rows; i++) {
+				for (int j = 0; j < mel.Columns; j++) {
+					mel.MatrixData[i][j] = (mel.MatrixData[i][j] < 1.0 ? 0 : (20.0 * Math.Log10(mel.MatrixData[i][j])));
 				}
-
-				// last row
-				int iLast = mel.Rows - 1;
-				double startValueLast = mel.MatrixData[iLast][j];
-				double endValueLast = mel.MatrixData[iLast][j]; // 0.0;
-
-				// what indexes in resulting matrix does this row cover?
-				//Console.Out.WriteLine("Mel Row index {0} corresponds to Linear Row index {1} - {2} [{3:0.00} - {4:0.00}]", iLast, freqsIndex[iLast+1], freqsIndex[iLast+2]-1, startValueLast, endValueLast);
-
-				// add interpolated values
-				AddInterpolatedValues(m, freqsIndex[iLast+1], freqsIndex[iLast+2], startValueLast, endValueLast, j);
 			}
+			
+			// 6. Wavelet Transform
+			Matrix wavelet = mel.Copy();
+			Wavelets.Compress.WaveletCompress.HaarTransform2D(wavelet.MatrixData, numberWaveletTransforms, out lastHeight, out lastWidth);
+			
+			// Compress
+			Matrix waveletCompressed = wavelet.Resize(numberCoefficients, wavelet.Columns);
+			
+			Mirage.Dbg.WriteLine("Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return waveletCompressed;
+		}
+
+		/// <summary>
+		/// Perform an inverse haar wavelet mel scaled transform. E.g. perform an ihaar2d and inverse Mel Filterbands and return stftdata
+		/// </summary>
+		/// <param name="wavelet">wavelet matrix</param>
+		/// <returns>matrix inverse wavelet'ed and mel removed (e.g. stftdata)</returns>
+		public Matrix InverseWaveletCompression(ref Matrix wavelet, int firstHeight, int firstWidth) {
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
+			
+			// Resize
+			wavelet = wavelet.Resize(melScaleFreqsIndex.Length - 2, wavelet.Columns);
+
+			// 6. Perform the Inverse Wavelet Transform
+			Matrix mel = wavelet.Copy();
+			Wavelets.Compress.WaveletDecompress.Decompress2D(mel.MatrixData, numberWaveletTransforms, firstHeight, firstWidth);
+			
+			// 5. Take Inverse Logarithm
+			// Divide with first triangle height in order to scale properly
+			for (int i = 0; i < mel.Rows; i++) {
+				for (int j = 0; j < mel.Columns; j++) {
+					mel.MatrixData[i][j] = Math.Pow(10, (mel.MatrixData[i][j] / 20)) / melScaleTriangleHeights[0];
+				}
+			}
+			
+			// 4. Inverse Mel Scale using interpolation
+			// i.e. from e.g.
+			// mel=Rows: 40, Columns: 165 (average freq, time slice)
+			// to
+			// m=Rows: 1024, Columns: 165 (freq, time slice)
+			//Matrix m = filterWeights.Transpose() * mel;
+			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
+			InverseMelScale(mel, m);
 
 			Mirage.Dbg.WriteLine("Inverse Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
 		
+		/// <summary>
+		/// Mel Scale and Log
+		/// </summary>
+		/// <param name="m">matrix (stftdata)</param>
+		/// <returns>matrix mel scaled</returns>
 		public Matrix ApplyMelScaleAndLog(ref Matrix m) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
@@ -362,6 +417,11 @@ namespace Comirva.Audio
 			return mel;
 		}
 		
+		/// <summary>
+		/// Perform an inverse mel scale and log.
+		/// </summary>
+		/// <param name="wavelet">mel scaled matrix</param>
+		/// <returns>matrix mel removed and un-logged (e.g. stftdata)</returns>
 		public Matrix InverseMelScaleAndLog(ref Matrix mel) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
@@ -370,7 +430,7 @@ namespace Comirva.Audio
 			// Divide with first triangle height in order to scale properly
 			for (int i = 0; i < mel.Rows; i++) {
 				for (int j = 0; j < mel.Columns; j++) {
-					mel.MatrixData[i][j] = Math.Pow(10, (mel.MatrixData[i][j] / 20)) / triangleh[0];
+					mel.MatrixData[i][j] = Math.Pow(10, (mel.MatrixData[i][j] / 20)) / melScaleTriangleHeights[0];
 				}
 			}
 			
@@ -379,9 +439,25 @@ namespace Comirva.Audio
 			// mel=Rows: 40, Columns: 165 (average freq, time slice)
 			// to
 			// m=Rows: 1024, Columns: 165 (freq, time slice)
-			
+			//Matrix m = filterWeights.Transpose() * mel;
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
+			InverseMelScale(mel, m);
 			
+			Mirage.Dbg.WriteLine("InverseMelScaleAndLog Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return m;
+		}
+		
+		/// <summary>
+		/// Perform an inverse mel scale using interpolation
+		/// i.e. from e.g.
+		/// mel=Rows: 40, Columns: 165 (average freq, time slice)
+		/// to
+		/// m=Rows: 1024, Columns: 165 (freq, time slice)
+		/// </summary>
+		/// <param name="mel"></param>
+		/// <param name="m"></param>
+		private void InverseMelScale(Matrix mel, Matrix m) {
+
 			// for each row, interpolate values to next row according to mel scale
 			for (int j = 0; j < mel.Columns; j++) {
 				for (int i = 0; i < mel.Rows-1; i++) {
@@ -392,23 +468,21 @@ namespace Comirva.Audio
 					//Console.Out.WriteLine("Mel Row index {0} corresponds to Linear Row index {1} - {2} [{3:0.00} - {4:0.00}]", i, freqsIndex[i+1], freqsIndex[i+2]-1, startValue, endValue);
 
 					// add interpolated values
-					AddInterpolatedValues(m, freqsIndex[i+1], freqsIndex[i+2], startValue, endValue, j);
+					AddInterpolatedValues(m, melScaleFreqsIndex[i+1], melScaleFreqsIndex[i+2], startValue, endValue, j);
 				}
 
 				// last row
 				int iLast = mel.Rows - 1;
 				double startValueLast = mel.MatrixData[iLast][j];
-				double endValueLast = mel.MatrixData[iLast][j]; // 0.0;
+				double endValueLast = 0.0; // mel.MatrixData[iLast][j];
 
 				// what indexes in resulting matrix does this row cover?
 				//Console.Out.WriteLine("Mel Row index {0} corresponds to Linear Row index {1} - {2} [{3:0.00} - {4:0.00}]", iLast, freqsIndex[iLast+1], freqsIndex[iLast+2]-1, startValueLast, endValueLast);
 
 				// add interpolated values
-				AddInterpolatedValues(m, freqsIndex[iLast+1], freqsIndex[iLast+2], startValueLast, endValueLast, j);
+				AddInterpolatedValues(m, melScaleFreqsIndex[iLast+1], melScaleFreqsIndex[iLast+2], startValueLast, endValueLast, j);
 			}
-
-			Mirage.Dbg.WriteLine("InverseMelScaleAndLog Execution Time: " + t.Stop().TotalMilliseconds + " ms");
-			return m;
+			
 		}
 		
 		private void AddInterpolatedValues(Matrix m, int startIndex, int endIndex, double startValue, double endValue, int columnIndex) {
