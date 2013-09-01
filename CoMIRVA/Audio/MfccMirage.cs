@@ -85,16 +85,6 @@ namespace Comirva.Audio
 				fftFreq[j] = ((srate/2)/(fftFreq.Length -1.0)) * j;
 			}
 			
-			// write out
-			/*
-			Matrix m_freqs = new Matrix(freqs, freqs.Length);
-			m_freqs.WriteCSV("m_freqs.csv", ";");
-			Matrix m_fftFreq = new Matrix(fftFreq, fftFreq.Length);
-			m_fftFreq.WriteCSV("m_fftFreq.csv", ";");
-			Matrix m_freqsIndex = new Matrix(MathUtils.IntToDouble(freqsIndex), freqsIndex.Length);
-			m_freqsIndex.WriteCSV("m_freqsIndex.csv", ";");
-			 */
-			
 			// Compute the MFCC filter Weights
 			filterWeights = new Matrix(numberFilters, winsize/2);
 			for (int j = 0; j < numberFilters; j++) {

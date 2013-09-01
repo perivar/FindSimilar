@@ -196,6 +196,12 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleRNG.cs" />
+    <Compile Include="Soundfingerprinting\AbsComparator.cs" />
+    <Compile Include="Soundfingerprinting\AudioService.cs" />
+    <Compile Include="Soundfingerprinting\AudioServiceConfiguration.cs" />
+    <Compile Include="Soundfingerprinting\FingerprintDescriptor.cs" />
+    <Compile Include="Soundfingerprinting\IFFTService.cs" />
+    <Compile Include="Soundfingerprinting\WaveletUtils.cs" />
     <Compile Include="SoundPlayer\BassProxy.cs" />
     <Compile Include="SoundPlayer\IAudio.cs" />
     <Compile Include="SoundPlayer\NAudioProxy.cs" />
@@ -286,6 +292,7 @@
     <Folder Include="NativeLibraries\ZedGraph" />
     <Folder Include="NDtw" />
     <Folder Include="NDtw\Preprocessing" />
+    <Folder Include="Soundfingerprinting" />
     <Folder Include="Wavelets" />
     <Folder Include="SoundPlayer" />
     <Folder Include="SpeechRecognitionHMM" />
