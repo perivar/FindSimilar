@@ -721,6 +721,8 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
+				SetSimilarity.MinHash.Test();
+				
 				//TestWavelets();
 				//Imghash.Program.HashTester(args);
 				//DctMethods.test2(true);

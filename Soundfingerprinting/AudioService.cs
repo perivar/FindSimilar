@@ -14,7 +14,7 @@ using Mirage;
 
 namespace Soundfingerprinting.Audio.Services
 {
-	public abstract class AudioService
+	public abstract class AudioService : IAudioService
 	{
 		private readonly IFFTService fftService;
 

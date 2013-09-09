@@ -18,7 +18,7 @@ namespace Soundfingerprinting.Fingerprinting
 	///  Positive Numbers = 10
 	///  Zeros            = 00
 	/// </description>
-	public class FingerprintDescriptor // : IFingerprintDescriptor
+	public class FingerprintDescriptor : IFingerprintDescriptor
 	{
 		private readonly AbsComparator absComparator;
 
