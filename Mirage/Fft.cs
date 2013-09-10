@@ -198,7 +198,7 @@ namespace Mirage
 
 			lomonFFT.RealFFT(ifft, false);
 
-			float[] window = win.GetWindow();
+			double[] window = win.GetWindow();
 
 			// multiply by window w/ overlap-add
 			int N = ifft.Length / 2;
@@ -228,7 +228,7 @@ namespace Mirage
 			double[] complexSignal = FFTUtilsLomont.DoubleToComplexDouble(extendedWindow);
 			lomonFFT.TableFFT(complexSignal, false);
 			
-			float[] window = win.GetWindow();
+			double[] window = win.GetWindow();
 
 			// multiply by window w/ overlap-add
 			int N = complexSignal.Length / 2;

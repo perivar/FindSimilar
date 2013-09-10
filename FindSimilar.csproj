@@ -201,22 +201,30 @@
     <Compile Include="Soundfingerprinting\AbsComparator.cs" />
     <Compile Include="Soundfingerprinting\AudioService.cs" />
     <Compile Include="Soundfingerprinting\AudioServiceConfiguration.cs" />
+    <Compile Include="Soundfingerprinting\DefaultFingerprintingConfiguration.cs" />
     <Compile Include="Soundfingerprinting\FingerprintDescriptor.cs" />
     <Compile Include="Soundfingerprinting\FingerprintService.cs" />
+    <Compile Include="Soundfingerprinting\HaarWaveletDecomposition.cs" />
+    <Compile Include="Soundfingerprinting\HashSignature.cs" />
     <Compile Include="Soundfingerprinting\IAudioService.cs" />
     <Compile Include="Soundfingerprinting\IFFTService.cs" />
     <Compile Include="Soundfingerprinting\IFingerprintDescriptor.cs" />
     <Compile Include="Soundfingerprinting\IFingerprintingConfiguration.cs" />
     <Compile Include="Soundfingerprinting\IMinMutualSelector.cs" />
+    <Compile Include="Soundfingerprinting\IncrementalStaticStride.cs" />
     <Compile Include="Soundfingerprinting\IPermutationGeneratorService.cs" />
     <Compile Include="Soundfingerprinting\IPermutations.cs" />
     <Compile Include="Soundfingerprinting\ISpectrumService.cs" />
     <Compile Include="Soundfingerprinting\IStride.cs" />
     <Compile Include="Soundfingerprinting\IWaveletDecomposition.cs" />
     <Compile Include="Soundfingerprinting\IWaveletService.cs" />
+    <Compile Include="Soundfingerprinting\LocalPermutations.cs" />
     <Compile Include="Soundfingerprinting\MinHash.cs" />
     <Compile Include="Soundfingerprinting\PermutationGeneratorService.cs" />
+    <Compile Include="Soundfingerprinting\Repository.cs" />
     <Compile Include="Soundfingerprinting\SpectrumService.cs" />
+    <Compile Include="Soundfingerprinting\StandardHaarWaveletDecomposition.cs" />
+    <Compile Include="Soundfingerprinting\Track.cs" />
     <Compile Include="Soundfingerprinting\WaveletService.cs" />
     <Compile Include="Soundfingerprinting\WaveletUtils.cs" />
     <Compile Include="Soundfingerprinting\WorkUnitParameterObject.cs" />
@@ -332,7 +340,6 @@
     <Content Include="NativeLibraries\ffmpeg\ffmpeg.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="app.config" />
     <Content Include="Mirage\Resources\dct.filter">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -467,6 +474,10 @@
     </None>
     <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
     <None Include="README.txt" />
+    <Content Include="Soundfingerprinting\perms.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Wavelets\app.config" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FindSimilarClient\FindSimilarClientForm.resx">

@@ -31,23 +31,31 @@ namespace Mirage
 
 		void Apply(ref float[] data, float[] audiodata, int offset);
 		
-		float[] GetWindow();
+		double[] GetWindow();
 	}
 
 
 	public class HammingWindow : IWindowFunction
 	{
 		int winsize;
-		float[] win;
+		double[] win;
 		
-		public float[] GetWindow() {
+		public HammingWindow() {
+		}
+
+		// Initialize and setup the window
+		public HammingWindow(int winsize) {
+			Initialize(winsize);
+		}
+		
+		public double[] GetWindow() {
 			return win;
 		}
 		
 		public void Initialize(int winsize)
 		{
 			this.winsize = winsize;
-			win = new float[winsize];
+			win = new double[winsize];
 
 			for (int i = 0; i < winsize; i++) {
 				win[i] = (float)(0.54 - 0.46 * Math.Cos(2*Math.PI * ((double)i/(double)winsize)));
@@ -57,7 +65,7 @@ namespace Mirage
 		public void Apply(ref float[] data, float[] audiodata, int offset)
 		{
 			for (int i = 0; i < winsize; i++) {
-				data[i] = win[i] * audiodata[i+offset];
+				data[i] = (float) win[i] * audiodata[i+offset];
 			}
 		}
 	}
@@ -65,16 +73,24 @@ namespace Mirage
 	public class HannWindow : IWindowFunction
 	{
 		int winsize;
-		float[] win;
+		double[] win;
 		
-		public float[] GetWindow() {
+		public HannWindow() {
+		}
+
+		// Initialize and setup the window
+		public HannWindow(int winsize) {
+			Initialize(winsize);
+		}
+
+		public double[] GetWindow() {
 			return win;
 		}
 
 		public void Initialize(int winsize)
 		{
 			this.winsize = winsize;
-			win = new float[winsize];
+			win = new double[winsize];
 			
 			for (int i = 0; i < winsize; i++) {
 				win[i] = (float)(0.5 * (1 - Math.Cos(2*Math.PI*(double)i/(winsize-1))));
@@ -84,7 +100,7 @@ namespace Mirage
 		public void Apply(ref float[] data, float[] audiodata, int offset)
 		{
 			for (int i = 0; i < winsize; i++) {
-				data[i] = win[i] * audiodata[i+offset];
+				data[i] = (float) win[i] * audiodata[i+offset];
 			}
 		}
 	}

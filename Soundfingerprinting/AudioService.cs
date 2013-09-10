@@ -9,18 +9,20 @@ using System.Diagnostics;
 using System.Linq;
 
 using Soundfingerprinting.Audio.Models;
-using Soundfingerprinting.Fingerprinting.FFT;
 using Mirage;
+
+using Lomont;
+using FindSimilar.AudioProxies;
 
 namespace Soundfingerprinting.Audio.Services
 {
-	public abstract class AudioService : IAudioService
+	public class AudioService : IAudioService
 	{
-		private readonly IFFTService fftService;
-
-		protected AudioService(IFFTService fftService)
+		private readonly LomontFFT lomont;
+		
+		public AudioService()
 		{
-			this.fftService = fftService;
+			lomont = new Lomont.LomontFFT();
 		}
 
 		// normalize power (volume) of an audio file.
@@ -30,10 +32,15 @@ namespace Soundfingerprinting.Audio.Services
 
 		private const float MaxRms = 3;
 
-		public abstract void Dispose();
-
-		public abstract float[] ReadMonoFromFile(
-			string pathToFile, int sampleRate, int milliSeconds, int startMilliSeconds);
+		public void Dispose()
+		{
+			BassProxy.Instance.Dispose();
+		}
+		
+		public float[] ReadMonoFromFile(
+			string pathToFile, int sampleRate, int milliSeconds, int startMilliSeconds) {
+			return BassProxy.Instance.ReadMonoFromFile(pathToFile, sampleRate, milliSeconds, startMilliSeconds);
+		}
 
 		public float[][] CreateSpectrogram(string pathToFilename, IWindowFunction windowFunction, int sampleRate, int overlap, int wdftSize)
 		{
@@ -44,20 +51,19 @@ namespace Soundfingerprinting.Audio.Services
 
 			int width = (samples.Length - wdftSize) / overlap; /*width of the image*/
 			float[][] frames = new float[width][];
-			float[] complexSignal = new float[2 * wdftSize]; /*even - Re, odd - Img, thats how Exocortex works*/
+			double[] complexSignal = new double[2 * wdftSize]; /*even - Re, odd - Img, thats how Exocortex works*/
 			//double[] window = windowFunction.GetWindow(wdftSize);
-			float[] window = windowFunction.GetWindow();
+			double[] window = windowFunction.GetWindow();
 			for (int i = 0; i < width; i++)
 			{
 				// take 371 ms each 11.6 ms (2048 samples each 64 samples)
 				for (int j = 0; j < wdftSize; j++)
 				{
-					complexSignal[2 * j] = (float)window[j] * samples[(i * overlap) + j];
+					complexSignal[2 * j] = window[j] * samples[(i * overlap) + j];
 					complexSignal[(2 * j) + 1] = 0;
 				}
 
-				//Fourier.FFT(complexSignal, wdftSize, FourierDirection.Forward);
-				//float[] complexSignal = fftService.FFTForward(complexSignal, configuration.WdftSize);
+				lomont.FFT(complexSignal, true);
 
 				float[] band = new float[(wdftSize / 2) + 1];
 				for (int j = 0; j < (wdftSize / 2) + 1; j++)
@@ -95,10 +101,20 @@ namespace Soundfingerprinting.Audio.Services
 			float[][] frames = new float[width][];
 			int[] logFrequenciesIndexes = GenerateLogFrequencies(configuration);
 			//double[] window = windowFunction.GetWindow(configuration.WdftSize);
-			float[] window = windowFunction.GetWindow();
+			double[] window = windowFunction.GetWindow();
 			for (int i = 0; i < width; i++)
 			{
-				float[] complexSignal = fftService.FFTForward(samples, i * configuration.Overlap, configuration.WdftSize, window);
+				double[] complexSignal = new double[2 * configuration.WdftSize]; /*even - Re, odd - Img, thats how Exocortex works*/
+
+				// take 371 ms each 11.6 ms (2048 samples each 64 samples)
+				for (int j = 0; j < configuration.WdftSize; j++)
+				{
+					complexSignal[2 * j] = window[j] * samples[(i * configuration.Overlap) + j];
+					complexSignal[(2 * j) + 1] = 0;
+				}
+				
+				lomont.FFT(complexSignal, true);
+				
 				frames[i] = ExtractLogBins(complexSignal, logFrequenciesIndexes, configuration.LogBins);
 			}
 
@@ -131,7 +147,7 @@ namespace Soundfingerprinting.Audio.Services
 			}
 		}
 
-		private float[] ExtractLogBins(float[] spectrum, int[] logFrequenciesIndex, int logBins)
+		private float[] ExtractLogBins(double[] spectrum, int[] logFrequenciesIndex, int logBins)
 		{
 			int width = spectrum.Length / 2;
 			float[] sumFreq = new float[logBins]; /*32*/
@@ -142,8 +158,8 @@ namespace Soundfingerprinting.Audio.Services
 
 				for (int k = lowBound; k < higherBound; k++)
 				{
-					double re = spectrum[2 * k] / ((float)width / 2);
-					double img = spectrum[(2 * k) + 1] / ((float)width / 2);
+					double re = spectrum[2 * k] / ((double)width / 2);
+					double img = spectrum[(2 * k) + 1] / ((double)width / 2);
 					sumFreq[i] += (float)((re * re) + (img * img));
 				}
 

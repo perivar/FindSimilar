@@ -721,7 +721,53 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
-				SetSimilarity.MinHash.Test();
+				//SetSimilarity.MinHash.Test();
+				
+				Soundfingerprinting.Fingerprinting.Configuration.DefaultFingerprintingConfiguration defaultConfig = new Soundfingerprinting.Fingerprinting.Configuration.DefaultFingerprintingConfiguration();
+
+				string filename = @"C:\Users\Public\Music\Sample Music\Sleep Away.mp3";
+				Soundfingerprinting.Fingerprinting.WorkUnitBuilder.WorkUnitParameterObject workConfig = new Soundfingerprinting.Fingerprinting.WorkUnitBuilder.WorkUnitParameterObject();
+				workConfig.PathToAudioFile = filename;
+				workConfig.StartAtMilliseconds = 0;
+				workConfig.MillisecondsToProcess = 60 * 1000;
+				workConfig.FingerprintingConfiguration = defaultConfig;
+
+				Soundfingerprinting.Audio.Services.IAudioService audioService = new Soundfingerprinting.Audio.Services.AudioService();
+
+				/*
+				Soundfingerprinting.Audio.Models.AudioServiceConfiguration config = new Soundfingerprinting.Audio.Models.AudioServiceConfiguration();
+				config.SampleRate = 44100;
+				config.WdftSize = 2048;
+				config.Overlap = 1024;
+				config.NormalizeSignal = false;
+				config.LogBins = 32;
+				config.LogBase = Math.E;
+				config.MinFrequency = 20;
+				config.MaxFrequency = 22050;
+				float[][] spectrogram = audioService.CreateSpectrogram(filename, new Mirage.HannWindow(config.WdftSize), config.SampleRate, config.Overlap, config.WdftSize);
+				float[][] logSpectrogram = audioService.CreateLogSpectrogram(filename, new Mirage.HannWindow(config.WdftSize), config);
+				 */
+				
+				Soundfingerprinting.Fingerprinting.IFingerprintDescriptor fingerprintDescriptor = new Soundfingerprinting.Fingerprinting.FingerprintDescriptor();
+				
+				Soundfingerprinting.Fingerprinting.FFT.ISpectrumService spectrumService = new Soundfingerprinting.Fingerprinting.FFT.SpectrumService();
+				
+				Soundfingerprinting.Fingerprinting.Wavelets.IWaveletDecomposition waveletDecomposition = new Soundfingerprinting.Fingerprinting.Wavelets.StandardHaarWaveletDecomposition();
+				Soundfingerprinting.Fingerprinting.Wavelets.IWaveletService waveletService = new Soundfingerprinting.Fingerprinting.Wavelets.WaveletService(waveletDecomposition);
+				
+				Soundfingerprinting.Fingerprinting.FingerprintService fingerprintService =
+					new Soundfingerprinting.Fingerprinting.FingerprintService(audioService,
+					                                                          fingerprintDescriptor,
+					                                                          spectrumService,
+					                                                          waveletService);
+				List<bool[]> fingerprints = fingerprintService.CreateFingerprintsFromAudioFile(workConfig);
+				
+				
+				Soundfingerprinting.Hashing.IPermutations permutations =
+					new Soundfingerprinting.Hashing.LocalPermutations("Soundfingerprinting\\perms.csv", ",");
+				Soundfingerprinting.DuplicatesDetector.DataAccess.Repository repository = new Soundfingerprinting.DuplicatesDetector.DataAccess.Repository(permutations);
+				Soundfingerprinting.DuplicatesDetector.Model.Track track = new Soundfingerprinting.DuplicatesDetector.Model.Track();
+				List<Soundfingerprinting.DuplicatesDetector.Model.HashSignature> signatures = repository.GetSignatures(fingerprints, track, 25, 4);
 				
 				//TestWavelets();
 				//Imghash.Program.HashTester(args);

@@ -9,14 +9,14 @@ namespace Soundfingerprinting.Fingerprinting
 		/// <param name = "indexes">Sorted indexes with the first one with the highest value in array</param>
 		/// <param name = "topWavelets">Number of top wavelets to encode</param>
 		/// <returns>Encoded fingerprint</returns>
-		bool[] EncodeFingerprint(double[] concatenated, int[] indexes, int topWavelets);
+		bool[] EncodeFingerprint(float[] concatenated, int[] indexes, int topWavelets);
 
 		/// <summary>
 		///   Decode the signature of the fingerprint
 		/// </summary>
 		/// <param name = "signature">Signature to be decoded</param>
 		/// <returns>Array of doubles with positive [10], negatives [01], and zeros [00]</returns>
-		double[] DecodeFingerprint(bool[] signature);
+		float[] DecodeFingerprint(bool[] signature);
 
 		/// <summary>
 		/// Sets all other wavelet values to 0 except whose which make part of Top Wavelet [top wavelet &gt; 0 ? 1 : -1]
@@ -35,6 +35,6 @@ namespace Soundfingerprinting.Fingerprinting
 		///   Positive Numbers = 10
 		///   Zeros            = 00
 		/// </remarks>
-		bool[] ExtractTopWavelets(double[][] frames, int topWavelets);
+		bool[] ExtractTopWavelets(float[][] frames, int topWavelets);
 	}
 }

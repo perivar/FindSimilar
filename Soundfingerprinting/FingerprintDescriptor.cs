@@ -49,11 +49,11 @@ namespace Soundfingerprinting.Fingerprinting
 		/// was that there is no need to keep the magnitude of top wavelets;
 		/// instead, we can simply keep the sign of it (+/-). This information is enough to keep the extract perceptual characteristics of a song.
 		/// </description>
-		public bool[] ExtractTopWavelets(double[][] frames, int topWavelets)
+		public bool[] ExtractTopWavelets(float[][] frames, int topWavelets)
 		{
 			int rows = frames.GetLength(0); /*128*/
 			int cols = frames[0].Length; /*32*/
-			double[] concatenated = new double[rows * cols]; /* 128 * 32 */
+			float[] concatenated = new float[rows * cols]; /* 128 * 32 */
 			for (int row = 0; row < rows; row++)
 			{
 				Array.Copy(frames[row], 0, concatenated, row * frames[row].Length, frames[row].Length);
@@ -72,13 +72,13 @@ namespace Soundfingerprinting.Fingerprinting
 		/// <param name = "indexes">Sorted indexes with the first one with the highest value in array</param>
 		/// <param name = "topWavelets">Number of top wavelets to encode</param>
 		/// <returns>Encoded fingerprint</returns>
-		public bool[] EncodeFingerprint(double[] concatenated, int[] indexes, int topWavelets)
+		public bool[] EncodeFingerprint(float[] concatenated, int[] indexes, int topWavelets)
 		{
 			bool[] result = new bool[concatenated.Length * 2]; // Concatenated float array
 			for (int i = 0; i < topWavelets; i++)
 			{
 				int index = indexes[i];
-				double value = concatenated[i];
+				float value = concatenated[i];
 				if (value > 0)
 				{
 					// positive wavelet
@@ -99,10 +99,10 @@ namespace Soundfingerprinting.Fingerprinting
 		/// </summary>
 		/// <param name = "signature">Signature to be decoded</param>
 		/// <returns>Array of doubles with positive [10], negatives [01], and zeros [00]</returns>
-		public double[] DecodeFingerprint(bool[] signature)
+		public float[] DecodeFingerprint(bool[] signature)
 		{
 			int len = signature.Length / 2;
-			double[] result = new double[len];
+			float[] result = new float[len];
 			for (int i = 0; i < len * 2; i += 2)
 			{
 				if (signature[i])

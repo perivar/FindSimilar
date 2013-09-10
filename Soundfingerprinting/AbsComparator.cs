@@ -3,15 +3,13 @@ namespace Soundfingerprinting.Fingerprinting
 	using System;
 	using System.Collections.Generic;
 
-	public class AbsComparator : IComparer<double>
+	public class AbsComparator : IComparer<float>
 	{
 		#region IComparer<double> Members
-		
-		public int Compare(double x, double y)
+		public int Compare(float x, float y)
 		{
 			return Math.Abs(y).CompareTo(Math.Abs(x));
 		}
-
 		#endregion
 	}
 }

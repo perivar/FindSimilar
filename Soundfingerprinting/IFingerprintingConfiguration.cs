@@ -1,7 +1,6 @@
 namespace Soundfingerprinting.Fingerprinting.Configuration
 {
     using Soundfingerprinting.Audio.Strides;
-    //using Soundfingerprinting.Fingerprinting.Windows;
     using Mirage;
 
     public interface IFingerprintingConfiguration

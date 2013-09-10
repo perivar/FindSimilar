@@ -31,7 +31,7 @@ namespace Soundfingerprinting.Fingerprinting
 			this.audioService = audioService;
 		}
 
-		private List<bool[]> CreateFingerprintsFromAudioFile(WorkUnitParameterObject param)
+		public List<bool[]> CreateFingerprintsFromAudioFile(WorkUnitParameterObject param)
 		{
 			float[] samples = audioService.ReadMonoFromFile(
 				param.PathToAudioFile,
@@ -42,7 +42,7 @@ namespace Soundfingerprinting.Fingerprinting
 			return CreateFingerprintsFromAudioSamples(samples, param);
 		}
 
-		private List<bool[]> CreateFingerprintsFromAudioSamples(float[] samples, WorkUnitParameterObject param)
+		public List<bool[]> CreateFingerprintsFromAudioSamples(float[] samples, WorkUnitParameterObject param)
 		{
 			IFingerprintingConfiguration configuration = param.FingerprintingConfiguration;
 			AudioServiceConfiguration audioServiceConfiguration = new AudioServiceConfiguration
@@ -80,9 +80,7 @@ namespace Soundfingerprinting.Fingerprinting
 
 			foreach (var spectralImage in spectralImages)
 			{
-				// TODO: FIXME !!
-				//bool[] image = fingerprintDescriptor.ExtractTopWavelets(spectralImage, topWavelets);
-				bool[] image = null;
+				bool[] image = fingerprintDescriptor.ExtractTopWavelets(spectralImage, topWavelets);
 				fingerprints.Add(image);
 			}
 
