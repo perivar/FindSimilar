@@ -14,10 +14,10 @@ namespace Soundfingerprinting.Fingerprinting
 
 	public class FingerprintService
 	{
-		private readonly ISpectrumService spectrumService;
-		private readonly IWaveletService waveletService;
-		private readonly IFingerprintDescriptor fingerprintDescriptor;
-		private readonly IAudioService audioService;
+		public readonly ISpectrumService spectrumService;
+		public readonly IWaveletService waveletService;
+		public readonly IFingerprintDescriptor fingerprintDescriptor;
+		public readonly IAudioService audioService;
 
 		public FingerprintService(
 			IAudioService audioService,
@@ -58,9 +58,9 @@ namespace Soundfingerprinting.Fingerprinting
 				UseDynamicLogBase = configuration.UseDynamicLogBase
 			};
 
-			float[][] spectrum = audioService.CreateLogSpectrogram(
+			double[][] spectrum = audioService.CreateLogSpectrogram(
 				samples, configuration.WindowFunction, audioServiceConfiguration);
-
+			
 			return this.CreateFingerprintsFromLogSpectrum(
 				spectrum,
 				configuration.Stride,
@@ -70,9 +70,9 @@ namespace Soundfingerprinting.Fingerprinting
 		}
 
 		private List<bool[]> CreateFingerprintsFromLogSpectrum(
-			float[][] logarithmizedSpectrum, IStride stride, int fingerprintLength, int overlap, int topWavelets)
+			double[][] logarithmizedSpectrum, IStride stride, int fingerprintLength, int overlap, int topWavelets)
 		{
-			List<float[][]> spectralImages = spectrumService.CutLogarithmizedSpectrum(
+			List<double[][]> spectralImages = spectrumService.CutLogarithmizedSpectrum(
 				logarithmizedSpectrum, stride, fingerprintLength, overlap);
 
 			waveletService.ApplyWaveletTransformInPlace(spectralImages);

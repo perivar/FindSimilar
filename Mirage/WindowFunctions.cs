@@ -58,7 +58,7 @@ namespace Mirage
 			win = new double[winsize];
 
 			for (int i = 0; i < winsize; i++) {
-				win[i] = (float)(0.54 - 0.46 * Math.Cos(2*Math.PI * ((double)i/(double)winsize)));
+				win[i] = (double)(0.54 - 0.46 * Math.Cos(2*Math.PI * ((double)i/(double)winsize)));
 			}
 		}
 		
@@ -93,7 +93,7 @@ namespace Mirage
 			win = new double[winsize];
 			
 			for (int i = 0; i < winsize; i++) {
-				win[i] = (float)(0.5 * (1 - Math.Cos(2*Math.PI*(double)i/(winsize-1))));
+				win[i] = (double)(0.5 * (1 - Math.Cos(2*Math.PI*(double)i/(winsize-1))));
 			}
 		}
 		

@@ -48,7 +48,7 @@ namespace Comirva.Audio {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
-			int hops = (audiodata.Length - winsize)/ hopsize + 1;
+			int hops = (audiodata.Length - winsize)/ hopsize; // PIN: Removed + 1
 			
 			// Create a Matrix with "winsize" Rows and "hops" Columns
 			// Matrix[Row, Column]
@@ -79,7 +79,7 @@ namespace Comirva.Audio {
 			// stft is a Matrix with "winsize" Rows and "hops" Columns
 			int columns = stft.Columns;
 
-			int signalLengh = winsize + (columns-1)*hopsize;
+			int signalLengh = winsize + (columns)*hopsize; // PIN: Removed -1 from (columns-1)
 			double[] signal = new double[signalLengh];
 			
 			// Take the ifft of each column of pixels and piece together the results.

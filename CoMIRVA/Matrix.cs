@@ -2431,12 +2431,12 @@ namespace Comirva.Audio.Util.Maths
 				int lowBound = logFrequenciesIndex[i];
 				int hiBound = logFrequenciesIndex[i + 1];
 
-				for (int j = lowBound; j <= hiBound; j++)
+				for (int j = lowBound; j <= hiBound; j++) // added the <= equal sign to ensure that we get the edges
 				{
 					avg += spectrum[j];
 				}
 
-				avg /= (hiBound - lowBound + 1);
+				avg /= (hiBound - lowBound + 1); // added + 1 at the end to ensure we get the edges
 				averages[i] = avg;
 			}
 			return averages;

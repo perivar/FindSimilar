@@ -13,24 +13,25 @@ using Mirage;
 
 using Lomont;
 using FindSimilar.AudioProxies;
+using CommonUtils;
 
 namespace Soundfingerprinting.Audio.Services
 {
 	public class AudioService : IAudioService
 	{
-		private readonly LomontFFT lomont;
+		private readonly LomontFFT lomonFFT;
 		
 		public AudioService()
 		{
-			lomont = new Lomont.LomontFFT();
+			lomonFFT = new Lomont.LomontFFT();
 		}
 
 		// normalize power (volume) of an audio file.
 		// minimum and maximum rms to normalize from.
 		// these values has been detected empirically
-		private const float MinRms = 0.1f;
+		private const double MinRms = 0.1f;
 
-		private const float MaxRms = 3;
+		private const double MaxRms = 3;
 
 		public void Dispose()
 		{
@@ -42,15 +43,20 @@ namespace Soundfingerprinting.Audio.Services
 			return BassProxy.Instance.ReadMonoFromFile(pathToFile, sampleRate, milliSeconds, startMilliSeconds);
 		}
 
-		public float[][] CreateSpectrogram(string pathToFilename, IWindowFunction windowFunction, int sampleRate, int overlap, int wdftSize)
+		public double[][] CreateSpectrogram(string pathToFilename, IWindowFunction windowFunction, int sampleRate, int overlap, int wdftSize)
 		{
 			// read 5512 Hz, Mono, PCM, with a specific proxy
 			float[] samples = ReadMonoFromFile(pathToFilename, sampleRate, 0, 0);
 
+			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
+			// Matlab multiplies with 2^15 (32768)
+			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
+			//MathUtils.Multiply(ref samples, Analyzer.AUDIO_MULTIPLIER); // 65536
+			
 			NormalizeInPlace(samples);
 
 			int width = (samples.Length - wdftSize) / overlap; /*width of the image*/
-			float[][] frames = new float[width][];
+			double[][] frames = new double[width][];
 			double[] complexSignal = new double[2 * wdftSize]; /*even - Re, odd - Img, thats how Exocortex works*/
 			//double[] window = windowFunction.GetWindow(wdftSize);
 			double[] window = windowFunction.GetWindow();
@@ -59,22 +65,34 @@ namespace Soundfingerprinting.Audio.Services
 				// take 371 ms each 11.6 ms (2048 samples each 64 samples)
 				for (int j = 0; j < wdftSize; j++)
 				{
+					// Weight by Hann Window
 					complexSignal[2 * j] = window[j] * samples[(i * overlap) + j];
+
+					// need to clear out as fft modifies buffer (phase)
 					complexSignal[(2 * j) + 1] = 0;
 				}
 
-				lomont.FFT(complexSignal, true);
+				lomonFFT.TableFFT(complexSignal, true);
 
-				float[] band = new float[(wdftSize / 2) + 1];
-				for (int j = 0; j < (wdftSize / 2) + 1; j++)
+				// When the input is purely real, its transform is Hermitian,
+				// i.e., the component at frequency f_k is the complex conjugate of the component
+				// at frequency -f_k, which means that for real inputs there is no information
+				// in the negative frequency components that is not already available from the
+				// positive frequency components.
+				// Thus, n input points produce n/2+1 complex output points.
+				// The inverses of this family assumes the same symmetry of its input,
+				// and for an output of n points uses n/2+1 input points.
+				
+				// Transform output contains, for a transform of size N,
+				// N/2+1 complex numbers, i.e. 2*(N/2+1) real numbers
+				// our transform is of size N+1, because the histogram has n+1 bins
+				double[] band = new double[(wdftSize / 2)]; // Don't add te last band, i.e. + 1 is removed
+				for (int j = 0; j < (wdftSize / 2); j++)	// Don't add te last band, i.e. + 1 is removed
 				{
 					double re = complexSignal[2 * j];
 					double img = complexSignal[(2 * j) + 1];
 
-					re /= (float)wdftSize / 2;
-					img /= (float)wdftSize / 2;
-
-					band[j] = (float)((re * re) + (img * img));
+					band[j] = Math.Sqrt( ((re * re) + (img * img)) * wdftSize);
 				}
 
 				frames[i] = band;
@@ -83,22 +101,27 @@ namespace Soundfingerprinting.Audio.Services
 			return frames;
 		}
 
-		public float[][] CreateLogSpectrogram(string pathToFile, IWindowFunction windowFunction, AudioServiceConfiguration configuration)
+		public double[][] CreateLogSpectrogram(string pathToFile, IWindowFunction windowFunction, AudioServiceConfiguration configuration)
 		{
 			float[] samples = ReadMonoFromFile(pathToFile, configuration.SampleRate, 0, 0);
 			return CreateLogSpectrogram(samples, windowFunction, configuration);
 		}
 
-		public float[][] CreateLogSpectrogram(
+		public double[][] CreateLogSpectrogram(
 			float[] samples, IWindowFunction windowFunction, AudioServiceConfiguration configuration)
 		{
+			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
+			// Matlab multiplies with 2^15 (32768)
+			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
+			//MathUtils.Multiply(ref samples, Analyzer.AUDIO_MULTIPLIER); // 65536
+			
 			if (configuration.NormalizeSignal)
 			{
 				NormalizeInPlace(samples);
 			}
 
 			int width = (samples.Length - configuration.WdftSize) / configuration.Overlap; /*width of the image*/
-			float[][] frames = new float[width][];
+			double[][] frames = new double[width][];
 			int[] logFrequenciesIndexes = GenerateLogFrequencies(configuration);
 			//double[] window = windowFunction.GetWindow(configuration.WdftSize);
 			double[] window = windowFunction.GetWindow();
@@ -109,15 +132,18 @@ namespace Soundfingerprinting.Audio.Services
 				// take 371 ms each 11.6 ms (2048 samples each 64 samples)
 				for (int j = 0; j < configuration.WdftSize; j++)
 				{
+					// Weight by Hann Window
 					complexSignal[2 * j] = window[j] * samples[(i * configuration.Overlap) + j];
+					
+					// need to clear out as fft modifies buffer (phase)
 					complexSignal[(2 * j) + 1] = 0;
 				}
 				
-				lomont.FFT(complexSignal, true);
+				lomonFFT.TableFFT(complexSignal, true);
 				
 				frames[i] = ExtractLogBins(complexSignal, logFrequenciesIndexes, configuration.LogBins);
 			}
-
+			
 			return frames;
 		}
 
@@ -125,7 +151,7 @@ namespace Soundfingerprinting.Audio.Services
 		{
 			double squares = samples.AsParallel().Aggregate<float, double>(0, (current, t) => current + (t * t));
 
-			float rms = (float)Math.Sqrt(squares / samples.Length) * 10;
+			double rms = (double)Math.Sqrt(squares / samples.Length) * 10;
 
 			Debug.WriteLine("10 RMS: {0}", rms);
 			
@@ -141,16 +167,16 @@ namespace Soundfingerprinting.Audio.Services
 
 			for (int i = 0; i < samples.Length; i++)
 			{
-				samples[i] /= rms;
+				samples[i] /= (float) rms;
 				samples[i] = Math.Min(samples[i], 1);
 				samples[i] = Math.Max(samples[i], -1);
 			}
 		}
 
-		private float[] ExtractLogBins(double[] spectrum, int[] logFrequenciesIndex, int logBins)
+		private double[] ExtractLogBins(double[] spectrum, int[] logFrequenciesIndex, int logBins)
 		{
 			int width = spectrum.Length / 2;
-			float[] sumFreq = new float[logBins]; /*32*/
+			double[] sumFreq = new double[logBins]; /*32*/
 			for (int i = 0; i < logBins; i++)
 			{
 				int lowBound = logFrequenciesIndex[i];
@@ -158,9 +184,14 @@ namespace Soundfingerprinting.Audio.Services
 
 				for (int k = lowBound; k < higherBound; k++)
 				{
-					double re = spectrum[2 * k] / ((double)width / 2);
-					double img = spectrum[(2 * k) + 1] / ((double)width / 2);
-					sumFreq[i] += (float)((re * re) + (img * img));
+					//double re = spectrum[2 * k] / ((double)width / 2);
+					//double img = spectrum[(2 * k) + 1] / ((double)width / 2);
+					//sumFreq[i] += (double)((re * re) + (img * img));
+
+					double re = spectrum[2 * k];
+					double img = spectrum[(2 * k) + 1];
+					
+					sumFreq[i] += Math.Sqrt( ((re * re) + (img * img)) * width);
 				}
 
 				sumFreq[i] /= higherBound - lowBound;
@@ -173,8 +204,8 @@ namespace Soundfingerprinting.Audio.Services
 		{
 			double logBase =
 				Math.Exp(
-					Math.Log((float)configuration.MaxFrequency / configuration.MinFrequency) / configuration.LogBins);
-			double mincoef = (float)configuration.WdftSize / configuration.SampleRate * configuration.MinFrequency;
+					Math.Log((double)configuration.MaxFrequency / configuration.MinFrequency) / configuration.LogBins);
+			double mincoef = (double)configuration.WdftSize / configuration.SampleRate * configuration.MinFrequency;
 			int[] indexes = new int[configuration.LogBins + 1];
 			for (int j = 0; j < configuration.LogBins + 1; j++)
 			{
@@ -216,7 +247,7 @@ namespace Soundfingerprinting.Audio.Services
 			double accDelta = 0;
 			for (int i = 0; i <= configuration.LogBins /*32 octaves*/; ++i)
 			{
-				float freq = (float)Math.Pow(configuration.LogBase, logMin + accDelta);
+				double freq = (double)Math.Pow(configuration.LogBase, logMin + accDelta);
 				accDelta += delta; // accDelta = delta * i
 				/*Find the start index in array from which to start the summation*/
 				indexes[i] = FreqToIndex(freq, configuration.SampleRate, configuration.WdftSize);
@@ -243,10 +274,10 @@ namespace Soundfingerprinting.Audio.Services
 		///   N points in time domain correspond to N/2 + 1 points in frequency domain
 		///   E.g. 300 Hz applies to 112'th element in the array
 		/// </remarks>
-		private int FreqToIndex(float freq, int sampleRate, int spectrumLength)
+		private int FreqToIndex(double freq, int sampleRate, int spectrumLength)
 		{
 			/*N sampled points in time correspond to [0, N/2] frequency range */
-			float fraction = freq / ((float)sampleRate / 2);
+			double fraction = freq / ((double)sampleRate / 2);
 			/*DFT N points defines [N/2 + 1] frequency points*/
 			int i = (int)Math.Round(((spectrumLength / 2) + 1) * fraction);
 			return i;

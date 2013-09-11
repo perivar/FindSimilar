@@ -1,45 +1,45 @@
 ﻿namespace Soundfingerprinting.Fingerprinting.FFT
 {
-    using System;
-    using System.Collections.Generic;
+	using System;
+	using System.Collections.Generic;
 
-    using Soundfingerprinting.Audio.Strides;
+	using Soundfingerprinting.Audio.Strides;
 
-    public class SpectrumService : ISpectrumService
-    {
-        public List<float[][]> CutLogarithmizedSpectrum(
-            float[][] logarithmizedSpectrum, IStride strideBetweenConsecutiveImages, int fingerprintImageLength, int overlap)
-        {
-            int start = strideBetweenConsecutiveImages.FirstStrideSize / overlap;
-            int logarithmicBins = logarithmizedSpectrum[0].Length;
-            List<float[][]> spectralImages = new List<float[][]>();
+	public class SpectrumService : ISpectrumService
+	{
+		public List<double[][]> CutLogarithmizedSpectrum(
+			double[][] logarithmizedSpectrum, IStride strideBetweenConsecutiveImages, int fingerprintImageLength, int overlap)
+		{
+			int start = strideBetweenConsecutiveImages.FirstStrideSize / overlap;
+			int logarithmicBins = logarithmizedSpectrum[0].Length;
+			List<double[][]> spectralImages = new List<double[][]>();
 
-            int width = logarithmizedSpectrum.GetLength(0);
-            
-            while (start + fingerprintImageLength < width)
-            {
-                float[][] spectralImage = this.AllocateMemoryForFingerprintImage(fingerprintImageLength, logarithmicBins);
-                for (int i = 0; i < fingerprintImageLength; i++)
-                {
-                    Array.Copy(logarithmizedSpectrum[start + i], spectralImage[i], logarithmicBins);
-                }
+			int width = logarithmizedSpectrum.GetLength(0);
+			
+			while (start + fingerprintImageLength < width)
+			{
+				double[][] spectralImage = this.AllocateMemoryForFingerprintImage(fingerprintImageLength, logarithmicBins);
+				for (int i = 0; i < fingerprintImageLength; i++)
+				{
+					Array.Copy(logarithmizedSpectrum[start + i], spectralImage[i], logarithmicBins);
+				}
 
-                start += fingerprintImageLength + (strideBetweenConsecutiveImages.StrideSize / overlap);
-                spectralImages.Add(spectralImage);
-            }
+				start += fingerprintImageLength + (strideBetweenConsecutiveImages.StrideSize / overlap);
+				spectralImages.Add(spectralImage);
+			}
 
-            return spectralImages;
-        }
+			return spectralImages;
+		}
 
-        private float[][] AllocateMemoryForFingerprintImage(int fingerprintLength, int logBins)
-        {
-            float[][] frames = new float[fingerprintLength][];
-            for (int i = 0; i < fingerprintLength; i++)
-            {
-                frames[i] = new float[logBins];
-            }
+		private double[][] AllocateMemoryForFingerprintImage(int fingerprintLength, int logBins)
+		{
+			double[][] frames = new double[fingerprintLength][];
+			for (int i = 0; i < fingerprintLength; i++)
+			{
+				frames[i] = new double[logBins];
+			}
 
-            return frames;
-        }
-    }
+			return frames;
+		}
+	}
 }
