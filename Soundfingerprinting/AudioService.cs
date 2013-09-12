@@ -38,11 +38,30 @@ namespace Soundfingerprinting.Audio.Services
 			BassProxy.Instance.Dispose();
 		}
 		
+		/// <summary>
+		/// Read audio from file at a specific frequency rate
+		/// </summary>
+		/// <param name = "pathToFile">Filename to read from</param>
+		/// <param name = "sampleRate">Sample rate</param>
+		/// <param name = "milliSeconds">Milliseconds to read</param>
+		/// <param name = "startMilliSeconds">Start at a specific millisecond</param>
+		/// <returns>Array with data samples</returns>
 		public float[] ReadMonoFromFile(
 			string pathToFile, int sampleRate, int milliSeconds, int startMilliSeconds) {
 			return BassProxy.Instance.ReadMonoFromFile(pathToFile, sampleRate, milliSeconds, startMilliSeconds);
 		}
 
+		/// <summary>
+		/// Read data from file
+		/// </summary>
+		/// <param name = "pathToFile">Filename to be read</param>
+		/// <param name = "sampleRate">Sample rate at which to perform reading</param>
+		/// <returns>Array with data</returns>
+		public float[] ReadMonoFromFile(string pathToFile, int sampleRate)
+		{
+			return ReadMonoFromFile(pathToFile, sampleRate, 0, 0);
+		}
+		
 		public double[][] CreateSpectrogram(string pathToFilename, IWindowFunction windowFunction, int sampleRate, int overlap, int wdftSize)
 		{
 			// read 5512 Hz, Mono, PCM, with a specific proxy
@@ -281,17 +300,6 @@ namespace Soundfingerprinting.Audio.Services
 			/*DFT N points defines [N/2 + 1] frequency points*/
 			int i = (int)Math.Round(((spectrumLength / 2) + 1) * fraction);
 			return i;
-		}
-
-		/// <summary>
-		///   Read data from file
-		/// </summary>
-		/// <param name = "pathToFile">Filename to be read</param>
-		/// <param name = "sampleRate">Sample rate at which to perform reading</param>
-		/// <returns>Array with data</returns>
-		public float[] ReadMonoFromFile(string pathToFile, int sampleRate)
-		{
-			return ReadMonoFromFile(pathToFile, sampleRate, 0, 0);
 		}
 	}
 }

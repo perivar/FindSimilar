@@ -86,7 +86,7 @@ namespace Mirage
 				dbcmd = dbcon.CreateCommand();
 			}
 			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
-				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER, bitstring TEXT)";
+				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER, bitstring TEXT, signature BLOB)";
 			
 			try {
 				dbcmd.ExecuteNonQuery();
@@ -143,24 +143,27 @@ namespace Mirage
 			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
 			IDbDataParameter dbDurationParam = new SQLiteParameter("@duration", DbType.Int64);
 			IDbDataParameter dbBitStringParam = new SQLiteParameter("@bitstring", DbType.String);
+			IDbDataParameter dbSignatureParam = new SQLiteParameter("@signature", DbType.Binary);
 			
 			dbTrackIdParam.Value = trackid;
 			dbAudioFeatureParam.Value = audioFeature.ToBytes();
 			dbNameParam.Value = audioFeature.Name;
 			dbDurationParam.Value = audioFeature.Duration;
 			dbBitStringParam.Value = audioFeature.BitString;
+			dbSignatureParam.Value = BoolToByte(audioFeature.Signature);
 			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration, bitstring) " +
-				"VALUES (@trackid, @audioFeature, @name, @duration, @bitstring)";
+			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration, bitstring, signature) " +
+				"VALUES (@trackid, @audioFeature, @name, @duration, @bitstring, @signature)";
 			dbcmd.Parameters.Add(dbTrackIdParam);
 			dbcmd.Parameters.Add(dbAudioFeatureParam);
 			dbcmd.Parameters.Add(dbNameParam);
 			dbcmd.Parameters.Add(dbDurationParam);
 			dbcmd.Parameters.Add(dbBitStringParam);
+			dbcmd.Parameters.Add(dbSignatureParam);
 			
 			try {
 				dbcmd.ExecuteNonQuery();
@@ -237,7 +240,7 @@ namespace Mirage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "SELECT audioFeature, name, duration, bitstring FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, name, duration, bitstring, signature FROM mirage " +
 				"WHERE trackid = " + trackid;
 			IDataReader reader = dbcmd.ExecuteReader();
 			if (!reader.Read()) {
@@ -248,6 +251,7 @@ namespace Mirage
 			string name = reader.GetString(1);
 			long duration = reader.GetInt64(2);
 			string bitstring = reader.GetString(3);
+			bool[] signature = ByteToBool((byte[]) reader.GetValue(4));
 			
 			reader.Close();
 			
@@ -263,6 +267,7 @@ namespace Mirage
 			audioFeature.Name = name;
 			audioFeature.Duration = duration;
 			audioFeature.BitString = bitstring;
+			audioFeature.Signature = signature;
 			
 			return audioFeature;
 		}
@@ -325,7 +330,7 @@ namespace Mirage
 				}
 			}
 			
-			dbcmd.CommandText = "SELECT audioFeature, trackid, name, duration, bitstring FROM mirage " +
+			dbcmd.CommandText = "SELECT audioFeature, trackid, name, duration, bitstring, signature FROM mirage " +
 				"WHERE trackid NOT in (" + trackSql + ")";
 
 			if (duration > 0 && percentage < 1.0) {
@@ -364,6 +369,7 @@ namespace Mirage
 				audioFeature.Name = tracksIterator.GetString(2);
 				audioFeature.Duration = tracksIterator.GetInt64(3);
 				audioFeature.BitString = tracksIterator.GetString(4);
+				audioFeature.Signature = ByteToBool((byte[]) tracksIterator.GetValue(5));
 				tracks[i] = audioFeature;
 				i++;
 			}
@@ -374,6 +380,23 @@ namespace Mirage
 			}
 			
 			return i;
+		}
+		
+		private static bool[] ByteToBool(byte[] byteArray) {
+			
+			// basic - same count
+			bool[] boolArray = new bool[byteArray.Length];
+			for (int i = 0; i < byteArray.Length; i++) {
+				boolArray[i] = (byteArray[i] == 1 ? true: false);
+			}
+			return boolArray;
+		}
+		
+		private static byte[] BoolToByte(bool[] boolArray) {
+			// http://stackoverflow.com/questions/713057/convert-bool-to-byte-c-sharp
+			// basic - same count
+			byte[] byteArray = Array.ConvertAll(boolArray, b => b ? (byte)1 : (byte)0);
+			return byteArray;
 		}
 	}
 }

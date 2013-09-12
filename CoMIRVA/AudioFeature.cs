@@ -28,12 +28,27 @@ namespace Comirva.Audio.Feature
 			Dtw_Maximum = 5,
 			UCR_Dtw = 6,
 			CosineSimilarity = 7,
-			BitStringHamming = 8
+			BitStringHamming = 8,
+			JaqSimilarity = 9
 		}
 		
 		private string bitString;
 		private Image image;
+		private bool[] signature;
 
+		/// <summary>
+		/// Signature
+		/// This is a bool array
+		/// </summary>
+		public bool[] Signature {
+			get {
+				return signature;
+			}
+			set {
+				signature = value;
+			}
+		}
+		
 		/// <summary>
 		/// Bitstring that represents the audio feature.
 		/// This is a 'binary string' (aka bitstring) (like. 001010111011100010) which is easy to do a hamming distance on.

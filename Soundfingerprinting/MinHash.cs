@@ -167,7 +167,7 @@
 		}
 
 		/// <summary>
-		///   Calculate similarity between 2 fingerprints.
+		/// Calculate similarity between 2 fingerprints.
 		/// </summary>
 		/// <param name = "x">Signature x</param>
 		/// <param name = "y">Signature y</param>
@@ -178,7 +178,7 @@
 		///   Sim(x,y) = a/(a+b+c)
 		///   +1 = 10
 		///   -1 = 01
-		///   0 = 00
+		///    0 = 00
 		/// </remarks>
 		public static double CalculateJaqSimilarity(bool[] x, bool[] y)
 		{

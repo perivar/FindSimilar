@@ -46,14 +46,24 @@ using math.transform.jwave;
 using math.transform.jwave.handlers;
 using math.transform.jwave.handlers.wavelets;
 
+using Soundfingerprinting.Audio.Services;
+using Soundfingerprinting.Fingerprinting;
+using Soundfingerprinting.Fingerprinting.FFT;
+using Soundfingerprinting.Fingerprinting.Wavelets;
+using Soundfingerprinting.Fingerprinting.Configuration;
+using Soundfingerprinting.Fingerprinting.WorkUnitBuilder;
+using Soundfingerprinting.Image;
+using Soundfingerprinting.Audio.Models;
+using Soundfingerprinting.Hashing;
+
 // Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
 	public class Analyzer
 	{
-		public const bool DEBUG_INFO_VERBOSE = true;
-		public const bool DEBUG_OUTPUT_TEXT = true;
-		public const bool DEFAULT_DEBUG_INFO = true;
+		public const bool DEBUG_INFO_VERBOSE = false;
+		public const bool DEBUG_OUTPUT_TEXT = false;
+		public const bool DEFAULT_DEBUG_INFO = false;
 		
 		public enum AnalysisMethod {
 			SCMS = 1,
@@ -96,6 +106,9 @@ namespace Mirage
 		// Create the STFS object with 50% overlap (half of the window size);
 		//private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
+
+		// Create the Soundfingerprinting Service
+		private static FingerprintService fingerprintService = GetSoundfingerprintingService();
 		
 		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
 		{
@@ -224,8 +237,9 @@ namespace Mirage
 			#endif
 			
 			// Try to use the Soundfingerprinting methods
-			//TestSoundfingerprintingAlgorithm(audiodata);
-			TestSoundfingerprintingAlgorithm(filePath.FullName, name);
+			//TestSoundfingerprintingAlgorithm(audiodata, name);
+			//TestSoundfingerprintingAlgorithm(filePath.FullName, name);
+			List<bool[]> signatures = GetFingerprintSignatures(fingerprintService, audiodata);
 			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
@@ -280,7 +294,7 @@ namespace Mirage
 				}
 				
 				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (Analyzer.DEBUG_INFO_VERBOSE  & false) {
 					#region Inverse Wavelet
 					// try to do an inverse wavelet transform
 					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseWaveletCompression(ref featureData, lastHeight, lastWidth);
@@ -316,7 +330,7 @@ namespace Mirage
 				}
 
 				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (Analyzer.DEBUG_INFO_VERBOSE & false) {
 					#region Inverse MFCC
 					// try to do an inverse mfcc
 					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMfcc(ref featureData);
@@ -350,6 +364,9 @@ namespace Mirage
 				// Store bitstring hash as well
 				string hashString = GetBitString(featureData);
 				audioFeature.BitString = hashString;
+				
+				// Store signature
+				audioFeature.Signature = signatures.FirstOrDefault();
 				
 				// Store duration
 				audioFeature.Duration = (long) duration;
@@ -503,48 +520,52 @@ namespace Mirage
 			return hash;
 		}
 		
-		private static Soundfingerprinting.Fingerprinting.FingerprintService GetSoundfingerprintingService() {
+		private static FingerprintService GetSoundfingerprintingService() {
 
 			// Audio service
-			Soundfingerprinting.Audio.Services.IAudioService audioService = new Soundfingerprinting.Audio.Services.AudioService();
+			IAudioService audioService = new AudioService();
 			
 			// Fingerprint Descriptor
-			Soundfingerprinting.Fingerprinting.IFingerprintDescriptor fingerprintDescriptor = new Soundfingerprinting.Fingerprinting.FingerprintDescriptor();
+			IFingerprintDescriptor fingerprintDescriptor = new FingerprintDescriptor();
 			
 			// SpectrumService
-			Soundfingerprinting.Fingerprinting.FFT.ISpectrumService spectrumService = new Soundfingerprinting.Fingerprinting.FFT.SpectrumService();
+			ISpectrumService spectrumService = new SpectrumService();
 			
 			// Wavelet Service
-			Soundfingerprinting.Fingerprinting.Wavelets.IWaveletDecomposition waveletDecomposition = new Soundfingerprinting.Fingerprinting.Wavelets.StandardHaarWaveletDecomposition();
-			Soundfingerprinting.Fingerprinting.Wavelets.IWaveletService waveletService = new Soundfingerprinting.Fingerprinting.Wavelets.WaveletService(waveletDecomposition);
+			IWaveletDecomposition waveletDecomposition = new Soundfingerprinting.Fingerprinting.Wavelets.StandardHaarWaveletDecomposition();
+			IWaveletService waveletService = new WaveletService(waveletDecomposition);
 
 			// Fingerprint Service
-			Soundfingerprinting.Fingerprinting.FingerprintService fingerprintService =
-				new Soundfingerprinting.Fingerprinting.FingerprintService(audioService,
-				                                                          fingerprintDescriptor,
-				                                                          spectrumService,
-				                                                          waveletService);
+			FingerprintService fingerprintService = new FingerprintService(audioService,
+			                                                               fingerprintDescriptor,
+			                                                               spectrumService,
+			                                                               waveletService);
 			
 			return fingerprintService;
 		}
 		
-		private static void TestSoundfingerprintingAlgorithm(string filename, string name) {
+		private static List<Soundfingerprinting.DuplicatesDetector.Model.HashSignature> TestSoundfingerprintingAlgorithm(string filename, string name) {
 			
 			// default config
-			Soundfingerprinting.Fingerprinting.Configuration.DefaultFingerprintingConfiguration config = new Soundfingerprinting.Fingerprinting.Configuration.DefaultFingerprintingConfiguration();
+			DefaultFingerprintingConfiguration config = new DefaultFingerprintingConfiguration();
 			
 			// work config
-			Soundfingerprinting.Fingerprinting.WorkUnitBuilder.WorkUnitParameterObject param = new Soundfingerprinting.Fingerprinting.WorkUnitBuilder.WorkUnitParameterObject();
+			WorkUnitParameterObject param = new WorkUnitParameterObject();
 			param.PathToAudioFile = filename;
 			param.StartAtMilliseconds = 0;
 			param.MillisecondsToProcess = 0;
 			param.FingerprintingConfiguration = config;
 
 			// Soundfingerprinting Service
-			Soundfingerprinting.Fingerprinting.FingerprintService fingerprintService = GetSoundfingerprintingService();
+			FingerprintService fingerprintService = GetSoundfingerprintingService();
+			
+			// Image Service
+			ImageService imageService = new ImageService(
+				fingerprintService.SpectrumService,
+				fingerprintService.WaveletService);
 			
 			// Configuration
-			Soundfingerprinting.Audio.Models.AudioServiceConfiguration audioServiceConfiguration = new Soundfingerprinting.Audio.Models.AudioServiceConfiguration
+			AudioServiceConfiguration audioServiceConfiguration = new AudioServiceConfiguration
 			{
 				LogBins = config.LogBins,
 				LogBase = config.LogBase,
@@ -557,9 +578,11 @@ namespace Mirage
 				UseDynamicLogBase = config.UseDynamicLogBase
 			};
 			
-			double[][] spectrogram = fingerprintService.audioService.CreateSpectrogram(filename, new Mirage.HannWindow(config.WdftSize), config.SampleRate, config.Overlap, config.WdftSize);
+			double[][] spectrogram = fingerprintService.AudioService.CreateSpectrogram(filename, new Mirage.HannWindow(config.WdftSize), config.SampleRate, config.Overlap, config.WdftSize);
+			imageService.GetSpectrogramImage(spectrogram, 600, 400).Save("imageservice_" + name + "_specgram.png");
+
+			/*
 			Comirva.Audio.Util.Maths.Matrix stftdata = new Comirva.Audio.Util.Maths.Matrix(spectrogram).Transpose();
-			
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				if (DEBUG_OUTPUT_TEXT) {
@@ -574,50 +597,106 @@ namespace Mirage
 				stftdata.DrawMatrixImageLogY(name + "_specgramlog2.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			}
 			#endif
+			 */
 			
-			double[][] logSpectrogram = fingerprintService.audioService.CreateLogSpectrogram(filename, new Mirage.HannWindow(config.WdftSize), audioServiceConfiguration);
-			Comirva.Audio.Util.Maths.Matrix stftdataLog = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram).Transpose();
+			double[][] logSpectrogram = fingerprintService.AudioService.CreateLogSpectrogram(filename, new Mirage.HannWindow(config.WdftSize), audioServiceConfiguration);
+			imageService.GetLogSpectralImages(logSpectrogram, config.Stride, config.FingerprintLength, config.Overlap, 2).Save("imageservice_" + name + "_specgram_logimages.png");
 
+			Comirva.Audio.Util.Maths.Matrix stftdataLog = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram).Transpose();
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				if (DEBUG_OUTPUT_TEXT) {
-					stftdataLog.WriteAscii(name + "_stftdata2_log.ascii");
-					stftdataLog.WriteCSV(name + "_stftdata2_log.csv", ";");
+					stftdataLog.WriteAscii(name + "_stftdataLog.ascii");
+					stftdataLog.WriteCSV(name + "_stftdataLog.csv", ";");
 				}
 
 				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
-				stftdataLog.DrawMatrixImageLogValues(name + "_specgram_log.png", true);
+				stftdataLog.DrawMatrixImageLogValues(name + "_stftdataLog.png", true);
 			}
 			#endif
 			
+			// Get fingerprints
 			List<bool[]> fingerprints = fingerprintService.CreateFingerprintsFromAudioFile(param);
+			int width = config.FingerprintLength;
+			int height = config.LogBins;
+			imageService.GetImageForFingerprints(fingerprints, width, height, 2).Save("imageservice_" + name + "_fingerprints.png");
 			
-			Soundfingerprinting.Hashing.IPermutations permutations =
-				new Soundfingerprinting.Hashing.LocalPermutations("Soundfingerprinting\\perms.csv", ",");
+			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
 			Soundfingerprinting.DuplicatesDetector.DataAccess.Repository repository = new Soundfingerprinting.DuplicatesDetector.DataAccess.Repository(permutations);
-			Soundfingerprinting.DuplicatesDetector.Model.Track track = new Soundfingerprinting.DuplicatesDetector.Model.Track();
+			
+			// Define track
+			Soundfingerprinting.DuplicatesDetector.Model.Track track
+				= new Soundfingerprinting.DuplicatesDetector.Model.Track {
+				Title = name,
+				Path = filename
+			};
+			
+			// Get the HashSignatures
 			List<Soundfingerprinting.DuplicatesDetector.Model.HashSignature> signatures = repository.GetSignatures(fingerprints, track, 25, 4);
+			return signatures;
 		}
 		
-		private static void TestSoundfingerprintingAlgorithm(float[] samples) {
+		private static List<int[]> TestSoundfingerprintingAlgorithm(float[] samples, string name) {
 			
 			// default config
-			Soundfingerprinting.Fingerprinting.Configuration.DefaultFingerprintingConfiguration defaultConfig = new Soundfingerprinting.Fingerprinting.Configuration.DefaultFingerprintingConfiguration();
+			DefaultFingerprintingConfiguration defaultConfig = new DefaultFingerprintingConfiguration();
 			
 			// work config
-			Soundfingerprinting.Fingerprinting.WorkUnitBuilder.WorkUnitParameterObject param = new Soundfingerprinting.Fingerprinting.WorkUnitBuilder.WorkUnitParameterObject();
+			WorkUnitParameterObject param = new WorkUnitParameterObject();
 			param.FingerprintingConfiguration = defaultConfig;
 
 			// Soundfingerprinting Service
-			Soundfingerprinting.Fingerprinting.FingerprintService fingerprintService = GetSoundfingerprintingService();
+			FingerprintService fingerprintService = GetSoundfingerprintingService();
 
+			// Image Service
+			ImageService imageService =
+				new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+			
+			// Get fingerprints
+			List<bool[]> fingerprints = fingerprintService.CreateFingerprintsFromAudioSamples(samples, param);
+			int width = param.FingerprintingConfiguration.FingerprintLength;
+			int height = param.FingerprintingConfiguration.LogBins;
+			imageService.GetImageForFingerprints(fingerprints, width, height, 2).Save("imageservice_" + name + "_fingerprints.png");
+			
+			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
+
+			/*
+			Soundfingerprinting.DuplicatesDetector.DataAccess.Repository repository = new Soundfingerprinting.DuplicatesDetector.DataAccess.Repository(permutations);
+			
+			// Define track
+			Soundfingerprinting.DuplicatesDetector.Model.Track track
+				= new Soundfingerprinting.DuplicatesDetector.Model.Track {
+				Title = name
+			};
+			 */
+			
+			Soundfingerprinting.Hashing.MinHash hasher = new Soundfingerprinting.Hashing.MinHash(permutations);
+			List<int[]> signatures = new List<int[]>();
+			foreach (bool[] fingerprint in fingerprints)
+			{
+				int[] signature = hasher.ComputeMinHashSignature(fingerprint); /*Compute min-hash signature out of signature*/
+				signatures.Add(signature);
+			}
+			return signatures;
+		}
+		
+		private static List<bool[]> GetFingerprintSignatures(FingerprintService fingerprintService, float[] samples) {
+			
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
+			
+			// default config
+			DefaultFingerprintingConfiguration defaultConfig = new DefaultFingerprintingConfiguration();
+			
+			// work config
+			WorkUnitParameterObject param = new WorkUnitParameterObject();
+			param.FingerprintingConfiguration = defaultConfig;
+			
+			// Get fingerprints
 			List<bool[]> fingerprints = fingerprintService.CreateFingerprintsFromAudioSamples(samples, param);
 
-			Soundfingerprinting.Hashing.IPermutations permutations =
-				new Soundfingerprinting.Hashing.LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-			Soundfingerprinting.DuplicatesDetector.DataAccess.Repository repository = new Soundfingerprinting.DuplicatesDetector.DataAccess.Repository(permutations);
-			Soundfingerprinting.DuplicatesDetector.Model.Track track = new Soundfingerprinting.DuplicatesDetector.Model.Track();
-			List<Soundfingerprinting.DuplicatesDetector.Model.HashSignature> signatures = repository.GetSignatures(fingerprints, track, 25, 4);
+			Mirage.Dbg.WriteLine("GetFingerprintSignatures Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return fingerprints;
 		}
 	}
 }
