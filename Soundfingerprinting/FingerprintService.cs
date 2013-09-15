@@ -14,15 +14,15 @@ namespace Soundfingerprinting.Fingerprinting
 
 	public class FingerprintService
 	{
-		public readonly ISpectrumService SpectrumService;
+		public readonly SpectrumService SpectrumService;
 		public readonly IWaveletService WaveletService;
-		public readonly IFingerprintDescriptor FingerprintDescriptor;
+		public readonly FingerprintDescriptor FingerprintDescriptor;
 		public readonly IAudioService AudioService;
 
 		public FingerprintService(
 			IAudioService audioService,
-			IFingerprintDescriptor fingerprintDescriptor,
-			ISpectrumService spectrumService,
+			FingerprintDescriptor fingerprintDescriptor,
+			SpectrumService spectrumService,
 			IWaveletService waveletService)
 		{
 			this.SpectrumService = spectrumService;

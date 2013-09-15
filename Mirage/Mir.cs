@@ -302,7 +302,7 @@ namespace Mirage
 				List<string> filesRemaining = filesAll.Except(filesProcessed.Keys).ToList();
 				Console.Out.WriteLine("Found {0} files remaining in scan directory to be processed.", filesRemaining.Count);
 
-				int fileCounter = filesProcessed.Count;
+				int fileCounter = filesProcessed.Count + 1;
 				
 				#if !DEBUG
 				Console.Out.WriteLine("Running in multi-threaded mode!");
@@ -333,10 +333,12 @@ namespace Mirage
 				                 				case Analyzer.AnalysisMethod.SCMS:
 				                 					feature = Analyzer.AnalyzeScms(fileInfo);
 				                 					break;
+				                 				case Analyzer.AnalysisMethod.AudioFingerprinting:
+				                 					Analyzer.AnalyzeSoundfingerprinting(fileInfo, ref fileCounter);
+				                 					break;
 				                 			}
 				                 			if (feature != null) {
-				                 				db.AddTrack(fileCounter, feature);
-				                 				fileCounter++;
+				                 				db.AddTrack(ref fileCounter, feature);
 				                 				Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms) (Thread: {4})", fileInfo.Name, fileCounter, filesRemaining.Count, feature.Duration, Thread.CurrentThread.ManagedThreadId);
 				                 				feature = null;
 				                 			} else {
@@ -722,15 +724,16 @@ namespace Mirage
 			public static void Main(string[] args) {
 
 				//SetSimilarity.MinHash.Test();
-								
+				
 				//TestWavelets();
 				//Imghash.Program.HashTester(args);
 				//DctMethods.test2(true);
 				//DctComirva.test();
 				//TestComirvaMatrix();
 				
-				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
+				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.AudioFingerprinting;
 				
 				string scanPath = "";
 				double skipDurationAboveSeconds = -1; // less than zero disables this

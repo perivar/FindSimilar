@@ -38,7 +38,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
-    <StartArguments>-gui</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects" -resetdb -skipduration=10</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -201,27 +201,28 @@
     <Compile Include="Soundfingerprinting\AbsComparator.cs" />
     <Compile Include="Soundfingerprinting\AudioService.cs" />
     <Compile Include="Soundfingerprinting\AudioServiceConfiguration.cs" />
+    <Compile Include="Soundfingerprinting\DatabaseService.cs" />
     <Compile Include="Soundfingerprinting\DefaultFingerprintingConfiguration.cs" />
+    <Compile Include="Soundfingerprinting\Fingerprint.cs" />
     <Compile Include="Soundfingerprinting\FingerprintDescriptor.cs" />
     <Compile Include="Soundfingerprinting\FingerprintService.cs" />
+    <Compile Include="Soundfingerprinting\FullFrequencyFingerprintingConfiguration.cs" />
     <Compile Include="Soundfingerprinting\HaarWaveletDecomposition.cs" />
-    <Compile Include="Soundfingerprinting\HashSignature.cs" />
+    <Compile Include="Soundfingerprinting\HashBin.cs" />
+    <Compile Include="Soundfingerprinting\HashBinMinHash.cs" />
     <Compile Include="Soundfingerprinting\IAudioService.cs" />
     <Compile Include="Soundfingerprinting\IFFTService.cs" />
-    <Compile Include="Soundfingerprinting\IFingerprintDescriptor.cs" />
     <Compile Include="Soundfingerprinting\IFingerprintingConfiguration.cs" />
     <Compile Include="Soundfingerprinting\ImageService.cs" />
-    <Compile Include="Soundfingerprinting\IMinMutualSelector.cs" />
     <Compile Include="Soundfingerprinting\IncrementalStaticStride.cs" />
-    <Compile Include="Soundfingerprinting\IPermutationGeneratorService.cs" />
     <Compile Include="Soundfingerprinting\IPermutations.cs" />
-    <Compile Include="Soundfingerprinting\ISpectrumService.cs" />
     <Compile Include="Soundfingerprinting\IStride.cs" />
     <Compile Include="Soundfingerprinting\IWaveletDecomposition.cs" />
     <Compile Include="Soundfingerprinting\IWaveletService.cs" />
     <Compile Include="Soundfingerprinting\LocalPermutations.cs" />
     <Compile Include="Soundfingerprinting\MinHash.cs" />
-    <Compile Include="Soundfingerprinting\PermutationGeneratorService.cs" />
+    <Compile Include="Soundfingerprinting\QueryFingerprintManager.cs" />
+    <Compile Include="Soundfingerprinting\QueryStats.cs" />
     <Compile Include="Soundfingerprinting\Repository.cs" />
     <Compile Include="Soundfingerprinting\SpectrumService.cs" />
     <Compile Include="Soundfingerprinting\StandardHaarWaveletDecomposition.cs" />

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Drawing;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Comirva.Audio.Feature
 {
@@ -34,18 +36,17 @@ namespace Comirva.Audio.Feature
 		
 		private string bitString;
 		private Image image;
-		private bool[] signature;
+		private List<bool[]> signatures = new List<bool[]>();
 
 		/// <summary>
-		/// Signature
-		/// This is a bool array
+		/// Signatures
 		/// </summary>
-		public bool[] Signature {
+		public List<bool[]> Signatures {
 			get {
-				return signature;
+				return signatures;
 			}
 			set {
-				signature = value;
+				signatures = value;
 			}
 		}
 		

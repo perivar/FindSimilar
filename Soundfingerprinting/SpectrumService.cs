@@ -5,7 +5,7 @@
 
 	using Soundfingerprinting.Audio.Strides;
 
-	public class SpectrumService : ISpectrumService
+	public class SpectrumService
 	{
 		/// <summary>
 		/// Cut logarithmized spetrum to spectral images

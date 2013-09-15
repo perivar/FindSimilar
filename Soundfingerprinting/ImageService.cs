@@ -17,11 +17,11 @@
 	{
 		private const int SpaceBetweenImages = 10; /*10 pixel space between fingerprint images*/
 
-		private readonly ISpectrumService spectrumService;
+		private readonly SpectrumService spectrumService;
 
 		private readonly IWaveletService waveletService;
 		
-		public ImageService(ISpectrumService spectrumService, IWaveletService waveletService)
+		public ImageService(SpectrumService spectrumService, IWaveletService waveletService)
 		{
 			this.spectrumService = spectrumService;
 			this.waveletService = waveletService;

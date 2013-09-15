@@ -130,13 +130,14 @@ namespace Mirage
 			return true;
 		}
 		
+
 		/// <summary>
-		/// Add a track to the database using the given track-id
+		/// Add a track N number of times to the database starting with the given track-id
 		/// </summary>
-		/// <param name="trackid">track-id to use</param>
+		/// <param name="trackid">track-id to start with</param>
 		/// <param name="audioFeature">the audiofeature object</param>
-		/// <returns>-1 if failed otherwise the track-id passed</returns>
-		public int AddTrack(int trackid, AudioFeature audioFeature)
+		/// <returns>the track-ids inserted</returns>
+		public int[] AddTracks(ref int trackid, AudioFeature audioFeature)
 		{
 			IDbDataParameter dbTrackIdParam = new SQLiteParameter("@trackid", DbType.Int64);
 			IDbDataParameter dbAudioFeatureParam = new SQLiteParameter("@audioFeature", DbType.Binary);
@@ -144,26 +145,75 @@ namespace Mirage
 			IDbDataParameter dbDurationParam = new SQLiteParameter("@duration", DbType.Int64);
 			IDbDataParameter dbBitStringParam = new SQLiteParameter("@bitstring", DbType.String);
 			IDbDataParameter dbSignatureParam = new SQLiteParameter("@signature", DbType.Binary);
+
+			dbAudioFeatureParam.Value = audioFeature.ToBytes();
+			dbNameParam.Value = audioFeature.Name;
+			dbDurationParam.Value = audioFeature.Duration;
+			dbBitStringParam.Value = audioFeature.BitString;
+
+			List<int> trackids = new List<int>();
+			foreach(bool[] signature in audioFeature.Signatures) {
+
+				trackids.Add(trackid);
+				dbTrackIdParam.Value = trackid;
+				dbSignatureParam.Value = BoolToByte(signature);
+				
+				IDbCommand dbcmd;
+				lock (dbcon) {
+					dbcmd = dbcon.CreateCommand();
+				}
+				dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration, bitstring, signature) " +
+					"VALUES (@trackid, @audioFeature, @name, @duration, @bitstring, @signature)";
+				dbcmd.Parameters.Add(dbTrackIdParam);
+				dbcmd.Parameters.Add(dbAudioFeatureParam);
+				dbcmd.Parameters.Add(dbNameParam);
+				dbcmd.Parameters.Add(dbDurationParam);
+				dbcmd.Parameters.Add(dbBitStringParam);
+				dbcmd.Parameters.Add(dbSignatureParam);
+				
+				try {
+					dbcmd.ExecuteNonQuery();
+				} catch (SQLiteException) {
+					continue;
+				}
+				
+				trackid++;
+			}
+			
+			return trackids.ToArray();
+		}
+		
+		/// <summary>
+		/// Add a track to the database using the given track-id
+		/// </summary>
+		/// <param name="trackid">track-id to use</param>
+		/// <param name="audioFeature">the audiofeature object</param>
+		/// <returns>-1 if failed otherwise the track-id passed</returns>
+		public int AddTrack(ref int trackid, AudioFeature audioFeature)
+		{
+			IDbDataParameter dbTrackIdParam = new SQLiteParameter("@trackid", DbType.Int64);
+			IDbDataParameter dbAudioFeatureParam = new SQLiteParameter("@audioFeature", DbType.Binary);
+			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
+			IDbDataParameter dbDurationParam = new SQLiteParameter("@duration", DbType.Int64);
+			IDbDataParameter dbBitStringParam = new SQLiteParameter("@bitstring", DbType.String);
 			
 			dbTrackIdParam.Value = trackid;
 			dbAudioFeatureParam.Value = audioFeature.ToBytes();
 			dbNameParam.Value = audioFeature.Name;
 			dbDurationParam.Value = audioFeature.Duration;
 			dbBitStringParam.Value = audioFeature.BitString;
-			dbSignatureParam.Value = BoolToByte(audioFeature.Signature);
 			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
 			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration, bitstring, signature) " +
-				"VALUES (@trackid, @audioFeature, @name, @duration, @bitstring, @signature)";
+				"VALUES (@trackid, @audioFeature, @name, @duration, @bitstring)";
 			dbcmd.Parameters.Add(dbTrackIdParam);
 			dbcmd.Parameters.Add(dbAudioFeatureParam);
 			dbcmd.Parameters.Add(dbNameParam);
 			dbcmd.Parameters.Add(dbDurationParam);
 			dbcmd.Parameters.Add(dbBitStringParam);
-			dbcmd.Parameters.Add(dbSignatureParam);
 			
 			try {
 				dbcmd.ExecuteNonQuery();
@@ -171,6 +221,7 @@ namespace Mirage
 				return -1;
 			}
 			
+			trackid++;
 			return trackid;
 		}
 
@@ -267,7 +318,7 @@ namespace Mirage
 			audioFeature.Name = name;
 			audioFeature.Duration = duration;
 			audioFeature.BitString = bitstring;
-			audioFeature.Signature = signature;
+			audioFeature.Signatures.Add(signature);
 			
 			return audioFeature;
 		}
@@ -369,7 +420,7 @@ namespace Mirage
 				audioFeature.Name = tracksIterator.GetString(2);
 				audioFeature.Duration = tracksIterator.GetInt64(3);
 				audioFeature.BitString = tracksIterator.GetString(4);
-				audioFeature.Signature = ByteToBool((byte[]) tracksIterator.GetValue(5));
+				audioFeature.Signatures.Add(ByteToBool((byte[]) tracksIterator.GetValue(5)));
 				tracks[i] = audioFeature;
 				i++;
 			}
@@ -383,7 +434,6 @@ namespace Mirage
 		}
 		
 		private static bool[] ByteToBool(byte[] byteArray) {
-			
 			// basic - same count
 			bool[] boolArray = new bool[byteArray.Length];
 			for (int i = 0; i < byteArray.Length; i++) {

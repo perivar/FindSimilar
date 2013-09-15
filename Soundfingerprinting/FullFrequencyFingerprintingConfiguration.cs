@@ -1,12 +1,12 @@
-namespace Soundfingerprinting.Fingerprinting.Configuration
+﻿namespace Soundfingerprinting.Fingerprinting.Configuration
 {
 	using System;
 	using Soundfingerprinting.Audio.Strides;
 	using Mirage;
 
-	public class DefaultFingerprintingConfiguration : IFingerprintingConfiguration
+	public class FullFrequencyFingerprintingConfiguration : IFingerprintingConfiguration
 	{
-		public DefaultFingerprintingConfiguration()
+		public FullFrequencyFingerprintingConfiguration()
 		{
 			// The parameters used in these transformation steps will be equal to those that have been found to work well in other audio fingerprinting studies
 			// (specifically in A Highly Robust Audio Fingerprinting System):
@@ -14,22 +14,23 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 			// taken every 11.6 ms (64 samples),
 			// thus having an overlap of 31/32
 			FingerprintLength = 128;
-			WdftSize = 2048; 	// 2048/5512 	= 371 ms
-			Overlap = 64;		// 64/5512 		= 11,6 ms
+			WdftSize = 16384; 		// 2048/5512 	= 371 ms 	(16384/44100)
+			Overlap = 512; 			// 64/5512 		= 11,6 ms 	(512/44100)
 			SamplesPerFingerprint = FingerprintLength * Overlap;
-			MinFrequency = 318;
-			MaxFrequency = 2000;
-			SampleRate = 5512;
-			LogBase = 2; // 2 or 10;
+			MinFrequency = 20; 		// 318;
+			MaxFrequency = 22050; 	// 2000;
+			SampleRate = 44100; 	// 5512;
+			LogBase = Math.E; 		// 2 or 10;
 			
 			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation, and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
-			Stride = new IncrementalStaticStride(5115, FingerprintLength * Overlap); // 5115 / 5512 = 0,928 sec
+			//Stride = new IncrementalStaticStride(5115, FingerprintLength * Overlap); // 5115 / 5512 = 0,928 sec
+			Stride = new IncrementalStaticStride(40924, FingerprintLength * Overlap); // 40924 / 44100 = 0,928 sec
 			
 			TopWavelets = 200;
-			LogBins = 32;
+			LogBins = 32; // 40; // 32;
 			WindowFunction = new HannWindow(WdftSize);
-			NormalizeSignal = true;
-			UseDynamicLogBase = false;
+			NormalizeSignal = true; 	// true;
+			UseDynamicLogBase = false;	// false;
 		}
 
 		/// <summary>
