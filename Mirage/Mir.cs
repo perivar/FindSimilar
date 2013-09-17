@@ -280,6 +280,15 @@ namespace Mirage
 			FAILED_FILES_LOG.Delete();
 			WARNING_FILES_LOG.Delete();
 			
+			// Get database
+			Soundfingerprinting.DbStorage.DatabaseService databaseService = Soundfingerprinting.DbStorage.DatabaseService.Instance;
+			databaseService.RemoveFingerprintTable();
+			databaseService.AddFingerprintTable();
+			databaseService.RemoveHashBinTable();
+			databaseService.AddHashBinTable();
+			databaseService.RemoveTrackTable();
+			databaseService.AddTrackTable();
+			
 			// scan directory for audio files
 			try
 			{
@@ -334,7 +343,7 @@ namespace Mirage
 				                 					feature = Analyzer.AnalyzeScms(fileInfo);
 				                 					break;
 				                 				case Analyzer.AnalysisMethod.AudioFingerprinting:
-				                 					Analyzer.AnalyzeSoundfingerprinting(fileInfo, ref fileCounter);
+				                 					Analyzer.AnalyzeSoundfingerprinting(fileInfo);
 				                 					break;
 				                 			}
 				                 			if (feature != null) {
@@ -723,6 +732,10 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
+				Analyzer.SearchSoundfingerprinting(new FileInfo(@"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked\VEH1 Hard Kick - 045.wav"));
+				Console.Read();
+				return;
+				
 				//SetSimilarity.MinHash.Test();
 				
 				//TestWavelets();

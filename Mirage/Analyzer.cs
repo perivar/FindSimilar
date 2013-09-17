@@ -114,7 +114,8 @@ namespace Mirage
 
 		// Create the Soundfingerprinting Service
 		private static FingerprintService fingerprintService = GetSoundfingerprintingService();
-		private static DefaultFingerprintingConfiguration fingerprintingConfig = new DefaultFingerprintingConfiguration();
+		//private static IFingerprintingConfiguration fingerprintingConfig = new DefaultFingerprintingConfiguration();
+		private static IFingerprintingConfiguration fingerprintingConfig = new FullFrequencyFingerprintingConfiguration();
 
 		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
 		{
@@ -378,7 +379,7 @@ namespace Mirage
 			return audioFeature;
 		}
 		
-		public static Scms AnalyzeSoundfingerprinting(FileInfo filePath, ref int fileCounter, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
+		public static AudioFeature AnalyzeSoundfingerprinting(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
@@ -408,22 +409,19 @@ namespace Mirage
 			
 			// Get fingerprint signatures using the Soundfingerprinting methods
 			
+			// zero pad if the audio file is too short to perform a mfcc
+			if (audiodata.Length < (fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap))
+			{
+				int lenNew = fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap;
+				Array.Resize<float>(ref audiodata, lenNew);
+			}
+			
 			// Get database
 			DatabaseService databaseService = DatabaseService.Instance;
-			databaseService.RemoveFingerprintTable();
-			databaseService.AddFingerprintTable();
-			databaseService.RemoveHashBinTable();
-			databaseService.AddHashBinTable();
 
 			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
 			Repository repository = new Repository(permutations, databaseService, fingerprintService);
 
-			// build track
-			Track track = new Track();
-			track.Title = name;
-			track.TrackLengthSec = (int) (duration / 1000);
-			track.Id = fileCounter;
-			
 			// work config
 			WorkUnitParameterObject param = new WorkUnitParameterObject();
 			param.FingerprintingConfiguration = fingerprintingConfig;
@@ -431,13 +429,71 @@ namespace Mirage
 			param.PathToAudioFile = filePath.FullName;
 			param.MillisecondsToProcess = SECONDS_TO_ANALYZE * 1000;
 			param.StartAtMilliseconds = 0;
+
+			// build track
+			Track track = new Track();
+			track.Title = name;
+			track.TrackLengthSec = (int) (duration / 1000);
+			track.Id = -1; // this will be set by the insert method
 			
 			repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param);
-			fileCounter++;
 			
 			Dbg.WriteLine ("Soundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 
 			return null;
+		}
+		
+		public static void SearchSoundfingerprinting(FileInfo filePath) {
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
+
+			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
+			if (audiodata == null || audiodata.Length == 0)  {
+				Dbg.WriteLine("Error! - No Audio Found");
+				return;
+			}
+
+			// Name of file being processed
+			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
+			
+			// Calculate duration in ms
+			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
+			
+			// Get fingerprint signatures using the Soundfingerprinting methods
+			
+			// zero pad if the audio file is too short to perform a mfcc
+			if (audiodata.Length < (fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap))
+			{
+				int lenNew = fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap;
+				Array.Resize<float>(ref audiodata, lenNew);
+			}
+			
+			// Get database
+			DatabaseService databaseService = DatabaseService.Instance;
+
+			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
+			Repository repository = new Repository(permutations, databaseService, fingerprintService);
+
+			// work config
+			WorkUnitParameterObject param = new WorkUnitParameterObject();
+			param.FingerprintingConfiguration = fingerprintingConfig;
+			param.PathToAudioFile = filePath.FullName;
+			param.AudioSamples = audiodata;
+			param.MillisecondsToProcess = SECONDS_TO_ANALYZE * 1000;
+			param.StartAtMilliseconds = 0;
+
+			var candidates = repository.FindSimilarFromAudioSamples(25, 4, 1, param);
+			
+			// Use var keyword to enumerate dictionary
+			foreach (var pair in candidates)
+			{
+				Console.WriteLine("{0}, {1}",
+				                  pair.Key,
+				                  ((Soundfingerprinting.SoundTools.QueryStats) pair.Value).Similarity);
+			}
+			
+			Dbg.WriteLine ("Soundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 		}
 		
 		/// <summary>

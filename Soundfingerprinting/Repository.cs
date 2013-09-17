@@ -66,36 +66,48 @@
 		}
 		 */
 
-		public void Query(int trackid,
-		                  int lshHashTables,
-		                  int lshGroupsPerKey,
-		                  int thresholdTables,
-		                  WorkUnitParameterObject param) {
+		public Dictionary<int, QueryStats> FindSimilarFromAudioSamples(
+			int lshHashTables,
+			int lshGroupsPerKey,
+			int thresholdTables,
+			WorkUnitParameterObject param) {
 			
-			int recognized = 0, verified = 0;
 
 			// Get fingerprints
 			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param);
 
 			long elapsedMiliseconds = 0;
-			Track actualTrack = dbService.ReadTrackById(trackid);
 			
+			// Query the database using Min Hash
 			Dictionary<int, QueryStats> allCandidates = QueryFingerprintManager.QueryOneSongMinHash(
 				signatures,
 				dbService,
 				minHash,
-				param.MillisecondsToProcess*1000,
 				lshHashTables,
 				lshGroupsPerKey,
 				thresholdTables,
-				ref elapsedMiliseconds); /*Query the database using Min Hash*/
+				ref elapsedMiliseconds);
 
 			// Order by Hamming Similarity
-			OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel() /*Using PLINQ*/
+			// Using PLINQ
+			OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
 				.OrderBy((pair) => pair.Value.OrderingValue =
 				         pair.Value.HammingDistance / pair.Value.NumberOfTotalTableVotes
 				         + 0.4 * pair.Value.MinHammingDistance);
 
+			
+			Dictionary<int, QueryStats> stats = new Dictionary<int, QueryStats>();
+			if (order.Any())
+			{
+				foreach( KeyValuePair<int, QueryStats> kvp in order)
+				{
+					stats.Add(kvp.Key, kvp.Value);
+					//Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+				}
+			}
+			/*
+			int recognized = 0, verified = 0;
+			Track actualTrack = dbService.ReadTrackById(trackid);
 			Track recognizedTrack = null;
 			bool found = false;
 
@@ -124,6 +136,8 @@
 					}
 				}
 			}
+			 */
+			return stats;
 		}
 		
 		/// <summary>
@@ -135,13 +149,10 @@
 		/// <param name="param">WorkUnitParameterObject parameters</param>
 		public void InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param)
 		{
-			int count = 0;
-			
+			dbService.InsertTrack(track);
 			List<bool[]> images = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param);
 			List<Fingerprint> inserted = AssociateFingerprintsToTrack(images, track.Id);
 			dbService.InsertFingerprint(inserted);
-			count = inserted.Count;
-
 			HashFingerprintsUsingMinHash(inserted, track, hashTables, hashKeys);
 		}
 		
@@ -185,7 +196,7 @@
 					listToInsert.Add(hash);
 				}
 			}
-			dbService.InsertHashBin(listToInsert); //Insert
+			dbService.InsertHashBin(listToInsert);
 		}
 		
 	}

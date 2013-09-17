@@ -40,7 +40,9 @@ namespace Soundfingerprinting.DbStorage
 			string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 			string dbdir = Path.Combine(homedir,".mirage");
 			string dbfile = Path.Combine(dbdir, "soundfingerprinting.db");
-			string sqlite = string.Format("Data Source={0};Version=3", dbfile);
+			string sqlite = string.Format("Data Source={0};Version=3;", dbfile);
+			sqlite += "Count Changes=off;Journal Mode=off;";
+			sqlite += "Pooling=true;Cache Size=10000;Page Size=4096;Synchronous=off";
 			
 			if (!Directory.Exists(dbdir)) {
 				Directory.CreateDirectory(dbdir);
@@ -80,7 +82,7 @@ namespace Soundfingerprinting.DbStorage
 				dbcmd = dbcon.CreateCommand();
 			}
 			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS fingerprints"
-				+ " (id INTEGER PRIMARY KEY AUTOINCREMENT, trackid INTEGER, songorder INTEGER, signature BLOB)";
+				+ " (id INTEGER PRIMARY KEY AUTOINCREMENT, trackid INTEGER, songorder INTEGER, totalfingerprints INTEGER, signature BLOB)";
 			
 			try {
 				dbcmd.ExecuteNonQuery();
@@ -127,6 +129,42 @@ namespace Soundfingerprinting.DbStorage
 			return true;
 		}
 		#endregion
+
+		#region Add and Remove the Track table
+		public bool RemoveTrackTable()
+		{
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "DROP TABLE IF EXISTS tracks";
+			
+			try {
+				dbcmd.ExecuteNonQuery();
+			} catch (SQLiteException){
+				return false;
+			}
+			
+			return true;
+		}
+		
+		public bool AddTrackTable() {
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS tracks"
+				+ " (id INTEGER PRIMARY KEY AUTOINCREMENT, albumid INTEGER, length INTEGER, artist TEXT, title TEXT)";
+
+			try {
+				dbcmd.ExecuteNonQuery();
+			} catch (SQLiteException){
+				return false;
+			}
+			
+			return true;
+		}
+		#endregion
 		
 		#region Inserts
 		public void InsertFingerprint(Fingerprint fingerprint)
@@ -152,6 +190,7 @@ namespace Soundfingerprinting.DbStorage
 			try {
 				dbcmd.Prepare();
 				dbcmd.ExecuteNonQuery();
+				dbcmd.Dispose();
 			} catch (Exception e) {
 				throw e;
 			}
@@ -161,31 +200,117 @@ namespace Soundfingerprinting.DbStorage
 		{
 			IDbDataParameter dbTrackIdParam = new SQLiteParameter("@trackid", DbType.Int32);
 			IDbDataParameter dbSongOrderParam = new SQLiteParameter("@songorder", DbType.Int32);
+			IDbDataParameter dbTotalFingerprintsParam = new SQLiteParameter("@totalfingerprints", DbType.Int32);
 			IDbDataParameter dbSignatureParam = new SQLiteParameter("@signature", DbType.Binary);
 			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
-			}
-			dbcmd.CommandText = "INSERT INTO fingerprints (trackid, songorder, signature) " +
-				"VALUES (@trackid, @songorder, @signature)";
+				dbcmd.CommandText = "INSERT INTO fingerprints (trackid, songorder, totalfingerprints, signature) " +
+					"VALUES (@trackid, @songorder, @totalfingerprints, @signature); SELECT last_insert_rowid();";
 
-			dbcmd.Parameters.Add(dbTrackIdParam);
-			dbcmd.Parameters.Add(dbSongOrderParam);
-			dbcmd.Parameters.Add(dbSignatureParam);
+				dbcmd.Parameters.Add(dbTrackIdParam);
+				dbcmd.Parameters.Add(dbSongOrderParam);
+				dbcmd.Parameters.Add(dbTotalFingerprintsParam);
+				dbcmd.Parameters.Add(dbSignatureParam);
+				dbcmd.Prepare();
+				
+				int count = collection.Count();
+				using (var transaction = dbcon.BeginTransaction())
+				{
+					try {
+						foreach (var fingerprint in collection) {
+							dbTrackIdParam.Value = fingerprint.TrackId;
+							dbSongOrderParam.Value = fingerprint.SongOrder;
+							dbTotalFingerprintsParam.Value = fingerprint.TotalFingerprintsPerTrack = count;
+							dbSignatureParam.Value = BoolToByte(fingerprint.Signature);
+
+							//dbcmd.ExecuteNonQuery();
+							fingerprint.Id = Convert.ToInt32(dbcmd.ExecuteScalar());
+						}
+						transaction.Commit();
+						dbcmd.Dispose();
+						
+					} catch (Exception e1) {
+						// attempt to rollback the transaction
+						try {
+							transaction.Rollback();
+						} catch (Exception e2) {
+							// do nothing
+						}
+						throw e1;
+					}
+				}
+			}
+		}
+
+		public void InsertTrack(Track track)
+		{
+			IDbDataParameter dbAlbumIdParam = new SQLiteParameter("@albumid", DbType.Int64);
+			IDbDataParameter dbLengthParam = new SQLiteParameter("@length", DbType.Int32);
+			IDbDataParameter dbArtistParam = new SQLiteParameter("@artist", DbType.String);
+			IDbDataParameter dbTitleParam = new SQLiteParameter("@title", DbType.String);
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "INSERT INTO tracks (albumid, length, artist, title) " +
+				"VALUES (@albumid, @length, @artist, @title); SELECT last_insert_rowid();";
+
+			dbcmd.Parameters.Add(dbAlbumIdParam);
+			dbcmd.Parameters.Add(dbLengthParam);
+			dbcmd.Parameters.Add(dbArtistParam);
+			dbcmd.Parameters.Add(dbTitleParam);
+
+			dbAlbumIdParam.Value = track.AlbumId;
+			dbLengthParam.Value = track.TrackLengthSec;
+			dbArtistParam.Value = track.Artist;
+			dbTitleParam.Value = track.Title;
+			
+			try {
+				dbcmd.Prepare();
+				//dbcmd.ExecuteNonQuery();
+				track.Id = Convert.ToInt32(dbcmd.ExecuteScalar());
+				dbcmd.Dispose();
+			} catch (Exception e) {
+				throw e;
+			}
+		}
+
+		public void InsertTrack(IEnumerable<Track> collection)
+		{
+			IDbDataParameter dbAlbumIdParam = new SQLiteParameter("@albumid", DbType.Int64);
+			IDbDataParameter dbLengthParam = new SQLiteParameter("@length", DbType.Int32);
+			IDbDataParameter dbArtistParam = new SQLiteParameter("@artist", DbType.String);
+			IDbDataParameter dbTitleParam = new SQLiteParameter("@title", DbType.String);
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "INSERT INTO tracks (albumid, length, artist, title) " +
+				"VALUES (@albumid, @length, @artist, @title)";
+
+			dbcmd.Parameters.Add(dbAlbumIdParam);
+			dbcmd.Parameters.Add(dbLengthParam);
+			dbcmd.Parameters.Add(dbArtistParam);
+			dbcmd.Parameters.Add(dbTitleParam);
 			dbcmd.Prepare();
 			
 			using (var transaction = dbcon.BeginTransaction())
 			{
 				try {
-					foreach (var fingerprint in collection) {
-						dbTrackIdParam.Value = fingerprint.TrackId;
-						dbSongOrderParam.Value = fingerprint.SongOrder;
-						dbSignatureParam.Value = BoolToByte(fingerprint.Signature);
-
+					foreach (var track in collection) {
+						dbAlbumIdParam.Value = track.AlbumId;
+						dbLengthParam.Value = track.TrackLengthSec;
+						dbArtistParam.Value = track.Artist;
+						dbTitleParam.Value = track.Title;
+						
 						dbcmd.ExecuteNonQuery();
 					}
 					transaction.Commit();
+					dbcmd.Dispose();
 					
 				} catch (Exception e1) {
 					// attempt to rollback the transaction
@@ -197,16 +322,6 @@ namespace Soundfingerprinting.DbStorage
 					throw e1;
 				}
 			}
-		}
-
-		public void InsertTrack(Track track)
-		{
-			//trackDao.Insert(track);
-		}
-
-		public void InsertTrack(IEnumerable<Track> collection)
-		{
-			//trackDao.Insert(collection);
 		}
 
 		public void InsertHashBin(HashBinMinHash hashBin)
@@ -236,6 +351,7 @@ namespace Soundfingerprinting.DbStorage
 			try {
 				dbcmd.Prepare();
 				dbcmd.ExecuteNonQuery();
+				dbcmd.Dispose();
 			} catch (Exception e) {
 				throw e;
 			}
@@ -251,49 +367,50 @@ namespace Soundfingerprinting.DbStorage
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
-			}
-			dbcmd.CommandText = "INSERT INTO hashbins (hashbin, hashtable, trackid, fingerprintid) " +
-				"VALUES (@hashbin, @hashtable, @trackid, @fingerprintid)";
+				dbcmd.CommandText = "INSERT INTO hashbins (hashbin, hashtable, trackid, fingerprintid) " +
+					"VALUES (@hashbin, @hashtable, @trackid, @fingerprintid)";
 
-			dbcmd.Parameters.Add(dbHashBinParam);
-			dbcmd.Parameters.Add(dbHashTableParam);
-			dbcmd.Parameters.Add(dbTrackIdParam);
-			dbcmd.Parameters.Add(dbFingerprintIdParam);
-			dbcmd.Prepare();
-			
-			using (var transaction = dbcon.BeginTransaction())
-			{
-				try {
-					foreach (var hashBin in collection) {
-						dbHashBinParam.Value = hashBin.Bin;
-						dbHashTableParam.Value = hashBin.HashTable;
-						dbTrackIdParam.Value = hashBin.TrackId;
-						dbFingerprintIdParam.Value = hashBin.FingerprintId;
-						
-						dbcmd.ExecuteNonQuery();
-					}
-					transaction.Commit();
-					
-				} catch (Exception e1) {
-					// attempt to rollback the transaction
+				dbcmd.Parameters.Add(dbHashBinParam);
+				dbcmd.Parameters.Add(dbHashTableParam);
+				dbcmd.Parameters.Add(dbTrackIdParam);
+				dbcmd.Parameters.Add(dbFingerprintIdParam);
+				dbcmd.Prepare();
+				
+				using (var transaction = dbcon.BeginTransaction())
+				{
 					try {
-						transaction.Rollback();
-					} catch (Exception e2) {
-						// do nothing
+						foreach (var hashBin in collection) {
+							dbHashBinParam.Value = hashBin.Bin;
+							dbHashTableParam.Value = hashBin.HashTable;
+							dbTrackIdParam.Value = hashBin.TrackId;
+							dbFingerprintIdParam.Value = hashBin.FingerprintId;
+							
+							dbcmd.ExecuteNonQuery();
+						}
+						transaction.Commit();
+						dbcmd.Dispose();
+						
+					} catch (Exception e1) {
+						// attempt to rollback the transaction
+						try {
+							transaction.Rollback();
+						} catch (Exception e2) {
+							// do nothing
+						}
+						throw e1;
 					}
-					throw e1;
 				}
 			}
 		}
 		#endregion
 
+		#region Reads
 		public IDictionary<Track, int> ReadDuplicatedTracks()
 		{
 			//return trackDao.ReadDuplicatedTracks();
 			return null;
 		}
-
-		#region Reads
+		
 		public IList<Fingerprint> ReadFingerprints()
 		{
 			var fingerprints = new List<Fingerprint>();
@@ -362,9 +479,8 @@ namespace Soundfingerprinting.DbStorage
 				dbcmd = dbcon.CreateCommand();
 			}
 			
-			dbcmd.CommandText = "SELECT id, trackid, songorder, signature FROM [fingerprints] WHERE trackid in (@trackids) LIMIT @limit";
-			dbcmd.Parameters.Add(new SQLiteParameter("@trackids") { Value = statementValueTags});
-			dbcmd.Parameters.Add(new SQLiteParameter("@limit") { Value = numberOfFingerprintsToRead });
+			String query = String.Format("SELECT id, trackid, songorder, signature FROM [fingerprints] WHERE (trackid IN ({0})) LIMIT {0};", statementValueTags, numberOfFingerprintsToRead);
+			dbcmd.CommandText = query;
 			dbcmd.CommandType = CommandType.Text;
 			dbcmd.Prepare();
 
@@ -407,7 +523,7 @@ namespace Soundfingerprinting.DbStorage
 				dbcmd = dbcon.CreateCommand();
 			}
 
-			dbcmd.CommandText = "SELECT trackid, songorder, signature FROM [fingerprints] WHERE [id] = @id";
+			dbcmd.CommandText = "SELECT trackid, songorder, totalfingerprints, signature FROM [fingerprints] WHERE [id] = @id";
 			dbcmd.Parameters.Add(new SQLiteParameter("@id") { Value = id });
 			dbcmd.CommandType = CommandType.Text;
 			dbcmd.Prepare();
@@ -421,7 +537,8 @@ namespace Soundfingerprinting.DbStorage
 			fingerprint.Id = id;
 			fingerprint.TrackId = reader.GetInt32(0);
 			fingerprint.SongOrder = reader.GetInt32(1);
-			fingerprint.Signature = ByteToBool((byte[]) reader.GetValue(2));
+			fingerprint.TotalFingerprintsPerTrack = reader.GetInt32(2);
+			fingerprint.Signature = ByteToBool((byte[]) reader.GetValue(3));
 			
 			reader.Close();
 			return fingerprint;
@@ -438,8 +555,8 @@ namespace Soundfingerprinting.DbStorage
 			
 			String statementValueTags = String.Join(",", ids);
 			
-			dbcmd.CommandText = "SELECT id, trackid, songorder, signature FROM [fingerprints] WHERE id in (@ids)";
-			dbcmd.Parameters.Add(new SQLiteParameter("@ids") { Value = statementValueTags });
+			String query = String.Format("SELECT id, trackid, songorder, totalfingerprints, signature FROM [fingerprints] WHERE (id IN ({0}));", statementValueTags);
+			dbcmd.CommandText = query;
 			dbcmd.CommandType = CommandType.Text;
 			dbcmd.Prepare();
 
@@ -449,7 +566,8 @@ namespace Soundfingerprinting.DbStorage
 				fingerprint.Id = reader.GetInt32(0);
 				fingerprint.TrackId = reader.GetInt32(1);
 				fingerprint.SongOrder = reader.GetInt32(2);
-				fingerprint.Signature = ByteToBool((byte[]) reader.GetValue(3));
+				fingerprint.TotalFingerprintsPerTrack = reader.GetInt32(3);
+				fingerprint.Signature = ByteToBool((byte[]) reader.GetValue(4));
 				fingerprints.Add(fingerprint);
 			}
 			
@@ -457,31 +575,79 @@ namespace Soundfingerprinting.DbStorage
 			return fingerprints;
 		}
 
-		public virtual IList<Track> ReadTracks()
+		public IList<Track> ReadTracks()
 		{
-			//return trackDao.Read();
-			return null;
+			var tracks = new List<Track>();
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			
+			dbcmd.CommandText = "SELECT id, albumid, length, artist, title FROM [tracks]";
+			dbcmd.CommandType = CommandType.Text;
+
+			IDataReader reader = dbcmd.ExecuteReader();
+			while (reader.Read()) {
+				Track track = new Track();
+				track.Id = reader.GetInt32(0);
+				track.AlbumId = reader.GetInt32(1);
+				track.TrackLengthSec = reader.GetInt32(2);
+				track.Artist = reader.GetString(3);
+				track.Title = reader.GetString(4);
+				tracks.Add(track);
+			}
+			
+			reader.Close();
+			return tracks;
 		}
 
 		public Track ReadTrackById(int id)
 		{
-			//return trackDao.ReadById(id);
-			return null;
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			dbcmd.CommandText = "SELECT albumid, length, artist, title FROM [tracks] WHERE [id] = @id";
+			dbcmd.Parameters.Add(new SQLiteParameter("@id") { Value = id });
+			dbcmd.CommandType = CommandType.Text;
+			dbcmd.Prepare();
+
+			IDataReader reader = dbcmd.ExecuteReader();
+			if (!reader.Read()) {
+				return null;
+			}
+			
+			Track track = new Track();
+			track.Id = id;
+			track.AlbumId = reader.GetInt32(0);
+			track.TrackLengthSec = reader.GetInt32(1);
+			if (!reader.IsDBNull(2)) {
+				track.Artist = reader.GetString(2);
+			}
+			track.Title = reader.GetString(3);
+			
+			reader.Close();
+			return track;
 		}
 
 		public Track ReadTrackByArtistAndTitleName(string artist, string title)
 		{
-			//return trackDao.ReadTrackByArtistAndTitleName(artist, title);
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public IList<Track> ReadTrackByFingerprint(int id)
 		{
-			//return trackDao.ReadTrackByFingerprintId(id);
-			return null;
+			throw new NotImplementedException();
 		}
 
-		public IDictionary<int, IList<HashBinMinHash>> ReadFingerprintsByHashBucketLsh(long[] hashBuckets)
+		/// <summary>
+		/// Find fingerprints using hash-buckets (e.g. HashBins)
+		/// </summary>
+		/// <param name="hashBuckets"></param>
+		/// <returns>Return dictionary with fingerprintids as keys and the corresponding hashbins as values</returns>
+		public IDictionary<int, IList<HashBinMinHash>> ReadFingerprintsByHashBucketLshSlow(long[] hashBuckets)
 		{
 			IDbDataParameter dbHashBinParam = new SQLiteParameter("@hashbin", DbType.Int64);
 			
@@ -492,7 +658,6 @@ namespace Soundfingerprinting.DbStorage
 			
 			dbcmd.CommandText = "SELECT id, hashbin, hashtable, trackid, fingerprintid FROM hashbins WHERE hashbin = @hashbin";
 
-			// TODO: verify that this can go here and does not need to be within the foreach loop below
 			dbcmd.Parameters.Add(dbHashBinParam);
 			dbcmd.CommandType = CommandType.Text;
 			dbcmd.Prepare();
@@ -529,31 +694,71 @@ namespace Soundfingerprinting.DbStorage
 
 			return result;
 		}
+		
+		/// <summary>
+		/// Find fingerprints using hash-buckets (e.g. HashBins)
+		/// </summary>
+		/// <param name="hashBuckets"></param>
+		/// <returns>Return dictionary with fingerprintids as keys and the corresponding hashbins as values</returns>
+		public IDictionary<int, IList<HashBinMinHash>> ReadFingerprintsByHashBucketLsh(long[] hashBuckets) {
+			
+			IDictionary<int, IList<HashBinMinHash>> result = new Dictionary<int, IList<HashBinMinHash>>();
+			
+			String statementValueTags = String.Join(",", hashBuckets);
+
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			String query = String.Format("SELECT id, hashbin, hashtable, trackid, fingerprintid FROM hashbins WHERE (hashbin IN ({0}))", statementValueTags);
+			dbcmd.CommandText = query;
+			dbcmd.CommandType = CommandType.Text;
+			dbcmd.Prepare();
+			
+			IDataReader reader = dbcmd.ExecuteReader();
+			while (reader.Read()) {
+				HashBinMinHash hash = new HashBinMinHash();
+				hash.Id = reader.GetInt32(0);
+				hash.Bin = reader.GetInt64(1);
+				hash.HashTable = reader.GetInt32(2);
+				hash.TrackId = reader.GetInt32(3);
+				hash.FingerprintId = reader.GetInt32(4);
+				
+				if (result.ContainsKey(hash.FingerprintId))
+				{
+					result[hash.FingerprintId].Add(hash);
+				}
+				else
+				{
+					result.Add(hash.FingerprintId, new List<HashBinMinHash>(new[] { hash }));
+				}
+			}
+			
+			reader.Close();
+			return result;
+		}
 		#endregion
 
 		#region Deletes
 		public int DeleteTrack(int trackId)
 		{
-			//return trackDao.DeleteTrack(trackId);
-			return -1;
+			throw new NotImplementedException();
 		}
 
 		public int DeleteTrack(Track track)
 		{
-			//return DeleteTrack(track.Id);
-			return -1;
+			throw new NotImplementedException();
 		}
 
 		public int DeleteTrack(IEnumerable<int> collection)
 		{
-			//return collection.Sum(trackId => trackDao.DeleteTrack(trackId));
-			return -1;
+			throw new NotImplementedException();
 		}
 
 		public int DeleteTrack(IEnumerable<Track> collection)
 		{
-			//return DeleteTrack(collection.Select(track => track.Id));
-			return -1;
+			throw new NotImplementedException();
 		}
 		#endregion
 		

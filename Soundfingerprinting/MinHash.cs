@@ -94,8 +94,8 @@
 		}
 
 		/// <summary>
-		///   Compute LSH hash buckets which will be inserted into hash tables.
-		///   Each fingerprint will have a candidate in each of the hash tables.
+		/// Compute LSH hash buckets which will be inserted into hash tables.
+		/// Each fingerprint will have a candidate in each of the hash tables.
 		/// </summary>
 		/// <param name = "minHashes">Min Hashes gathered from every fingerprint [N = 100]</param>
 		/// <param name = "numberOfHashTables">Number of hash tables [L = 25]</param>
@@ -127,7 +127,7 @@
 		}
 
 		/// <summary>
-		///   Calculate Hamming Distance between two fingerprints
+		/// Calculate Hamming Distance between two fingerprints
 		/// </summary>
 		/// <param name = "a">Signature 'A'</param>
 		/// <param name = "b">Signature 'B'</param>
@@ -147,7 +147,7 @@
 		}
 
 		/// <summary>
-		///   Calculate hamming distance between 2 longs
+		/// Calculate hamming distance between 2 longs
 		/// </summary>
 		/// <param name = "a">First item</param>
 		/// <param name = "b">Second item</param>
@@ -204,7 +204,7 @@
 		}
 
 		/// <summary>
-		///   Calculates Jacquard similarity between 2 buckets
+		/// Calculates Jacquard similarity between 2 buckets
 		/// </summary>
 		/// <param name = "aBucket">First bucket</param>
 		/// <param name = "bBucket">Second bucket</param>

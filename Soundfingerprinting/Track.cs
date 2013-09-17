@@ -89,7 +89,7 @@ namespace Soundfingerprinting.DbStorage.Entities
 		}
 		
 		public override string ToString() {
-			return String.Format("Id: {0}, artist: {1}, title: {2}, albumId: {3}", Id, Artist, Title, AlbumId);
+			return String.Format("Id: {0}, artist: {1}, title: {2}, albumId: {3}, length: {4}", Id, Artist, Title, AlbumId, TrackLengthSec);
 		}
 
 	}
