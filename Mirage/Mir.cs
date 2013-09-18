@@ -49,7 +49,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.9";
+		public static string VERSION = "1.0.10";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -732,9 +732,9 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
-				Analyzer.SearchSoundfingerprinting(new FileInfo(@"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked\VEH1 Hard Kick - 045.wav"));
-				Console.Read();
-				return;
+				//Analyzer.SearchSoundfingerprinting(new FileInfo(@"C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects\Deadmau5 - Right the second Mehran abbasi reworked\VEH1 Hard Kick - 045.wav"));
+				//Console.Read();
+				//return;
 				
 				//SetSimilarity.MinHash.Test();
 				

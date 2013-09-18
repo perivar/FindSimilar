@@ -18,12 +18,12 @@
 		/// <summary>
 		/// Query one specific song using MinHash algorithm.
 		/// </summary>
-		/// <param name = "signatures">Signature signatures from a song</param>
-		/// <param name = "dbService">DatabaseService used to query the underlying database</param>
-		/// <param name = "lshHashTables">Number of hash tables from the database</param>
-		/// <param name = "lshGroupsPerKey">Number of groups per hash table</param>
-		/// <param name = "thresholdTables">Threshold percentage [0.07 for 20 LHash Tables, 0.17 for 25 LHashTables]</param>
-		/// <param name = "queryTime">Set buy the method, representing the query length</param>
+		/// <param name="signatures">Signature signatures from a song</param>
+		/// <param name="dbService">DatabaseService used to query the underlying database</param>
+		/// <param name="lshHashTables">Number of hash tables from the database</param>
+		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
+		/// <param name="thresholdTables">Threshold percentage [0.07 for 20 LHash Tables, 0.17 for 25 LHashTables]</param>
+		/// <param name="queryTime">Set buy the method, representing the query length</param>
 		/// <returns>Dictionary with Tracks ID's and the Query Statistics</returns>
 		public static Dictionary<Int32, QueryStats> QueryOneSongMinHash(
 			IEnumerable<bool[]> signatures,
@@ -66,38 +66,41 @@
 		}
 
 		/// <summary>
-		///   Arrange candidates according to the corresponding calculation between initial signature and actual signature
+		/// Arrange candidates according to the corresponding calculation between initial signature and actual signature
 		/// </summary>
-		/// <param name = "f">Actual signature gathered from the song</param>
-		/// <param name = "potentialCandidates">Potential fingerprints returned from the database</param>
-		/// <param name = "lHashTables">Number of L Hash tables</param>
-		/// <param name = "kKeys">Number of keys per table</param>
-		/// <param name = "trackIdQueryStats">Result set</param>
+		/// <param name="f">Actual signature gathered from the song</param>
+		/// <param name="potentialCandidates">Potential fingerprints returned from the database</param>
+		/// <param name="lHashTables">Number of L Hash tables</param>
+		/// <param name="kKeys">Number of keys per table</param>
+		/// <param name="trackIdQueryStats">Result set</param>
 		/// <returns>Result set</returns>
 		private static Dictionary<Int32, QueryStats> ArrangeCandidatesAccordingToFingerprints(bool[] f, Dictionary<Fingerprint, int> potentialCandidates,
 		                                                                                      int lHashTables, int kKeys, Dictionary<Int32, QueryStats> trackIdQueryStats)
 		{
-			/*Most time consuming method while performing the necessary calculation*/
+			// Most time consuming method while performing the necessary calculation
 			foreach (KeyValuePair<Fingerprint, int> pair in potentialCandidates)
 			{
 				Fingerprint fingerprint = pair.Key;
 				int tableVotes = pair.Value;
-				/*Compute Hamming Distance of actual and read signature*/
+				
+				// Compute Hamming Distance of actual and read signature
 				int hammingDistance = MinHash.CalculateHammingDistance(f, fingerprint.Signature)*tableVotes;
 				double jaqSimilarity = MinHash.CalculateJaqSimilarity(f, fingerprint.Signature);
-				/*Add to sample set*/
+				
+				// Add to sample set
 				Int32 trackId = fingerprint.TrackId;
 				if (!trackIdQueryStats.ContainsKey(trackId))
 					trackIdQueryStats.Add(trackId, new QueryStats(0, 0, 0, -1, -1, 0, Int32.MinValue, 0, Int32.MaxValue, Int32.MinValue, Int32.MinValue, Double.MaxValue));
+				
 				QueryStats stats = trackIdQueryStats[trackId];
-				stats.HammingDistance += hammingDistance; /*Sum hamming distance of each potential candidate*/
-				stats.NumberOfTrackIdOccurences++; /*Increment occurrence count*/
-				stats.NumberOfTotalTableVotes += tableVotes; /*Find total table votes*/
-				stats.HammingDistanceByTrack += hammingDistance/tableVotes; /*Find hamming distance by track id occurrence*/
-				if (stats.MinHammingDistance > hammingDistance/tableVotes) /*Find minimal hamming distance over the entire set*/
-				stats.MinHammingDistance = hammingDistance/tableVotes;
-				if (stats.MaxTableVote < tableVotes) /*Find maximal table vote*/
-				stats.MaxTableVote = tableVotes;
+				stats.HammingDistance += hammingDistance; 		// Sum hamming distance of each potential candidate
+				stats.NumberOfTrackIdOccurences++;  			// Increment occurrence count
+				stats.NumberOfTotalTableVotes += tableVotes; 	// Find total table votes
+				stats.HammingDistanceByTrack += hammingDistance/tableVotes; // Find hamming distance by track id occurrence
+				if (stats.MinHammingDistance > hammingDistance/tableVotes) 	// Find minimal hamming distance over the entire set
+					stats.MinHammingDistance = hammingDistance/tableVotes;
+				if (stats.MaxTableVote < tableVotes) // Find maximal table vote
+					stats.MaxTableVote = tableVotes;
 				if (stats.Similarity > jaqSimilarity)
 					stats.Similarity = jaqSimilarity;
 			}
@@ -107,8 +110,8 @@
 		/// <summary>
 		/// Select potential matches out of the entire dataset
 		/// </summary>
-		/// <param name = "dataset">Dataset to consider</param>
-		/// <param name = "thresholdTables">Threshold tables</param>
+		/// <param name="dataset">Dataset to consider</param>
+		/// <param name="thresholdTables">Threshold tables</param>
 		/// <returns>Sub dictionary</returns>
 		public static Dictionary<int, IList<HashBinMinHash>> SelectPotentialMatchesOutOfEntireDataset(IDictionary<int, IList<HashBinMinHash>> dataset, int thresholdTables)
 		{

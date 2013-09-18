@@ -56,9 +56,9 @@ using Soundfingerprinting.Fingerprinting.WorkUnitBuilder;
 using Soundfingerprinting.Image;
 using Soundfingerprinting.Audio.Models;
 using Soundfingerprinting.Hashing;
-
 using Soundfingerprinting.DbStorage;
 using Soundfingerprinting.DbStorage.Entities;
+using Soundfingerprinting.SoundTools;
 
 // Heavily modified by perivar@nerseth.com
 namespace Mirage
@@ -433,7 +433,8 @@ namespace Mirage
 			// build track
 			Track track = new Track();
 			track.Title = name;
-			track.TrackLengthSec = (int) (duration / 1000);
+			track.TrackLengthMs = (int) duration;
+			track.FilePath = filePath.FullName;
 			track.Id = -1; // this will be set by the insert method
 			
 			repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param);
@@ -443,7 +444,7 @@ namespace Mirage
 			return null;
 		}
 		
-		public static void SearchSoundfingerprinting(FileInfo filePath) {
+		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
@@ -451,7 +452,7 @@ namespace Mirage
 			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
 			if (audiodata == null || audiodata.Length == 0)  {
 				Dbg.WriteLine("Error! - No Audio Found");
-				return;
+				return null;
 			}
 
 			// Name of file being processed
@@ -483,15 +484,18 @@ namespace Mirage
 			param.MillisecondsToProcess = SECONDS_TO_ANALYZE * 1000;
 			param.StartAtMilliseconds = 0;
 
-			var candidates = repository.FindSimilarFromAudioSamples(25, 4, 1, param);
+			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(25, 4, 2, param);
+			return candidates;
 			
+			/*
 			// Use var keyword to enumerate dictionary
 			foreach (var pair in candidates)
 			{
-				Console.WriteLine("{0}, {1}",
-				                  pair.Key,
-				                  ((Soundfingerprinting.SoundTools.QueryStats) pair.Value).Similarity);
+				Console.WriteLine("{0} - {1:0.00}",
+				                  pair.Key.Title,
+				                  pair.Value);
 			}
+			 */
 			
 			Dbg.WriteLine ("Soundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 		}

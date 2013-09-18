@@ -8,24 +8,27 @@ namespace Soundfingerprinting.DbStorage.Entities
 
 		private string title;
 
-		private int trackLengthSec;
+		private int trackLengthMs;
+		
+		private string filePath;
 
 		public Track()
 		{
 		}
 
-		public Track(int trackId, string artist, string title, int albumId)
+		public Track(int trackId, string artist, string title, int albumId, string filePath)
 		{
 			Id = trackId;
 			Artist = artist;
 			Title = title;
 			AlbumId = albumId;
+			FilePath = filePath;
 		}
 
-		public Track(int trackId, string artist, string title, int albumId, int trackLength)
-			: this(trackId, artist, title, albumId)
+		public Track(int trackId, string artist, string title, int albumId, string filePath, int trackLength)
+			: this(trackId, artist, title, albumId, filePath)
 		{
-			TrackLengthSec = trackLength;
+			TrackLengthMs = trackLength;
 		}
 
 		public int Id { get; set; }
@@ -70,11 +73,11 @@ namespace Soundfingerprinting.DbStorage.Entities
 
 		public int AlbumId { get; set; }
 
-		public int TrackLengthSec
+		public int TrackLengthMs
 		{
 			get
 			{
-				return trackLengthSec;
+				return trackLengthMs;
 			}
 
 			set
@@ -84,12 +87,21 @@ namespace Soundfingerprinting.DbStorage.Entities
 					throw new Exception("Track's Length cannot be less than 0");
 				}
 
-				trackLengthSec = value;
+				trackLengthMs = value;
+			}
+		}
+		
+		public string FilePath {
+			get {
+				return filePath;
+			}
+			set {
+				filePath = value;
 			}
 		}
 		
 		public override string ToString() {
-			return String.Format("Id: {0}, artist: {1}, title: {2}, albumId: {3}, length: {4}", Id, Artist, Title, AlbumId, TrackLengthSec);
+			return String.Format("Id: {0}, artist: {1}, title: {2}, albumId: {3}, length: {4} ms", Id, Artist, Title, AlbumId, TrackLengthMs);
 		}
 
 	}

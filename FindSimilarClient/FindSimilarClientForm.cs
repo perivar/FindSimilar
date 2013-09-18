@@ -17,6 +17,11 @@ using FindSimilar.AudioProxies;
 using Mirage;
 using Comirva.Audio.Feature;
 
+using Soundfingerprinting.Dao;
+using Soundfingerprinting.Dao.Entities;
+using Soundfingerprinting.DbStorage;
+using Soundfingerprinting.DbStorage.Entities;
+
 namespace FindSimilar
 {
 	/// <summary>
@@ -39,6 +44,8 @@ namespace FindSimilar
 		private string selectedFilePath = null;
 		private double percentage = DEFAULT_PERCENTAGE_ENABLED;
 		
+		private DatabaseService databaseService = null;
+
 		public FindSimilarClientForm()
 		{
 			//
@@ -61,12 +68,13 @@ namespace FindSimilar
 			this.dataGridView1.Columns.Add("Duration_Similarity", "Duration (ms) / Similarity");
 			this.dataGridView1.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
-			db = new Db();
+			this.db = new Db();
+			this.databaseService = DatabaseService.Instance;
 			
 			ReadAllTracks();
 		}
 		
-		private void ReadAllTracks() {
+		private void ReadAllTracksOld() {
 			
 			// Clear all rows
 			this.dataGridView1.Rows.Clear();
@@ -77,6 +85,22 @@ namespace FindSimilar
 			int counter = 0;
 			foreach (string filePath in filesProcessed.Keys) {
 				this.dataGridView1.Rows.Add(filesProcessed[filePath].Key, filePath, filesProcessed[filePath].Value);
+				if (counter == DEFAULT_NUM_TO_TAKE) break;
+				counter++;
+			}
+		}
+
+		private void ReadAllTracks() {
+			
+			// Clear all rows
+			this.dataGridView1.Rows.Clear();
+			
+			IList<Track> tracks = databaseService.ReadTracks();
+			Console.Out.WriteLine("Database contains {0} processed files.", tracks.Count);
+			
+			int counter = 0;
+			foreach (Track track in tracks) {
+				this.dataGridView1.Rows.Add(track.Id, track.FilePath, track.TrackLengthMs);
 				if (counter == DEFAULT_NUM_TO_TAKE) break;
 				counter++;
 			}
@@ -320,8 +344,8 @@ namespace FindSimilar
 		}
 		#endregion
 		
-		#region Find methods
-		private void FindByFilePath(string queryPath) {
+		#region Old Find methods
+		private void FindByFilePathOld(string queryPath) {
 			if (queryPath != "") {
 				FileInfo fi = new FileInfo(queryPath);
 				if (fi.Exists) {
@@ -341,13 +365,10 @@ namespace FindSimilar
 				} else {
 					MessageBox.Show("File does not exist!");
 				}
-
-				// reset
-				//selectedFilePath = null;
 			}
 		}
-		
-		private void FindById(int queryId) {
+
+		private void FindByIdOld(int queryId) {
 			if (queryId != -1) {
 				int[] seedTrackIds = new int[] { queryId };
 				
@@ -370,12 +391,9 @@ namespace FindSimilar
 					MessageBox.Show("File-id does not exist!");
 				}
 			}
-			
-			// reset
-			//selectedFilePath = null;
 		}
 		
-		private void FindByString(string queryString) {
+		private void FindByStringOld(string queryString) {
 
 			if (queryString != "") {
 				
@@ -384,6 +402,7 @@ namespace FindSimilar
 
 				// search for tracks
 				string whereClause = string.Format("WHERE name like '%{0}%'", queryString);
+
 				Dictionary<string, KeyValuePair<int, long>> filesFound = db.GetTracks(whereClause);
 				Console.Out.WriteLine("Database contains {0} files that matches the query '{1}'.", filesFound.Count, queryString);
 				
@@ -394,10 +413,76 @@ namespace FindSimilar
 					counter++;
 				}
 			}
-			
-			// reset
-			//selectedFilePath = null;
 		}
+		
+		#endregion
+
+		#region Find methods
+		private void FindByFilePath(string queryPath) {
+			if (queryPath != "") {
+				FileInfo fi = new FileInfo(queryPath);
+				if (fi.Exists) {
+					
+					// Clear all rows
+					this.dataGridView1.Rows.Clear();
+					
+					Dictionary<Track, double> candidates = Analyzer.SimilarTracksSoundfingerprinting(fi);
+					
+					// Add the found similar tracks
+					foreach (var entry in candidates)
+					{
+						this.dataGridView1.Rows.Add(entry.Key.Id, entry.Key.FilePath, entry.Value);
+					}
+				} else {
+					MessageBox.Show("File does not exist!");
+				}
+			}
+		}
+		
+		private void FindById(int queryId) {
+			
+			if (queryId != -1) {
+				
+				// Clear all rows
+				this.dataGridView1.Rows.Clear();
+
+				Track track = databaseService.ReadTrackById(queryId);
+				if (track != null) {
+					
+					Dictionary<Track, double> candidates = Analyzer.SimilarTracksSoundfingerprinting(new FileInfo(track.FilePath));
+					
+					// Add the found similar tracks
+					foreach (var entry in candidates)
+					{
+						this.dataGridView1.Rows.Add(entry.Key.Id, entry.Key.FilePath, entry.Value);
+					}
+				} else {
+					MessageBox.Show("File-id does not exist!");
+				}
+			}
+		}
+		
+		private void FindByString(string queryString) {
+			
+			if (queryString != "") {
+				
+				// Clear all rows
+				this.dataGridView1.Rows.Clear();
+				
+				// search for tracks
+				string whereClause = string.Format("WHERE filePath like '%{0}%'", queryString);
+				IList<Track> tracks = databaseService.ReadTracks(whereClause);
+				Console.Out.WriteLine("Database contains {0} files that matches the query '{1}'.", tracks.Count, queryString);
+				
+				int counter = 0;
+				foreach (Track track in tracks) {
+					this.dataGridView1.Rows.Add(track.Id, track.FilePath, track.TrackLengthMs);
+					if (counter == DEFAULT_NUM_TO_TAKE) break;
+					counter++;
+				}
+			}
+		}
+		#endregion
 		
 		void QueryIdTextBoxKeyPress(object sender, KeyPressEventArgs e)
 		{
@@ -423,7 +508,6 @@ namespace FindSimilar
 				FindByString(queryString);
 			}
 		}
-		#endregion
 		
 	}
 }

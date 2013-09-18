@@ -42,37 +42,55 @@
 			this.fingerprintService = fingerprintService;
 		}
 
-		/*
-		public List<HashSignature> GetSignatures(IEnumerable<bool[]> fingerprints, Track track, int hashTables, int hashKeys)
-		{
-			List<HashSignature> signatures = new List<HashSignature>();
-			foreach (bool[] fingerprint in fingerprints)
-			{
-				int[] signature = hasher.ComputeMinHashSignature(fingerprint); // Compute min-hash signature out of signature
-				Dictionary<int, long> buckets = hasher.GroupMinHashToLSHBuckets(signature, hashTables, hashKeys); // Group Min-Hash signature into LSH buckets
-				
-				//long[] hashbuckets = buckets.Values.ToArray();
-				
-				int[] hashSignature = new int[buckets.Count];
-				foreach (KeyValuePair<int, long> bucket in buckets)
-				{
-					hashSignature[bucket.Key] = (int)bucket.Value;
-				}
-
-				HashSignature hash = new HashSignature(track, hashSignature); // associate track to hash-signature
-				signatures.Add(hash);
-			}
-			return signatures; // Return the signatures
-		}
-		 */
-
-		public Dictionary<int, QueryStats> FindSimilarFromAudioSamples(
+		public Dictionary<Track, QueryStats> FindSimilarFromAudioFile(
 			int lshHashTables,
 			int lshGroupsPerKey,
 			int thresholdTables,
 			WorkUnitParameterObject param) {
 			
+			// Get fingerprints
+			// TODO: Note that this method might return too few samples
+			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioFile(param);
 
+			long elapsedMiliseconds = 0;
+			
+			// Query the database using Min Hash
+			Dictionary<int, QueryStats> allCandidates = QueryFingerprintManager.QueryOneSongMinHash(
+				signatures,
+				dbService,
+				minHash,
+				lshHashTables,
+				lshGroupsPerKey,
+				thresholdTables,
+				ref elapsedMiliseconds);
+
+			IEnumerable<int> ids = allCandidates.Select(p => p.Key);
+			IList<Track> tracks = dbService.ReadTrackById(ids);
+
+			// Order by Hamming Similarity
+			// Using PLINQ
+			OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
+				//IOrderedEnumerable<KeyValuePair<int, QueryStats>> order = allCandidates
+				.OrderBy((pair) => pair.Value.OrderingValue =
+				         pair.Value.HammingDistance / pair.Value.NumberOfTotalTableVotes
+				         + 0.4 * pair.Value.MinHammingDistance);
+			
+			// Join on the ID properties.
+			var joined = from o in order
+				join track in tracks on o.Key equals track.Id
+				select new { track, o.Value };
+
+			Dictionary<Track, QueryStats> stats = joined.ToDictionary(Key => Key.track, Value => Value.Value);
+			
+			return stats;
+		}
+		
+		public Dictionary<Track, double> FindSimilarFromAudioSamples(
+			int lshHashTables,
+			int lshGroupsPerKey,
+			int thresholdTables,
+			WorkUnitParameterObject param) {
+			
 			// Get fingerprints
 			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param);
 
@@ -88,55 +106,24 @@
 				thresholdTables,
 				ref elapsedMiliseconds);
 
+			IEnumerable<int> ids = allCandidates.Select(p => p.Key);
+			IList<Track> tracks = dbService.ReadTrackById(ids);
+
 			// Order by Hamming Similarity
 			// Using PLINQ
-			OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
+			//OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
+			IOrderedEnumerable<KeyValuePair<int, QueryStats>> order = allCandidates
 				.OrderBy((pair) => pair.Value.OrderingValue =
 				         pair.Value.HammingDistance / pair.Value.NumberOfTotalTableVotes
 				         + 0.4 * pair.Value.MinHammingDistance);
-
 			
-			Dictionary<int, QueryStats> stats = new Dictionary<int, QueryStats>();
-			if (order.Any())
-			{
-				foreach( KeyValuePair<int, QueryStats> kvp in order)
-				{
-					stats.Add(kvp.Key, kvp.Value);
-					//Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
-				}
-			}
-			/*
-			int recognized = 0, verified = 0;
-			Track actualTrack = dbService.ReadTrackById(trackid);
-			Track recognizedTrack = null;
-			bool found = false;
+			// Join on the ID properties.
+			var joined = from o in order
+				join track in tracks on o.Key equals track.Id
+				select new { track, o.Value.Similarity };
 
-			if (order.Any())
-			{
-				KeyValuePair<int, QueryStats> item = order.ElementAt(0);
-				recognizedTrack = dbService.ReadTrackById(item.Key);
-				if (actualTrack.Id == recognizedTrack.Id)
-				{
-					recognized++;
-					found = true;
-				}
-
-				verified++;
-				if (!found)
-				{
-					// If the element is not found, search it in all candidates
-					var query = order.Select((pair, indexAt) => new {Pair = pair, IndexAt = indexAt}).Where((a) => a.Pair.Key == actualTrack.Id);
-					if (query.Any())
-					{
-						var anonymType = query.ElementAt(0);
-						recognizedTrack = dbService.ReadTrackById(anonymType.Pair.Key);
-					}
-					else
-					{
-					}
-				}
-			}
-			 */
+			Dictionary<Track, double> stats = joined.ToDictionary(Key => Key.track, Value => Value.Similarity);
+			
 			return stats;
 		}
 		
@@ -159,8 +146,8 @@
 		/// <summary>
 		/// Associate fingerprint signatures with a specific track
 		/// </summary>
-		/// <param name = "fingerprintSignatures">Signatures built from one track</param>
-		/// <param name = "trackId">Track id, which is the parent for this fingerprints</param>
+		/// <param name="fingerprintSignatures">Signatures built from one track</param>
+		/// <param name="trackId">Track id, which is the parent for this fingerprints</param>
 		/// <returns>List of fingerprint entity objects</returns>
 		private List<Fingerprint> AssociateFingerprintsToTrack(IEnumerable<bool[]> fingerprintSignatures, int trackId)
 		{
@@ -179,10 +166,10 @@
 		/// <summary>
 		/// Hash Fingerprints using Min-Hash algorithm
 		/// </summary>
-		/// <param name = "listOfFingerprintsToHash">List of fingerprints already inserted in the database</param>
-		/// <param name = "track">Track of the corresponding fingerprints</param>
-		/// <param name = "hashTables">Number of hash tables (e.g. 25)</param>
-		/// <param name = "hashKeys">Number of hash keys (e.g. 4)</param>
+		/// <param name="listOfFingerprintsToHash">List of fingerprints already inserted in the database</param>
+		/// <param name="track">Track of the corresponding fingerprints</param>
+		/// <param name="hashTables">Number of hash tables (e.g. 25)</param>
+		/// <param name="hashKeys">Number of hash keys (e.g. 4)</param>
 		private void HashFingerprintsUsingMinHash(IEnumerable<Fingerprint> listOfFingerprintsToHash, Track track, int hashTables, int hashKeys)
 		{
 			List<HashBinMinHash> listToInsert = new List<HashBinMinHash>();
