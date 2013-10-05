@@ -44,6 +44,8 @@ using FindSimilar;
 using FindSimilar.AudioProxies; // BassProxy
 using CommonUtils.Audio.NAudio; // AudioUtilsNAudio
 
+using Soundfingerprinting.DbStorage;
+
 // Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
@@ -273,21 +275,12 @@ namespace Mirage
 		/// <param name="db">database</param>
 		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
 		/// <param name="skipDurationAboveSeconds">skip files with duration longer than this number of seconds (0 or less disables this)</param>
-		public static void ScanDirectory(string path, Db db, Analyzer.AnalysisMethod analysisMethod, double skipDurationAboveSeconds) {
+		public static void ScanDirectory(string path, Db db, DatabaseService databaseService, Analyzer.AnalysisMethod analysisMethod, double skipDurationAboveSeconds) {
 			
 			Stopwatch stopWatch = Stopwatch.StartNew();
 			
 			FAILED_FILES_LOG.Delete();
 			WARNING_FILES_LOG.Delete();
-			
-			// Get database
-			Soundfingerprinting.DbStorage.DatabaseService databaseService = Soundfingerprinting.DbStorage.DatabaseService.Instance;
-			databaseService.RemoveFingerprintTable();
-			databaseService.AddFingerprintTable();
-			databaseService.RemoveHashBinTable();
-			databaseService.AddHashBinTable();
-			databaseService.RemoveTrackTable();
-			databaseService.AddTrackTable();
 			
 			// scan directory for audio files
 			try
@@ -303,15 +296,23 @@ namespace Mirage
 				// get all already processed files stored in the database
 				// store in memory
 				// It seems to work well with huge volumes of file (200k)
-				Dictionary<string, KeyValuePair<int, long>> filesProcessed = db.GetTracks();
+				IList<string> filesAlreadyProcessed = null;
+				if (analysisMethod != Analyzer.AnalysisMethod.AudioFingerprinting) {
+					// if we are not using the audio fingerprinting database
+					filesAlreadyProcessed = db.ReadTrackFilenames();
+				} else {
+					// Get database
+					filesAlreadyProcessed = databaseService.ReadTrackFilenames();
+				}
 				
-				Console.Out.WriteLine("Database contains {0} already processed files.", filesProcessed.Count);
+				Console.Out.WriteLine("Database contains {0} already processed files.", filesAlreadyProcessed.Count);
 
 				// find the files that has not already been added to the database
-				List<string> filesRemaining = filesAll.Except(filesProcessed.Keys).ToList();
+				List<string> filesRemaining = filesAll.Except(filesAlreadyProcessed).ToList();
 				Console.Out.WriteLine("Found {0} files remaining in scan directory to be processed.", filesRemaining.Count);
 
-				int fileCounter = filesProcessed.Count + 1;
+				int filesCounter = 1;
+				int filesAllCounter = filesAlreadyProcessed.Count + 1;
 				
 				#if !DEBUG
 				Console.Out.WriteLine("Running in multi-threaded mode!");
@@ -343,12 +344,20 @@ namespace Mirage
 				                 					feature = Analyzer.AnalyzeScms(fileInfo);
 				                 					break;
 				                 				case Analyzer.AnalysisMethod.AudioFingerprinting:
-				                 					Analyzer.AnalyzeSoundfingerprinting(fileInfo);
+				                 					feature = Analyzer.AnalyzeSoundfingerprinting(fileInfo);
 				                 					break;
 				                 			}
 				                 			if (feature != null) {
-				                 				db.AddTrack(ref fileCounter, feature);
-				                 				Console.Out.WriteLine("[{1}/{2}] Succesfully added {0} to database ({3} ms) (Thread: {4})", fileInfo.Name, fileCounter, filesRemaining.Count, feature.Duration, Thread.CurrentThread.ManagedThreadId);
+				                 				if (analysisMethod != Analyzer.AnalysisMethod.AudioFingerprinting) {
+				                 					// if we are not using the audio fingerprinting database
+				                 					db.AddTrack(ref filesAllCounter, feature);
+				                 				} else {
+				                 					// if we are using the audio fingerprinting database, we have already added the track
+				                 				}
+				                 				
+				                 				Console.Out.WriteLine("[{1}/{2} - {3}/{4}] Succesfully added {0} to database ({5} ms) (Thread: {6})", fileInfo.Name, filesCounter, filesRemaining.Count, filesAllCounter, filesAll.Count(), feature.Duration, Thread.CurrentThread.ManagedThreadId);
+				                 				filesCounter++;
+				                 				filesAllCounter++;
 				                 				feature = null;
 				                 			} else {
 				                 				Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
@@ -364,7 +373,8 @@ namespace Mirage
 				                 	#if !DEBUG
 				                 	);
 				                 	#endif
-				                 	Console.WriteLine("Added {0} out of a total {1} files found.", fileCounter, filesAll.Count());
+				                 	int filesActuallyProcessed = filesCounter -1;
+				                 	Console.WriteLine("Added {0} out of a total remaining set of {1} files. (Of {2} files found).", filesActuallyProcessed, filesRemaining.Count(), filesAll.Count());
 				                 }
 				                 catch (UnauthorizedAccessException UAEx)
 				                 {
@@ -837,15 +847,26 @@ namespace Mirage
 					return;
 				}
 				
-				Db db = new Db();
+				// Get database
+				Db db = new Db(); // For MandelEllis and SCMS
+				DatabaseService databaseService = DatabaseService.Instance; // For AudioFingerprinting
 
 				if (scanPath != "") {
 					if (IOUtils.IsDirectory(scanPath)) {
 						if (resetdb) {
+							// For MandelEllis and SCMS
 							db.RemoveTable();
 							db.AddTable();
+							
+							// For AudioFingerprinting
+							databaseService.RemoveFingerprintTable();
+							databaseService.AddFingerprintTable();
+							databaseService.RemoveHashBinTable();
+							databaseService.AddHashBinTable();
+							databaseService.RemoveTrackTable();
+							databaseService.AddTrackTable();
 						}
-						ScanDirectory(scanPath, db, analysisMethod, skipDurationAboveSeconds);
+						ScanDirectory(scanPath, db, databaseService, analysisMethod, skipDurationAboveSeconds);
 					} else {
 						Console.Out.WriteLine("No directory found {0}!", scanPath);
 					}

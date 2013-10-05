@@ -200,7 +200,7 @@ namespace Soundfingerprinting.DbStorage
 			}
 		}
 
-		public void InsertFingerprint(IEnumerable<Fingerprint> collection)
+		public bool InsertFingerprint(IEnumerable<Fingerprint> collection)
 		{
 			IDbDataParameter dbTrackIdParam = new SQLiteParameter("@trackid", DbType.Int32);
 			IDbDataParameter dbSongOrderParam = new SQLiteParameter("@songorder", DbType.Int32);
@@ -243,12 +243,14 @@ namespace Soundfingerprinting.DbStorage
 							// do nothing
 						}
 						throw e1;
+						return false;
 					}
 				}
 			}
+			return true;
 		}
 
-		public void InsertTrack(Track track)
+		public bool InsertTrack(Track track)
 		{
 			IDbDataParameter dbAlbumIdParam = new SQLiteParameter("@albumid", DbType.Int64);
 			IDbDataParameter dbLengthParam = new SQLiteParameter("@length", DbType.Int32);
@@ -282,7 +284,9 @@ namespace Soundfingerprinting.DbStorage
 				dbcmd.Dispose();
 			} catch (Exception e) {
 				throw e;
+				return false;
 			}
+			return true;
 		}
 
 		public void InsertTrack(IEnumerable<Track> collection)
@@ -368,7 +372,7 @@ namespace Soundfingerprinting.DbStorage
 			}
 		}
 
-		public void InsertHashBin(IEnumerable<HashBinMinHash> collection)
+		public bool InsertHashBin(IEnumerable<HashBinMinHash> collection)
 		{
 			IDbDataParameter dbHashBinParam = new SQLiteParameter("@hashbin", DbType.Int64);
 			IDbDataParameter dbHashTableParam = new SQLiteParameter("@hashtable", DbType.Int32);
@@ -409,9 +413,11 @@ namespace Soundfingerprinting.DbStorage
 							// do nothing
 						}
 						throw e1;
+						return false;
 					}
 				}
 			}
+			return true;
 		}
 		#endregion
 
@@ -591,6 +597,28 @@ namespace Soundfingerprinting.DbStorage
 			return fingerprints;
 		}
 
+		public IList<string> ReadTrackFilenames() {
+			var filenames = new List<string>();
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			
+			dbcmd.CommandText = "SELECT filepath FROM [tracks]";
+			dbcmd.CommandType = CommandType.Text;
+
+			IDataReader reader = dbcmd.ExecuteReader();
+			while (reader.Read()) {
+				string filename = reader.GetString(0);
+				filenames.Add(filename);
+			}
+			
+			reader.Close();
+			dbcmd.Dispose();
+			return filenames;
+		}
+		
 		public IList<Track> ReadTracks()
 		{
 			var tracks = new List<Track>();

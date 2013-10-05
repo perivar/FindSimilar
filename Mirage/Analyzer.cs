@@ -407,14 +407,14 @@ namespace Mirage
 			// Calculate duration in ms
 			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
 			
-			// Get fingerprint signatures using the Soundfingerprinting methods
-			
 			// zero pad if the audio file is too short to perform a mfcc
 			if (audiodata.Length < (fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap))
 			{
 				int lenNew = fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap;
 				Array.Resize<float>(ref audiodata, lenNew);
 			}
+			
+			// Get fingerprint signatures using the Soundfingerprinting methods
 			
 			// Get database
 			DatabaseService databaseService = DatabaseService.Instance;
@@ -437,11 +437,21 @@ namespace Mirage
 			track.FilePath = filePath.FullName;
 			track.Id = -1; // this will be set by the insert method
 			
-			repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param);
-			
-			Dbg.WriteLine ("Soundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			AudioFeature audioFeature = null;
+			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param)) {
+				audioFeature = new DummyAudioFeature();
+				
+				// Store duration
+				audioFeature.Duration = (long) duration;
+				
+				// Store file name
+				audioFeature.Name = filePath.FullName;
+			} else {
+				// failed
+			}
 
-			return null;
+			Dbg.WriteLine ("Soundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return audioFeature;
 		}
 		
 		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath) {
@@ -460,15 +470,15 @@ namespace Mirage
 			
 			// Calculate duration in ms
 			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
-			
-			// Get fingerprint signatures using the Soundfingerprinting methods
-			
+						
 			// zero pad if the audio file is too short to perform a mfcc
 			if (audiodata.Length < (fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap))
 			{
 				int lenNew = fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap;
 				Array.Resize<float>(ref audiodata, lenNew);
 			}
+			
+			// Get fingerprint signatures using the Soundfingerprinting methods
 			
 			// Get database
 			DatabaseService databaseService = DatabaseService.Instance;

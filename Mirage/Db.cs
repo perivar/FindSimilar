@@ -221,7 +221,7 @@ namespace Mirage
 				return -1;
 			}
 			
-			trackid++;
+			//trackid++;
 			return trackid;
 		}
 
@@ -321,6 +321,32 @@ namespace Mirage
 			audioFeature.Signatures.Add(signature);
 			
 			return audioFeature;
+		}
+		
+		/// <summary>
+		/// Return all track filenames from the database
+		/// </summary>
+		/// <returns>a List of filenames.</returns>
+		public IList<string> ReadTrackFilenames() {
+			var filenames = new List<string>();
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			
+			dbcmd.CommandText = "SELECT name FROM [mirage]";
+			dbcmd.CommandType = CommandType.Text;
+
+			IDataReader reader = dbcmd.ExecuteReader();
+			while (reader.Read()) {
+				string filename = reader.GetString(0);
+				filenames.Add(filename);
+			}
+			
+			reader.Close();
+			dbcmd.Dispose();
+			return filenames;
 		}
 		
 		/// <summary>

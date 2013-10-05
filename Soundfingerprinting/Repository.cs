@@ -134,13 +134,19 @@
 		/// <param name="hashTables">Number of hash tables (e.g. 25)</param>
 		/// <param name="hashKeys">Number of hash keys (e.g. 4)</param>
 		/// <param name="param">WorkUnitParameterObject parameters</param>
-		public void InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param)
+		public bool InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param)
 		{
-			dbService.InsertTrack(track);
-			List<bool[]> images = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param);
-			List<Fingerprint> inserted = AssociateFingerprintsToTrack(images, track.Id);
-			dbService.InsertFingerprint(inserted);
-			HashFingerprintsUsingMinHash(inserted, track, hashTables, hashKeys);
+			if (dbService.InsertTrack(track)) {
+				List<bool[]> images = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param);
+				List<Fingerprint> inserted = AssociateFingerprintsToTrack(images, track.Id);
+				if (dbService.InsertFingerprint(inserted)) {
+					return HashFingerprintsUsingMinHash(inserted, track, hashTables, hashKeys);
+				} else {
+					return false;
+				}
+			} else {
+				return false;
+			}
 		}
 		
 		/// <summary>
@@ -170,7 +176,7 @@
 		/// <param name="track">Track of the corresponding fingerprints</param>
 		/// <param name="hashTables">Number of hash tables (e.g. 25)</param>
 		/// <param name="hashKeys">Number of hash keys (e.g. 4)</param>
-		private void HashFingerprintsUsingMinHash(IEnumerable<Fingerprint> listOfFingerprintsToHash, Track track, int hashTables, int hashKeys)
+		private bool HashFingerprintsUsingMinHash(IEnumerable<Fingerprint> listOfFingerprintsToHash, Track track, int hashTables, int hashKeys)
 		{
 			List<HashBinMinHash> listToInsert = new List<HashBinMinHash>();
 			foreach (Fingerprint fingerprint in listOfFingerprintsToHash)
@@ -183,7 +189,7 @@
 					listToInsert.Add(hash);
 				}
 			}
-			dbService.InsertHashBin(listToInsert);
+			return dbService.InsertHashBin(listToInsert);
 		}
 		
 	}

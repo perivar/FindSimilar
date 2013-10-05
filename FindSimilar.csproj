@@ -48,7 +48,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects" -resetdb -skipduration=10</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects" -skipduration=30</StartArguments>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">
@@ -203,6 +203,7 @@
     <Compile Include="Soundfingerprinting\AudioServiceConfiguration.cs" />
     <Compile Include="Soundfingerprinting\DatabaseService.cs" />
     <Compile Include="Soundfingerprinting\DefaultFingerprintingConfiguration.cs" />
+    <Compile Include="Soundfingerprinting\DummyAudioFeature.cs" />
     <Compile Include="Soundfingerprinting\Fingerprint.cs" />
     <Compile Include="Soundfingerprinting\FingerprintDescriptor.cs" />
     <Compile Include="Soundfingerprinting\FingerprintService.cs" />
