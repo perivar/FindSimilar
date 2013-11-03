@@ -769,6 +769,11 @@ namespace Mirage
 			// Calculate duration in ms
 			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
 			
+			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
+			// Matlab multiplies with 2^15 (32768)
+			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
+			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER); // 65536
+			
 			// zero pad if the audio file is too short to perform a mfcc
 			if (audiodata.Length < (fingerprintingConfig.WdftSize + fingerprintingConfig.Overlap))
 			{
