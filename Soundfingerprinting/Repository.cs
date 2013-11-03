@@ -50,7 +50,8 @@
 			
 			// Get fingerprints
 			// TODO: Note that this method might return too few samples
-			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioFile(param);
+			double[][] LogSpectrogram;
+			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioFile(param, out LogSpectrogram);
 
 			long elapsedMiliseconds = 0;
 			
@@ -92,7 +93,8 @@
 			WorkUnitParameterObject param) {
 			
 			// Get fingerprints
-			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param);
+			double[][] LogSpectrogram;
+			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out LogSpectrogram);
 
 			long elapsedMiliseconds = 0;
 			
@@ -134,10 +136,10 @@
 		/// <param name="hashTables">Number of hash tables (e.g. 25)</param>
 		/// <param name="hashKeys">Number of hash keys (e.g. 4)</param>
 		/// <param name="param">WorkUnitParameterObject parameters</param>
-		public bool InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param)
+		public bool InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param, out double[][] logSpectrogram)
 		{
 			if (dbService.InsertTrack(track)) {
-				List<bool[]> images = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param);
+				List<bool[]> images = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram);
 				List<Fingerprint> inserted = AssociateFingerprintsToTrack(images, track.Id);
 				if (dbService.InsertFingerprint(inserted)) {
 					return HashFingerprintsUsingMinHash(inserted, track, hashTables, hashKeys);
@@ -145,6 +147,7 @@
 					return false;
 				}
 			} else {
+				logSpectrogram = null;
 				return false;
 			}
 		}

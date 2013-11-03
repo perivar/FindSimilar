@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Soundfingerprinting.DbStorage.Entities
 {
@@ -11,6 +12,8 @@ namespace Soundfingerprinting.DbStorage.Entities
 		private int trackLengthMs;
 		
 		private string filePath;
+		
+		private Dictionary<string, string> tags = new Dictionary<string, string>();
 
 		public Track()
 		{
@@ -97,6 +100,15 @@ namespace Soundfingerprinting.DbStorage.Entities
 			}
 			set {
 				filePath = value;
+			}
+		}
+		
+		public Dictionary<string, string> Tags {
+			get {
+				return tags;
+			}
+			set {
+				tags = value;
 			}
 		}
 		

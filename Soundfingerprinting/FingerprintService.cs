@@ -31,7 +31,7 @@ namespace Soundfingerprinting.Fingerprinting
 			this.AudioService = audioService;
 		}
 
-		public List<bool[]> CreateFingerprintsFromAudioFile(WorkUnitParameterObject param)
+		public List<bool[]> CreateFingerprintsFromAudioFile(WorkUnitParameterObject param, out double[][] logSpectrogram)
 		{
 			float[] samples = AudioService.ReadMonoFromFile(
 				param.PathToAudioFile,
@@ -39,10 +39,10 @@ namespace Soundfingerprinting.Fingerprinting
 				param.MillisecondsToProcess,
 				param.StartAtMilliseconds);
 
-			return CreateFingerprintsFromAudioSamples(samples, param);
+			return CreateFingerprintsFromAudioSamples(samples, param, out logSpectrogram);
 		}
 
-		public List<bool[]> CreateFingerprintsFromAudioSamples(float[] samples, WorkUnitParameterObject param)
+		public List<bool[]> CreateFingerprintsFromAudioSamples(float[] samples, WorkUnitParameterObject param, out double[][] logSpectrogram)
 		{
 			IFingerprintingConfiguration configuration = param.FingerprintingConfiguration;
 			AudioServiceConfiguration audioServiceConfiguration = new AudioServiceConfiguration
@@ -58,11 +58,11 @@ namespace Soundfingerprinting.Fingerprinting
 				UseDynamicLogBase = configuration.UseDynamicLogBase
 			};
 
-			double[][] spectrum = AudioService.CreateLogSpectrogram(
+			logSpectrogram = AudioService.CreateLogSpectrogram(
 				samples, configuration.WindowFunction, audioServiceConfiguration);
 			
 			return this.CreateFingerprintsFromLogSpectrum(
-				spectrum,
+				logSpectrogram,
 				configuration.Stride,
 				configuration.FingerprintLength,
 				configuration.Overlap,

@@ -22,12 +22,13 @@
 			SampleRate = 44100; 	// 5512;
 			LogBase = Math.E; 		// 2 or 10;
 			
-			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation, and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
+			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation,
+			// and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
 			//Stride = new IncrementalStaticStride(5115, FingerprintLength * Overlap); // 5115 / 5512 = 0,928 sec
 			Stride = new IncrementalStaticStride(40924, FingerprintLength * Overlap); // 40924 / 44100 = 0,928 sec
 			
 			TopWavelets = 200;
-			LogBins = 32; // 40; // 32;
+			LogBins = 40; // 40; // 32; (Originally this was 32, but 40 seems to work better with SCMS?!)
 			WindowFunction = new HannWindow(WdftSize);
 			NormalizeSignal = true; 	// true;
 			UseDynamicLogBase = false;	// false;

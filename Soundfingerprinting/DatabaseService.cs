@@ -154,7 +154,7 @@ namespace Soundfingerprinting.DbStorage
 				dbcmd = dbcon.CreateCommand();
 			}
 			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS tracks"
-				+ " (id INTEGER PRIMARY KEY AUTOINCREMENT, albumid INTEGER, length INTEGER, artist TEXT, title TEXT, filepath TEXT)";
+				+ " (id INTEGER PRIMARY KEY AUTOINCREMENT, albumid INTEGER, length INTEGER, artist TEXT, title TEXT, filepath TEXT, tags TEXT)";
 
 			try {
 				dbcmd.ExecuteNonQuery();
@@ -257,25 +257,28 @@ namespace Soundfingerprinting.DbStorage
 			IDbDataParameter dbArtistParam = new SQLiteParameter("@artist", DbType.String);
 			IDbDataParameter dbTitleParam = new SQLiteParameter("@title", DbType.String);
 			IDbDataParameter dbFilePathParam = new SQLiteParameter("@filepath", DbType.String);
+			IDbDataParameter dbTagsParam = new SQLiteParameter("@tags", DbType.String);
 			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "INSERT INTO tracks (albumid, length, artist, title, filepath) " +
-				"VALUES (@albumid, @length, @artist, @title, @filepath); SELECT last_insert_rowid();";
+			dbcmd.CommandText = "INSERT INTO tracks (albumid, length, artist, title, filepath, tags) " +
+				"VALUES (@albumid, @length, @artist, @title, @filepath, @tags); SELECT last_insert_rowid();";
 
 			dbcmd.Parameters.Add(dbAlbumIdParam);
 			dbcmd.Parameters.Add(dbLengthParam);
 			dbcmd.Parameters.Add(dbArtistParam);
 			dbcmd.Parameters.Add(dbTitleParam);
 			dbcmd.Parameters.Add(dbFilePathParam);
+			dbcmd.Parameters.Add(dbTagsParam);
 
 			dbAlbumIdParam.Value = track.AlbumId;
 			dbLengthParam.Value = track.TrackLengthMs;
 			dbArtistParam.Value = track.Artist;
 			dbTitleParam.Value = track.Title;
 			dbFilePathParam.Value = track.FilePath;
+			dbTagsParam.Value = string.Join(";", track.Tags.Select(x => x.Key + "=" + x.Value));
 			
 			try {
 				dbcmd.Prepare();
@@ -296,19 +299,21 @@ namespace Soundfingerprinting.DbStorage
 			IDbDataParameter dbArtistParam = new SQLiteParameter("@artist", DbType.String);
 			IDbDataParameter dbTitleParam = new SQLiteParameter("@title", DbType.String);
 			IDbDataParameter dbFilePathParam = new SQLiteParameter("@filepath", DbType.String);
+			IDbDataParameter dbTagsParam = new SQLiteParameter("@tags", DbType.String);
 			
 			IDbCommand dbcmd;
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "INSERT INTO tracks (albumid, length, artist, title, filepath) " +
-				"VALUES (@albumid, @length, @artist, @title, @filepath); SELECT last_insert_rowid();";
+			dbcmd.CommandText = "INSERT INTO tracks (albumid, length, artist, title, filepath, tags) " +
+				"VALUES (@albumid, @length, @artist, @title, @filepath, @tags); SELECT last_insert_rowid();";
 			
 			dbcmd.Parameters.Add(dbAlbumIdParam);
 			dbcmd.Parameters.Add(dbLengthParam);
 			dbcmd.Parameters.Add(dbArtistParam);
 			dbcmd.Parameters.Add(dbTitleParam);
 			dbcmd.Parameters.Add(dbFilePathParam);
+			dbcmd.Parameters.Add(dbTagsParam);
 			dbcmd.Prepare();
 			
 			using (var transaction = dbcon.BeginTransaction())
@@ -320,6 +325,7 @@ namespace Soundfingerprinting.DbStorage
 						dbArtistParam.Value = track.Artist;
 						dbTitleParam.Value = track.Title;
 						dbFilePathParam.Value = track.FilePath;
+						dbTagsParam.Value = string.Join(";", track.Tags.Select(x => x.Key + "=" + x.Value));
 						
 						//dbcmd.ExecuteNonQuery();
 						track.Id = Convert.ToInt32(dbcmd.ExecuteScalar());

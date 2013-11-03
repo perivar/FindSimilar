@@ -153,7 +153,7 @@ namespace Comirva.Audio
 		/// </summary>
 		/// <param name="m">matrix (stftdata)</param>
 		/// <returns>matrix mel scaled and dct'ed</returns>
-		public Matrix Apply(ref Matrix m)
+		public Matrix ApplyMelScaleDCT(ref Matrix m)
 		{
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
@@ -182,7 +182,7 @@ namespace Comirva.Audio
 		/// </summary>
 		/// <param name="m">matrix (stftdata)</param>
 		/// <returns>matrix mel scaled and dct'ed</returns>
-		public Matrix ApplyComirvaWay(ref Matrix m)
+		public Matrix ApplyMelScaleDCTComirva(ref Matrix m)
 		{
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
@@ -211,7 +211,7 @@ namespace Comirva.Audio
 		/// </summary>
 		/// <param name="mfcc">mfcc matrix</param>
 		/// <returns>matrix idct'ed and mel removed (e.g. stftdata)</returns>
-		public Matrix InverseMfcc(ref Matrix mfcc)
+		public Matrix InverseMelScaleDCT(ref Matrix mfcc)
 		{
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
@@ -240,11 +240,43 @@ namespace Comirva.Audio
 		}
 		
 		/// <summary>
+		/// DCT
+		/// </summary>
+		/// <param name="m">matrix (logSpectrogram)</param>
+		/// <returns>matrix dct'ed</returns>
+		public Matrix ApplyDCT(ref Matrix m) {
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
+			
+			// 6. DCT (Discrete Cosine Transform)
+			m = dct * m;
+			
+			Mirage.Dbg.WriteLine("ApplyDCT Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return m;
+		}
+		
+		/// <summary>
+		/// Perform an inverse DCT
+		/// </summary>
+		/// <param name="mfcc">dct matrix</param>
+		/// <returns>matrix idct'ed (e.g. logSpectrogram)</returns>
+		public Matrix InverseDCT(ref Matrix input) {
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
+			
+			// 6. Perform the IDCT (Inverse Discrete Cosine Transform)
+			Matrix m = dct.Transpose() * input;
+			
+			Mirage.Dbg.WriteLine("InverseDCT Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return m;
+		}
+		
+		/// <summary>
 		/// Mel Scale Haar Wavelet Transform
 		/// </summary>
 		/// <param name="m">matrix (stftdata)</param>
 		/// <returns>matrix mel scaled and wavelet'ed</returns>
-		public Matrix ApplyWavelet(ref Matrix m) {
+		public Matrix ApplyMelScaleWaveletPadding(ref Matrix m) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
@@ -281,7 +313,7 @@ namespace Comirva.Audio
 		/// </summary>
 		/// <param name="wavelet">wavelet matrix</param>
 		/// <returns>matrix inverse wavelet'ed and mel removed (e.g. stftdata)</returns>
-		public Matrix InverseWavelet(ref Matrix wavelet) {
+		public Matrix InverseMelScaleWaveletPadding(ref Matrix wavelet) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
@@ -311,13 +343,53 @@ namespace Comirva.Audio
 			Mirage.Dbg.WriteLine("Inverse Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
+		
+		/// <summary>
+		/// Haar Wavelet Transform and Compress
+		/// </summary>
+		/// <param name="m">matrix (logSpectrogram)</param>
+		/// <returns>matrix wavelet'ed</returns>
+		public Matrix ApplyWaveletCompression(ref Matrix m, out int lastHeight, out int lastWidth) {
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
+			
+			// Wavelet Transform
+			Matrix wavelet = m.Copy();
+			Wavelets.Compress.WaveletCompress.HaarTransform2D(wavelet.MatrixData, numberWaveletTransforms, out lastHeight, out lastWidth);
+			
+			// Compress
+			Matrix waveletCompressed = wavelet.Resize(numberCoefficients, wavelet.Columns);
+			
+			Mirage.Dbg.WriteLine("Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return waveletCompressed;
+		}
+		
+		/// <summary>
+		/// Perform an inverse decompressed haar wavelet transform. E.g. perform an ihaar2d and return logSpectrogram
+		/// </summary>
+		/// <param name="wavelet">wavelet matrix</param>
+		/// <returns>matrix inverse wavelet'ed (e.g. logSpectrogram)</returns>
+		public Matrix InverseWaveletCompression(ref Matrix wavelet, int firstHeight, int firstWidth, int rows, int columns) {
+			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			t.Start();
+			
+			// Resize, e.g. Uncompress
+			wavelet = wavelet.Resize(rows, columns);
 
+			// 6. Perform the Inverse Wavelet Transform
+			Matrix m = wavelet.Copy();
+			Wavelets.Compress.WaveletDecompress.Decompress2D(m.MatrixData, numberWaveletTransforms, firstHeight, firstWidth);
+			
+			Mirage.Dbg.WriteLine("Inverse Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			return m;
+		}
+		
 		/// <summary>
 		/// Mel Scale Haar Wavelet Transform and Compress
 		/// </summary>
 		/// <param name="m">matrix (stftdata)</param>
 		/// <returns>matrix mel scaled and wavelet'ed</returns>
-		public Matrix ApplyWaveletCompression(ref Matrix m, out int lastHeight, out int lastWidth) {
+		public Matrix ApplyMelScaleWaveletCompression(ref Matrix m, out int lastHeight, out int lastWidth) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
@@ -333,12 +405,8 @@ namespace Comirva.Audio
 				}
 			}
 			
-			// 6. Wavelet Transform
-			Matrix wavelet = mel.Copy();
-			Wavelets.Compress.WaveletCompress.HaarTransform2D(wavelet.MatrixData, numberWaveletTransforms, out lastHeight, out lastWidth);
-			
-			// Compress
-			Matrix waveletCompressed = wavelet.Resize(numberCoefficients, wavelet.Columns);
+			// 6. Perform the Wavelet Transform and Compress
+			Matrix waveletCompressed = ApplyWaveletCompression(ref mel, out lastHeight, out lastWidth);
 			
 			Mirage.Dbg.WriteLine("Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return waveletCompressed;
@@ -349,16 +417,12 @@ namespace Comirva.Audio
 		/// </summary>
 		/// <param name="wavelet">wavelet matrix</param>
 		/// <returns>matrix inverse wavelet'ed and mel removed (e.g. stftdata)</returns>
-		public Matrix InverseWaveletCompression(ref Matrix wavelet, int firstHeight, int firstWidth) {
+		public Matrix InverseMelScaleWaveletCompression(ref Matrix wavelet, int firstHeight, int firstWidth) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
-			// Resize
-			wavelet = wavelet.Resize(melScaleFreqsIndex.Length - 2, wavelet.Columns);
-
-			// 6. Perform the Inverse Wavelet Transform
-			Matrix mel = wavelet.Copy();
-			Wavelets.Compress.WaveletDecompress.Decompress2D(mel.MatrixData, numberWaveletTransforms, firstHeight, firstWidth);
+			// 6. Ucompress and then perform the Inverse Wavelet Transform
+			Matrix mel = InverseWaveletCompression(ref wavelet, firstHeight, firstWidth, melScaleFreqsIndex.Length - 2, wavelet.Columns);
 			
 			// 5. Take Inverse Logarithm
 			// Divide with first triangle height in order to scale properly

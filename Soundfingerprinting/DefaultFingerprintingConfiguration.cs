@@ -22,7 +22,8 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 			SampleRate = 5512;
 			LogBase = 2; // 2 or 10;
 			
-			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation, and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
+			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation,
+			// and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
 			Stride = new IncrementalStaticStride(5115, FingerprintLength * Overlap); // 5115 / 5512 = 0,928 sec
 			
 			TopWavelets = 200;

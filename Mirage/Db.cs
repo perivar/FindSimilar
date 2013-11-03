@@ -207,7 +207,7 @@ namespace Mirage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration, bitstring, signature) " +
+			dbcmd.CommandText = "INSERT INTO mirage (trackid, audioFeature, name, duration, bitstring) " +
 				"VALUES (@trackid, @audioFeature, @name, @duration, @bitstring)";
 			dbcmd.Parameters.Add(dbTrackIdParam);
 			dbcmd.Parameters.Add(dbAudioFeatureParam);
