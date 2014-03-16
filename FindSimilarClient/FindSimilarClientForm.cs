@@ -33,7 +33,7 @@ namespace FindSimilar
 		private static Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 		//private static Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 		
-		private static int DEFAULT_NUM_TO_TAKE = 100;
+		private static int DEFAULT_NUM_TO_TAKE = 200;
 		private static double DEFAULT_PERCENTAGE_ENABLED = 0.8;
 		private static double DEFAULT_PERCENTAGE_DISABLED = 1.0;
 
@@ -509,5 +509,13 @@ namespace FindSimilar
 			}
 		}
 		
+		
+		void AudioFilePlayBtnClick(object sender, EventArgs e)
+		{
+			string queryPath = AudioFileQueryTextBox.Text;
+			if (player != null && !queryPath.Equals("")) {
+				Play(queryPath);
+			}
+		}
 	}
 }

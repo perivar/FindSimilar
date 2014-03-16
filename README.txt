@@ -1,10 +1,10 @@
 FindSimilar Audio Search Utility utilising MFCC methods README
 =================================================================
-Per Ivar Nerseth, 2013
+Per Ivar Nerseth, 2014
 perivar@nerseth.com
 
-FindSimilar. Version 1.0.6.
-Copyright (C) 2012-2013 Per Ivar Nerseth.
+FindSimilar. Version 1.0.11.
+Copyright (C) 2012-2014 Per Ivar Nerseth.
 
 Usage: FindSimilar.exe <Arguments>
 

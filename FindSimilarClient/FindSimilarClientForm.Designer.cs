@@ -31,6 +31,7 @@
 			this.components = new System.ComponentModel.Container();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabFileSearch = new System.Windows.Forms.TabPage();
+			this.AudioFilePlayBtn = new System.Windows.Forms.Button();
 			this.AudioFileQueryBtn = new System.Windows.Forms.Button();
 			this.AudioFileQueryTextBox = new System.Windows.Forms.TextBox();
 			this.FileQueryLabel = new System.Windows.Forms.Label();
@@ -77,6 +78,7 @@
 			// tabFileSearch
 			// 
 			this.tabFileSearch.AllowDrop = true;
+			this.tabFileSearch.Controls.Add(this.AudioFilePlayBtn);
 			this.tabFileSearch.Controls.Add(this.AudioFileQueryBtn);
 			this.tabFileSearch.Controls.Add(this.AudioFileQueryTextBox);
 			this.tabFileSearch.Controls.Add(this.FileQueryLabel);
@@ -90,10 +92,20 @@
 			this.tabFileSearch.DragDrop += new System.Windows.Forms.DragEventHandler(this.TabPage1DragDrop);
 			this.tabFileSearch.DragEnter += new System.Windows.Forms.DragEventHandler(this.TabPage1DragEnter);
 			// 
+			// AudioFilePlayBtn
+			// 
+			this.AudioFilePlayBtn.Location = new System.Drawing.Point(627, 2);
+			this.AudioFilePlayBtn.Name = "AudioFilePlayBtn";
+			this.AudioFilePlayBtn.Size = new System.Drawing.Size(38, 23);
+			this.AudioFilePlayBtn.TabIndex = 3;
+			this.AudioFilePlayBtn.Text = "Play";
+			this.AudioFilePlayBtn.UseVisualStyleBackColor = true;
+			this.AudioFilePlayBtn.Click += new System.EventHandler(this.AudioFilePlayBtnClick);
+			// 
 			// AudioFileQueryBtn
 			// 
 			this.AudioFileQueryBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.AudioFileQueryBtn.Location = new System.Drawing.Point(599, 2);
+			this.AudioFileQueryBtn.Location = new System.Drawing.Point(543, 2);
 			this.AudioFileQueryBtn.Name = "AudioFileQueryBtn";
 			this.AudioFileQueryBtn.Size = new System.Drawing.Size(66, 23);
 			this.AudioFileQueryBtn.TabIndex = 2;
@@ -107,7 +119,7 @@
 									| System.Windows.Forms.AnchorStyles.Right)));
 			this.AudioFileQueryTextBox.Location = new System.Drawing.Point(68, 4);
 			this.AudioFileQueryTextBox.Name = "AudioFileQueryTextBox";
-			this.AudioFileQueryTextBox.Size = new System.Drawing.Size(525, 20);
+			this.AudioFileQueryTextBox.Size = new System.Drawing.Size(469, 20);
 			this.AudioFileQueryTextBox.TabIndex = 1;
 			this.AudioFileQueryTextBox.Text = "Browse or Drag Audio File here";
 			this.AudioFileQueryTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.AudioFileQueryTextBoxKeyPress);
@@ -136,7 +148,7 @@
 			// 
 			this.QueryIdTextBox.Location = new System.Drawing.Point(150, 5);
 			this.QueryIdTextBox.Name = "QueryIdTextBox";
-			this.QueryIdTextBox.Size = new System.Drawing.Size(108, 20);
+			this.QueryIdTextBox.Size = new System.Drawing.Size(95, 20);
 			this.QueryIdTextBox.TabIndex = 3;
 			this.QueryIdTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.QueryIdTextBoxKeyPress);
 			// 
@@ -164,7 +176,7 @@
 			// 
 			this.QueryStringTextBox.Location = new System.Drawing.Point(150, 5);
 			this.QueryStringTextBox.Name = "QueryStringTextBox";
-			this.QueryStringTextBox.Size = new System.Drawing.Size(108, 20);
+			this.QueryStringTextBox.Size = new System.Drawing.Size(184, 20);
 			this.QueryStringTextBox.TabIndex = 5;
 			this.QueryStringTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.QueryStringTextBoxKeyPress);
 			// 
@@ -201,7 +213,7 @@
 									this.openFileLocationToolStripMenuItem,
 									this.dumpDebugInfoToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(169, 92);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(169, 70);
 			// 
 			// findSimilarToolStripMenuItem
 			// 
@@ -324,6 +336,7 @@
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
 		}
+		private System.Windows.Forms.Button AudioFilePlayBtn;
 		private System.Windows.Forms.ToolStripMenuItem dumpDebugInfoToolStripMenuItem;
 		private System.Windows.Forms.Label version;
 		private System.Windows.Forms.Label versionLabel;
