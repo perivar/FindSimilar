@@ -6,7 +6,7 @@
 
 	public class FullFrequencyFingerprintingConfiguration : IFingerprintingConfiguration
 	{
-		public FullFrequencyFingerprintingConfiguration()
+		public FullFrequencyFingerprintingConfiguration(bool useRandomStride = false)
 		{
 			// The parameters used in these transformation steps will be equal to those that have been found to work well in other audio fingerprinting studies
 			// (specifically in A Highly Robust Audio Fingerprinting System):
@@ -24,8 +24,14 @@
 			
 			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation,
 			// and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
-			//Stride = new IncrementalStaticStride(5115, FingerprintLength * Overlap); // 5115 / 5512 = 0,928 sec
-			Stride = new IncrementalStaticStride(40924, FingerprintLength * Overlap); // 40924 / 44100 = 0,928 sec
+			if (useRandomStride) {
+				// 2028 / 44100 = 0,046 sec
+				Stride = new IncrementalRandomStride(0, 2028, SamplesPerFingerprint);
+			} else {
+				// 5115 / 5512 = 0,928 sec
+				// 40924 / 44100 = 0,928 sec
+				Stride = new IncrementalStaticStride(40924, SamplesPerFingerprint);
+			}
 			
 			TopWavelets = 200;
 			LogBins = 40; // 40; // 32; (Originally this was 32, but 40 seems to work better with SCMS?!)
@@ -33,7 +39,7 @@
 			NormalizeSignal = true; 	// true;
 			UseDynamicLogBase = false;	// false;
 		}
-
+		
 		/// <summary>
 		/// Gets number of samples to read in order to create single signature. The granularity is 1.48 seconds
 		/// </summary>

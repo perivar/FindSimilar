@@ -48,7 +48,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects" -skipduration=30</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Projects" -skipduration=10</StartArguments>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">
@@ -215,6 +215,7 @@
     <Compile Include="Soundfingerprinting\IFFTService.cs" />
     <Compile Include="Soundfingerprinting\IFingerprintingConfiguration.cs" />
     <Compile Include="Soundfingerprinting\ImageService.cs" />
+    <Compile Include="Soundfingerprinting\IncrementalRandomStride.cs" />
     <Compile Include="Soundfingerprinting\IncrementalStaticStride.cs" />
     <Compile Include="Soundfingerprinting\IPermutations.cs" />
     <Compile Include="Soundfingerprinting\IStride.cs" />

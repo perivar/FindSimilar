@@ -113,8 +113,8 @@
 
 			// Order by Hamming Similarity
 			// Using PLINQ
-			//OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
-			IOrderedEnumerable<KeyValuePair<int, QueryStats>> order = allCandidates
+			OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
+				//IOrderedEnumerable<KeyValuePair<int, QueryStats>> order = allCandidates
 				.OrderBy((pair) => pair.Value.OrderingValue =
 				         pair.Value.HammingDistance / pair.Value.NumberOfTotalTableVotes
 				         + 0.4 * pair.Value.MinHammingDistance);

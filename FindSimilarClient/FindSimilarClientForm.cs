@@ -451,10 +451,12 @@ namespace FindSimilar
 					
 					Dictionary<Track, double> candidates = Analyzer.SimilarTracksSoundfingerprinting(new FileInfo(track.FilePath));
 					
-					// Add the found similar tracks
-					foreach (var entry in candidates)
-					{
-						this.dataGridView1.Rows.Add(entry.Key.Id, entry.Key.FilePath, entry.Value);
+					if (candidates != null) {
+						// Add the found similar tracks
+						foreach (var entry in candidates)
+						{
+							this.dataGridView1.Rows.Add(entry.Key.Id, entry.Key.FilePath, entry.Value);
+						}
 					}
 				} else {
 					MessageBox.Show("File-id does not exist!");
