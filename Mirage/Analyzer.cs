@@ -113,12 +113,10 @@ namespace Mirage
 		//private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 
-		// Create the Soundfingerprinting Service
+		// Soundfingerprinting static variables
 		private static FingerprintService fingerprintService = GetSoundfingerprintingService();
-		//private static IFingerprintingConfiguration fingerprintingConfig = new DefaultFingerprintingConfiguration();
 		private static IFingerprintingConfiguration fingerprintingConfigCreation = new FullFrequencyFingerprintingConfiguration();
 		private static IFingerprintingConfiguration fingerprintingConfigQuerying = new FullFrequencyFingerprintingConfiguration(true);
-
 		private static IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
 
 		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
@@ -176,17 +174,17 @@ namespace Mirage
 			}
 
 			// Name of file being processed
-			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
+			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
 			
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, name + "_audiodata.ascii");
-				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, name + "_audiodata.txt");
+				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, fileName + "_audiodata.ascii");
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, fileName + "_audiodata.txt");
 			}
 			#endif
 			
 			if (doOutputDebugInfo) {
-				DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
+				DrawGraph(MathUtils.FloatToDouble(audiodata), fileName + "_audiodata.png");
 			}
 			
 			// Calculate duration in ms
@@ -211,18 +209,18 @@ namespace Mirage
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
 				if (DEBUG_OUTPUT_TEXT) {
-					stftdata.WriteAscii(name + "_stftdata.ascii");
-					stftdata.WriteCSV(name + "_stftdata.csv", ";");
+					stftdata.WriteAscii(fileName + "_stftdata.ascii");
+					stftdata.WriteCSV(fileName + "_stftdata.csv", ";");
 				}
 			}
 			#endif
 
 			if (doOutputDebugInfo) {
 				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
-				stftdata.DrawMatrixImageLogValues(name + "_specgram.png", true);
+				stftdata.DrawMatrixImageLogValues(fileName + "_specgram.png", true);
 				
 				// spec gram with log values for the y axis (frequency)
-				stftdata.DrawMatrixImageLogY(name + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+				stftdata.DrawMatrixImageLogY(fileName + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			}
 			
 			#if DEBUG
@@ -235,14 +233,14 @@ namespace Mirage
 				MathUtils.Normalize(ref audiodata_inverse_stft);
 
 				if (DEBUG_OUTPUT_TEXT) {
-					WriteAscii(audiodata_inverse_stft, name + "_audiodata_inverse_stft.ascii");
-					WriteF3Formatted(audiodata_inverse_stft, name + "_audiodata_inverse_stft.txt");
+					WriteAscii(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.ascii");
+					WriteF3Formatted(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.txt");
 				}
 				
-				DrawGraph(audiodata_inverse_stft, name + "_audiodata_inverse_stft.png");
+				DrawGraph(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.png");
 				
 				float[] audiodata_inverse_float = MathUtils.DoubleToFloat(audiodata_inverse_stft);
-				bass.SaveFile(audiodata_inverse_float, name + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
+				bass.SaveFile(audiodata_inverse_float, fileName + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
 				#endregion
 			}
 			#endif
@@ -259,11 +257,11 @@ namespace Mirage
 				Comirva.Audio.Util.Maths.Matrix mellog = mfccMirage.ApplyMelScaleAndLog(ref stftdata);
 				
 				if (DEBUG_OUTPUT_TEXT) {
-					mellog.WriteCSV(name + "_mel_log.csv", ";");
+					mellog.WriteCSV(fileName + "_mel_log.csv", ";");
 				}
 				
 				if (doOutputDebugInfo) {
-					mellog.DrawMatrixImage(name + "_mel_log.png", 600, 400, true, true);
+					mellog.DrawMatrixImage(fileName + "_mel_log.png", 600, 400, true, true);
 				}
 				#endregion
 				
@@ -271,22 +269,22 @@ namespace Mirage
 				if (false) {
 					Comirva.Audio.Util.Maths.Matrix inverse_mellog = mfccMirage.InverseMelScaleAndLog(ref mellog);
 
-					inverse_mellog.WriteCSV(name + "_mel_log_inverse.csv", ";");
-					inverse_mellog.DrawMatrixImageLogValues(name + "_mel_log_inverse.png", true);
+					inverse_mellog.WriteCSV(fileName + "_mel_log_inverse.csv", ";");
+					inverse_mellog.DrawMatrixImageLogValues(fileName + "_mel_log_inverse.png", true);
 					
 					double[] audiodata_inverse_mellog = stftMirage.InverseStft(inverse_mellog);
 					//MathUtils.Divide(ref audiodata_inverse_mellog, AUDIO_MULTIPLIER/100);
 					MathUtils.Normalize(ref audiodata_inverse_mellog);
 
 					if (DEBUG_OUTPUT_TEXT) {
-						WriteAscii(audiodata_inverse_mellog, name + "_audiodata_inverse_mellog.ascii");
-						WriteF3Formatted(audiodata_inverse_mellog, name + "_audiodata_inverse_mellog.txt");
+						WriteAscii(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.ascii");
+						WriteF3Formatted(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.txt");
 					}
 					
-					DrawGraph(audiodata_inverse_mellog, name + "_audiodata_inverse_mellog.png");
+					DrawGraph(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.png");
 					
 					float[] audiodata_inverse_mellog_float = MathUtils.DoubleToFloat(audiodata_inverse_mellog);
-					bass.SaveFile(audiodata_inverse_mellog_float, name + "_inverse_mellog.wav", Analyzer.SAMPLING_RATE);
+					bass.SaveFile(audiodata_inverse_mellog_float, fileName + "_inverse_mellog.wav", Analyzer.SAMPLING_RATE);
 				}
 				#endregion
 			}
@@ -301,12 +299,12 @@ namespace Mirage
 
 				#if DEBUG
 				if (Analyzer.DEBUG_INFO_VERBOSE) {
-					if (DEBUG_OUTPUT_TEXT) featureData.WriteAscii(name + "_waveletdata.ascii");
+					if (DEBUG_OUTPUT_TEXT) featureData.WriteAscii(fileName + "_waveletdata.ascii");
 				}
 				#endif
 
 				if (doOutputDebugInfo) {
-					featureData.DrawMatrixImageLogValues(name + "_waveletdata.png", true);
+					featureData.DrawMatrixImageLogValues(fileName + "_waveletdata.png", true);
 				}
 				
 				#if DEBUG
@@ -315,15 +313,15 @@ namespace Mirage
 					// try to do an inverse wavelet transform
 					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseMelScaleWaveletCompression(ref featureData, lastHeight, lastWidth);
 
-					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_wavelet.WriteCSV(name + "_specgramlog_inverse_wavelet.csv", ";");
-					stftdata_inverse_wavelet.DrawMatrixImageLogValues(name + "_specgramlog_inverse_wavelet.png", true);
+					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_wavelet.WriteCSV(fileName + "_specgramlog_inverse_wavelet.csv", ";");
+					stftdata_inverse_wavelet.DrawMatrixImageLogValues(fileName + "_specgramlog_inverse_wavelet.png", true);
 					
 					double[] audiodata_inverse_wavelet = stftMirage.InverseStft(stftdata_inverse_wavelet);
 					MathUtils.Normalize(ref audiodata_inverse_wavelet);
 					
-					if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_wavelet, name + "_audiodata_inverse_wavelet.txt");
-					DrawGraph(audiodata_inverse_wavelet, name + "_audiodata_inverse_wavelet.png");
-					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_wavelet), name + "_inverse_wavelet.wav", Analyzer.SAMPLING_RATE);
+					if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_wavelet, fileName + "_audiodata_inverse_wavelet.txt");
+					DrawGraph(audiodata_inverse_wavelet, fileName + "_audiodata_inverse_wavelet.png");
+					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_wavelet), fileName + "_inverse_wavelet.wav", Analyzer.SAMPLING_RATE);
 					#endregion
 				}
 				#endif
@@ -337,12 +335,12 @@ namespace Mirage
 
 				#if DEBUG
 				if (Analyzer.DEBUG_INFO_VERBOSE) {
-					if (DEBUG_OUTPUT_TEXT) featureData.WriteAscii(name + "_mfccdata.ascii");
+					if (DEBUG_OUTPUT_TEXT) featureData.WriteAscii(fileName + "_mfccdata.ascii");
 				}
 				#endif
 
 				if (doOutputDebugInfo) {
-					featureData.DrawMatrixImageLogValues(name + "_mfccdata.png", true);
+					featureData.DrawMatrixImageLogValues(fileName + "_mfccdata.png", true);
 				}
 
 				#if DEBUG
@@ -351,15 +349,15 @@ namespace Mirage
 					// try to do an inverse mfcc
 					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMelScaleDCT(ref featureData);
 					
-					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_mfcc.WriteCSV(name + "_stftdata_inverse_mfcc.csv", ";");
-					stftdata_inverse_mfcc.DrawMatrixImageLogValues(name + "_specgramlog_inverse_mfcc.png", true);
+					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_mfcc.WriteCSV(fileName + "_stftdata_inverse_mfcc.csv", ";");
+					stftdata_inverse_mfcc.DrawMatrixImageLogValues(fileName + "_specgramlog_inverse_mfcc.png", true);
 					
 					double[] audiodata_inverse_mfcc = stftMirage.InverseStft(stftdata_inverse_mfcc);
 					MathUtils.Normalize(ref audiodata_inverse_mfcc);
 
-					if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.txt");
-					DrawGraph(audiodata_inverse_mfcc, name + "_audiodata_inverse_mfcc.png");
-					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), name + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
+					if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mfcc, fileName + "_audiodata_inverse_mfcc.txt");
+					DrawGraph(audiodata_inverse_mfcc, fileName + "_audiodata_inverse_mfcc.png");
+					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), fileName + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
 					#endregion
 				}
 				#endif
@@ -368,13 +366,13 @@ namespace Mirage
 			
 			// Store in a Statistical Cluster Model Similarity class.
 			// A Gaussian representation of a song
-			Scms audioFeature = Scms.GetScms(featureData, name);
+			Scms audioFeature = Scms.GetScms(featureData, fileName);
 			
 			if (audioFeature != null) {
 				
 				// Store image if debugging
 				if (doOutputDebugInfo) {
-					audioFeature.Image = featureData.DrawMatrixImageLogValues(name + "_featuredata.png", true, false, 0, 0, true);
+					audioFeature.Image = featureData.DrawMatrixImageLogValues(fileName + "_featuredata.png", true, false, 0, 0, true);
 				}
 
 				// Store bitstring hash as well
@@ -393,145 +391,7 @@ namespace Mirage
 			return audioFeature;
 		}
 		
-		public static AudioFeature AnalyzeSoundfingerprinting(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
-			DbgTimer t = new DbgTimer();
-			t.Start ();
-
-			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
-			if (audiodata == null || audiodata.Length == 0)  {
-				Dbg.WriteLine("Error! - No Audio Found");
-				return null;
-			}
-			
-			// Read TAGs using BASS
-			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
-			Un4seen.Bass.AddOn.Tags.TAG_INFO tag_info = bass.GetTagInfoFromFile(filePath.FullName);
-
-			// Name of file being processed
-			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
-			
-			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, name + "_audiodata.ascii");
-				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, name + "_audiodata.txt");
-			}
-			#endif
-			
-			if (doOutputDebugInfo) {
-				DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
-			}
-			
-			// Calculate duration in ms
-			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
-			
-			// zero pad if the audio file is too short to perform a mfcc
-			if (audiodata.Length < (fingerprintingConfigCreation.WdftSize + fingerprintingConfigCreation.Overlap))
-			{
-				int lenNew = fingerprintingConfigCreation.WdftSize + fingerprintingConfigCreation.Overlap;
-				Array.Resize<float>(ref audiodata, lenNew);
-			}
-			
-			// Get fingerprint signatures using the Soundfingerprinting methods
-			
-			// Get database
-			DatabaseService databaseService = DatabaseService.Instance;
-
-			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-			Repository repository = new Repository(permutations, databaseService, fingerprintService);
-
-			// Image Service
-			ImageService imageService = new ImageService(
-				fingerprintService.SpectrumService,
-				fingerprintService.WaveletService);
-
-			// work config
-			WorkUnitParameterObject param = new WorkUnitParameterObject();
-			param.FingerprintingConfiguration = fingerprintingConfigCreation;
-			param.AudioSamples = audiodata;
-			param.PathToAudioFile = filePath.FullName;
-			param.MillisecondsToProcess = SECONDS_TO_ANALYZE * 1000;
-			param.StartAtMilliseconds = 0;
-
-			// build track
-			Track track = new Track();
-			track.Title = name;
-			track.TrackLengthMs = (int) duration;
-			track.FilePath = filePath.FullName;
-			track.Id = -1; // this will be set by the insert method
-			
-			#region parse tag_info
-			if (tag_info != null) {
-				Dictionary<string, string> tags = new Dictionary<string, string>();
-				
-				//if (tag_info.title != string.Empty) tags.Add("title", tag_info.title);
-				if (tag_info.artist != string.Empty) tags.Add("artist", tag_info.artist);
-				if (tag_info.album != string.Empty) tags.Add("album", tag_info.album);
-				if (tag_info.albumartist != string.Empty) tags.Add("albumartist", tag_info.albumartist);
-				if (tag_info.year != string.Empty) tags.Add("year", tag_info.year);
-				if (tag_info.comment != string.Empty) tags.Add("comment", tag_info.comment);
-				if (tag_info.genre != string.Empty) tags.Add("genre", tag_info.genre);
-				if (tag_info.track != string.Empty) tags.Add("track", tag_info.track);
-				if (tag_info.disc != string.Empty) tags.Add("disc", tag_info.disc);
-				if (tag_info.copyright != string.Empty) tags.Add("copyright", tag_info.copyright);
-				if (tag_info.encodedby != string.Empty) tags.Add("encodedby", tag_info.encodedby);
-				if (tag_info.composer != string.Empty) tags.Add("composer", tag_info.composer);
-				if (tag_info.publisher != string.Empty) tags.Add("publisher", tag_info.publisher);
-				if (tag_info.lyricist != string.Empty) tags.Add("lyricist", tag_info.lyricist);
-				if (tag_info.remixer != string.Empty) tags.Add("remixer", tag_info.remixer);
-				if (tag_info.producer != string.Empty) tags.Add("producer", tag_info.producer);
-				if (tag_info.bpm != string.Empty) tags.Add("bpm", tag_info.bpm);
-				//if (tag_info.filename != string.Empty) tags.Add("filename", tag_info.filename);
-				tags.Add("channelinfo", tag_info.channelinfo.ToString());
-				//if (tag_info.duration > 0) tags.Add("duration", tag_info.duration.ToString());
-				if (tag_info.bitrate > 0) tags.Add("bitrate", tag_info.bitrate.ToString());
-				if (tag_info.replaygain_track_gain != -100f) tags.Add("replaygain_track_gain", tag_info.replaygain_track_gain.ToString());
-				if (tag_info.replaygain_track_peak != -1f) tags.Add("replaygain_track_peak", tag_info.replaygain_track_peak.ToString());
-				if (tag_info.conductor != string.Empty) tags.Add("conductor", tag_info.conductor);
-				if (tag_info.grouping != string.Empty) tags.Add("grouping", tag_info.grouping);
-				if (tag_info.mood != string.Empty) tags.Add("mood", tag_info.mood);
-				if (tag_info.rating != string.Empty) tags.Add("rating", tag_info.rating);
-				if (tag_info.isrc != string.Empty) tags.Add("isrc", tag_info.isrc);
-				
-				foreach(var nativeTag in tag_info.NativeTags) {
-					string[] keyvalue = nativeTag.Split('=');
-					tags.Add(keyvalue[0], keyvalue[1]);
-				}
-				track.Tags = tags;
-			}
-			#endregion
-			
-			AudioFeature audioFeature = null;
-			double[][] logSpectrogram;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram)) {
-				
-				if (doOutputDebugInfo) {
-					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(name + "_specgram_logimages.png");
-					
-					Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
-					logSpectrogramMatrix = logSpectrogramMatrix.Transpose();
-					logSpectrogramMatrix.DrawMatrixImageLogValues(name + "_specgram_logimage.png", true);
-					
-					if (DEBUG_OUTPUT_TEXT) {
-						logSpectrogramMatrix.WriteCSV(name + "_specgram_log.csv", ";");
-					}
-				}
-				
-				audioFeature = new DummyAudioFeature();
-				
-				// Store duration
-				audioFeature.Duration = (long) duration;
-				
-				// Store file name
-				audioFeature.Name = filePath.FullName;
-			} else {
-				// failed
-			}
-
-			Dbg.WriteLine ("Soundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
-			return audioFeature;
-		}
-		
-		public static bool AnalyzeAndAdd(FileInfo filePath, Db db, DatabaseService databaseService, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
+		public static bool AnalyzeAndAddSoundfingerprinting(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -546,17 +406,17 @@ namespace Mirage
 			Un4seen.Bass.AddOn.Tags.TAG_INFO tag_info = bass.GetTagInfoFromFile(filePath.FullName);
 
 			// Name of file being processed
-			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
+			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
 			
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, name + "_audiodata.ascii");
-				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, name + "_audiodata.txt");
+				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, fileName + "_audiodata.ascii");
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, fileName + "_audiodata.txt");
 			}
 			#endif
 			
 			if (doOutputDebugInfo) {
-				DrawGraph(MathUtils.FloatToDouble(audiodata), name + "_audiodata.png");
+				DrawGraph(MathUtils.FloatToDouble(audiodata), fileName + "_audiodata.png");
 			}
 			
 			// Calculate duration in ms
@@ -575,12 +435,8 @@ namespace Mirage
 			}
 			
 			// Get fingerprint signatures using the Soundfingerprinting methods
+			DatabaseService databaseService = DatabaseService.Instance; // For AudioFingerprinting
 			Repository repository = new Repository(permutations, databaseService, fingerprintService);
-
-			// Image Service
-			ImageService imageService = new ImageService(
-				fingerprintService.SpectrumService,
-				fingerprintService.WaveletService);
 
 			// work config
 			WorkUnitParameterObject param = new WorkUnitParameterObject();
@@ -592,12 +448,12 @@ namespace Mirage
 
 			// build track
 			Track track = new Track();
-			track.Title = name;
+			track.Title = fileName;
 			track.TrackLengthMs = (int) duration;
 			track.FilePath = filePath.FullName;
 			track.Id = -1; // this will be set by the insert method
 			
-			#region parse tag_info
+			#region Parse tag_info
 			if (tag_info != null) {
 				Dictionary<string, string> tags = new Dictionary<string, string>();
 				
@@ -647,104 +503,17 @@ namespace Mirage
 				
 				#region Debug for Soundfingerprinting Method
 				if (doOutputDebugInfo) {
-					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(name + "_specgram_logimages.png");
+					// Image Service
+					ImageService imageService = new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
 					
-					logSpectrogramMatrix.DrawMatrixImageLogValues(name + "_specgram_logimage.png", true);
+					logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
 					
 					if (DEBUG_OUTPUT_TEXT) {
-						logSpectrogramMatrix.WriteCSV(name + "_specgram_log.csv", ";");
+						logSpectrogramMatrix.WriteCSV(fileName + "_specgram_log.csv", ";");
 					}
 				}
 				#endregion
-				
-				#region Insert Statistical Cluster Model Similarity Audio Feature as well
-				Comirva.Audio.Util.Maths.Matrix scmsMatrix = null;
-				if (useHaarWavelet) {
-					#region Wavelet Transform
-					int lastHeight = 0;
-					int lastWidth = 0;
-					scmsMatrix = mfccMirage.ApplyWaveletCompression(ref logSpectrogramMatrix, out lastHeight, out lastWidth);
-
-					#if DEBUG
-					if (Analyzer.DEBUG_INFO_VERBOSE) {
-						if (DEBUG_OUTPUT_TEXT) scmsMatrix.WriteAscii(name + "_waveletdata.ascii");
-					}
-					#endif
-
-					if (doOutputDebugInfo) {
-						scmsMatrix.DrawMatrixImageLogValues(name + "_waveletdata.png", true);
-					}
-					
-					#if DEBUG
-					if (Analyzer.DEBUG_INFO_VERBOSE) {
-						#region Inverse Wavelet
-						// try to do an inverse wavelet transform
-						Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseWaveletCompression(ref scmsMatrix, lastHeight, lastWidth, logSpectrogramMatrix.Rows, logSpectrogramMatrix.Columns);
-
-						if (DEBUG_OUTPUT_TEXT) stftdata_inverse_wavelet.WriteCSV(name + "_specgramlog_inverse_wavelet.csv", ";");
-						stftdata_inverse_wavelet.DrawMatrixImageLogValues(name + "_specgramlog_inverse_wavelet.png", true);
-						#endregion
-					}
-					#endif
-					#endregion
-				} else {
-					#region DCT Transform
-					// It seems the Mirage way of applying the DCT is slightly faster than the
-					// Comirva way due to less loops
-					scmsMatrix = mfccMirage.ApplyDCT(ref logSpectrogramMatrix);
-
-					#if DEBUG
-					if (Analyzer.DEBUG_INFO_VERBOSE) {
-						if (DEBUG_OUTPUT_TEXT) scmsMatrix.WriteAscii(name + "_mfccdata.ascii");
-					}
-					#endif
-
-					if (doOutputDebugInfo) {
-						scmsMatrix.DrawMatrixImageLogValues(name + "_mfccdata.png", true);
-					}
-
-					#if DEBUG
-					if (Analyzer.DEBUG_INFO_VERBOSE) {
-						#region Inverse MFCC
-						// try to do an inverse mfcc
-						Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseDCT(ref scmsMatrix);
-						
-						if (DEBUG_OUTPUT_TEXT) stftdata_inverse_mfcc.WriteCSV(name + "_stftdata_inverse_mfcc.csv", ";");
-						stftdata_inverse_mfcc.DrawMatrixImageLogValues(name + "_specgramlog_inverse_mfcc.png", true);
-						#endregion
-					}
-					#endif
-					#endregion
-				}
-				
-				// Store in a Statistical Cluster Model Similarity class.
-				// A Gaussian representation of a song
-				Scms audioFeature = Scms.GetScms(scmsMatrix, name);
-				
-				if (audioFeature != null) {
-					
-					// Store image if debugging
-					if (doOutputDebugInfo) {
-						audioFeature.Image = scmsMatrix.DrawMatrixImageLogValues(name + "_featuredata.png", true, false, 0, 0, true);
-					}
-
-					// Store bitstring hash as well
-					string hashString = GetBitString(scmsMatrix);
-					audioFeature.BitString = hashString;
-					
-					// Store duration
-					audioFeature.Duration = (long) duration;
-					
-					// Store file name
-					audioFeature.Name = filePath.FullName;
-					
-					int id = track.Id;
-					if (db.AddTrack(ref id, audioFeature) == -1) {
-						Console.Out.WriteLine("Failed! Could not add audioFeature to database {0}!", name);
-					}
-				}
-				#endregion
-				
 			} else {
 				// failed
 				return false;
@@ -755,7 +524,267 @@ namespace Mirage
 		}
 		
 		/// <summary>
-		/// Query the database for similar tracks
+		/// Method to analyse and add all the different types of audio features
+		/// </summary>
+		/// <param name="filePath">full file path</param>
+		/// <param name="db">Scms database (Mirage)</param>
+		/// <param name="databaseService">soundfingerprinting database</param>
+		/// <param name="doOutputDebugInfo"></param>
+		/// <param name="useHaarWavelet"></param>
+		/// <returns>true if successful</returns>
+		public static bool AnalyzeAndAddComplete(FileInfo filePath, Db db, DatabaseService databaseService, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+
+			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
+			if (audiodata == null || audiodata.Length == 0)  {
+				Dbg.WriteLine("Error! - No Audio Found");
+				return false;
+			}
+			
+			// Read TAGs using BASS
+			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
+			Un4seen.Bass.AddOn.Tags.TAG_INFO tag_info = bass.GetTagInfoFromFile(filePath.FullName);
+
+			// Name of file being processed
+			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
+			
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, fileName + "_audiodata.ascii");
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, fileName + "_audiodata.txt");
+			}
+			#endif
+			
+			if (doOutputDebugInfo) {
+				DrawGraph(MathUtils.FloatToDouble(audiodata), fileName + "_audiodata.png");
+			}
+			
+			// Calculate duration in ms
+			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
+			
+			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
+			// Matlab multiplies with 2^15 (32768)
+			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
+			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER); // 65536
+			
+			// zero pad if the audio file is too short to perform a mfcc
+			if (audiodata.Length < (fingerprintingConfigCreation.WdftSize + fingerprintingConfigCreation.Overlap))
+			{
+				int lenNew = fingerprintingConfigCreation.WdftSize + fingerprintingConfigCreation.Overlap;
+				Array.Resize<float>(ref audiodata, lenNew);
+			}
+			
+			// Get fingerprint signatures using the Soundfingerprinting methods
+			Repository repository = new Repository(permutations, databaseService, fingerprintService);
+
+			// work config
+			WorkUnitParameterObject param = new WorkUnitParameterObject();
+			param.FingerprintingConfiguration = fingerprintingConfigCreation;
+			param.AudioSamples = audiodata;
+			param.PathToAudioFile = filePath.FullName;
+			param.MillisecondsToProcess = SECONDS_TO_ANALYZE * 1000;
+			param.StartAtMilliseconds = 0;
+
+			// build track
+			Track track = new Track();
+			track.Title = fileName;
+			track.TrackLengthMs = (int) duration;
+			track.FilePath = filePath.FullName;
+			track.Id = -1; // this will be set by the insert method
+			
+			#region Parse tag_info
+			if (tag_info != null) {
+				Dictionary<string, string> tags = new Dictionary<string, string>();
+				
+				//if (tag_info.title != string.Empty) tags.Add("title", tag_info.title);
+				if (tag_info.artist != string.Empty) tags.Add("artist", tag_info.artist);
+				if (tag_info.album != string.Empty) tags.Add("album", tag_info.album);
+				if (tag_info.albumartist != string.Empty) tags.Add("albumartist", tag_info.albumartist);
+				if (tag_info.year != string.Empty) tags.Add("year", tag_info.year);
+				if (tag_info.comment != string.Empty) tags.Add("comment", tag_info.comment);
+				if (tag_info.genre != string.Empty) tags.Add("genre", tag_info.genre);
+				if (tag_info.track != string.Empty) tags.Add("track", tag_info.track);
+				if (tag_info.disc != string.Empty) tags.Add("disc", tag_info.disc);
+				if (tag_info.copyright != string.Empty) tags.Add("copyright", tag_info.copyright);
+				if (tag_info.encodedby != string.Empty) tags.Add("encodedby", tag_info.encodedby);
+				if (tag_info.composer != string.Empty) tags.Add("composer", tag_info.composer);
+				if (tag_info.publisher != string.Empty) tags.Add("publisher", tag_info.publisher);
+				if (tag_info.lyricist != string.Empty) tags.Add("lyricist", tag_info.lyricist);
+				if (tag_info.remixer != string.Empty) tags.Add("remixer", tag_info.remixer);
+				if (tag_info.producer != string.Empty) tags.Add("producer", tag_info.producer);
+				if (tag_info.bpm != string.Empty) tags.Add("bpm", tag_info.bpm);
+				//if (tag_info.filename != string.Empty) tags.Add("filename", tag_info.filename);
+				tags.Add("channelinfo", tag_info.channelinfo.ToString());
+				//if (tag_info.duration > 0) tags.Add("duration", tag_info.duration.ToString());
+				if (tag_info.bitrate > 0) tags.Add("bitrate", tag_info.bitrate.ToString());
+				if (tag_info.replaygain_track_gain != -100f) tags.Add("replaygain_track_gain", tag_info.replaygain_track_gain.ToString());
+				if (tag_info.replaygain_track_peak != -1f) tags.Add("replaygain_track_peak", tag_info.replaygain_track_peak.ToString());
+				if (tag_info.conductor != string.Empty) tags.Add("conductor", tag_info.conductor);
+				if (tag_info.grouping != string.Empty) tags.Add("grouping", tag_info.grouping);
+				if (tag_info.mood != string.Empty) tags.Add("mood", tag_info.mood);
+				if (tag_info.rating != string.Empty) tags.Add("rating", tag_info.rating);
+				if (tag_info.isrc != string.Empty) tags.Add("isrc", tag_info.isrc);
+				
+				foreach(var nativeTag in tag_info.NativeTags) {
+					string[] keyvalue = nativeTag.Split('=');
+					tags.Add(keyvalue[0], keyvalue[1]);
+				}
+				track.Tags = tags;
+			}
+			#endregion
+			
+			double[][] logSpectrogram;
+			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram)) {
+
+				// store logSpectrogram as Matrix
+				Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
+				logSpectrogramMatrix = logSpectrogramMatrix.Transpose();
+				
+				#region Debug for Soundfingerprinting Method
+				if (doOutputDebugInfo) {
+					// Image Service
+					ImageService imageService = new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
+					
+					logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
+					
+					if (DEBUG_OUTPUT_TEXT) {
+						logSpectrogramMatrix.WriteCSV(fileName + "_specgram_log.csv", ";");
+					}
+				}
+				#endregion
+				
+				// Insert Statistical Cluster Model Similarity Audio Feature as well
+				if (!AnalyseAndAddScms(logSpectrogramMatrix, fileName, filePath.FullName, (long) duration, db, track.Id, doOutputDebugInfo, useHaarWavelet)) {
+					// failed, but ignore?
+				}
+			} else {
+				// failed
+				return false;
+			}
+
+			Dbg.WriteLine ("AnalyzeAndAdd - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return true;
+		}
+		
+		/// <summary>
+		/// Add the log spectrogram matrix as a Statistical Cluster Model Similarity class to the database
+		/// </summary>
+		/// <param name="logSpectrogramMatrix">log spectrogram matrix</param>
+		/// <param name="fileName">clean filename without extension</param>
+		/// <param name="fullFilePath">full file path</param>
+		/// <param name="duration">duration in ms</param>
+		/// <param name="db">database</param>
+		/// <param name="trackId">track id to insert</param>
+		/// <param name="doOutputDebugInfo"></param>
+		/// <param name="useHaarWavelet"></param>
+		/// <returns>true if successful</returns>
+		private static bool AnalyseAndAddScms(Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix,
+		                                      string fileName,
+		                                      string fullFilePath,
+		                                      double duration,
+		                                      Db db,
+		                                      int trackId,
+		                                      bool doOutputDebugInfo=DEFAULT_DEBUG_INFO,
+		                                      bool useHaarWavelet = true) {
+			
+			// Insert Statistical Cluster Model Similarity Audio Feature
+			Comirva.Audio.Util.Maths.Matrix scmsMatrix = null;
+			if (useHaarWavelet) {
+				#region Wavelet Transform
+				int lastHeight = 0;
+				int lastWidth = 0;
+				scmsMatrix = mfccMirage.ApplyWaveletCompression(ref logSpectrogramMatrix, out lastHeight, out lastWidth);
+
+				#if DEBUG
+				if (Analyzer.DEBUG_INFO_VERBOSE) {
+					if (DEBUG_OUTPUT_TEXT) scmsMatrix.WriteAscii(fileName + "_waveletdata.ascii");
+				}
+				#endif
+
+				if (doOutputDebugInfo) {
+					scmsMatrix.DrawMatrixImageLogValues(fileName + "_waveletdata.png", true);
+				}
+				
+				#if DEBUG
+				if (Analyzer.DEBUG_INFO_VERBOSE) {
+					#region Inverse Wavelet
+					// try to do an inverse wavelet transform
+					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseWaveletCompression(ref scmsMatrix, lastHeight, lastWidth, logSpectrogramMatrix.Rows, logSpectrogramMatrix.Columns);
+
+					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_wavelet.WriteCSV(fileName + "_specgramlog_inverse_wavelet.csv", ";");
+					stftdata_inverse_wavelet.DrawMatrixImageLogValues(fileName + "_specgramlog_inverse_wavelet.png", true);
+					#endregion
+				}
+				#endif
+				#endregion
+			} else {
+				#region DCT Transform
+				// It seems the Mirage way of applying the DCT is slightly faster than the
+				// Comirva way due to less loops
+				scmsMatrix = mfccMirage.ApplyDCT(ref logSpectrogramMatrix);
+
+				#if DEBUG
+				if (Analyzer.DEBUG_INFO_VERBOSE) {
+					if (DEBUG_OUTPUT_TEXT) scmsMatrix.WriteAscii(fileName + "_mfccdata.ascii");
+				}
+				#endif
+
+				if (doOutputDebugInfo) {
+					scmsMatrix.DrawMatrixImageLogValues(fileName + "_mfccdata.png", true);
+				}
+
+				#if DEBUG
+				if (Analyzer.DEBUG_INFO_VERBOSE) {
+					#region Inverse MFCC
+					// try to do an inverse mfcc
+					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseDCT(ref scmsMatrix);
+					
+					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_mfcc.WriteCSV(fileName + "_stftdata_inverse_mfcc.csv", ";");
+					stftdata_inverse_mfcc.DrawMatrixImageLogValues(fileName + "_specgramlog_inverse_mfcc.png", true);
+					#endregion
+				}
+				#endif
+				#endregion
+			}
+			
+			// Store in a Statistical Cluster Model Similarity class.
+			// i.e. a Gaussian representation of a song
+			Scms audioFeature = Scms.GetScms(scmsMatrix, fileName);
+			
+			if (audioFeature != null) {
+				
+				// Store image if debugging
+				if (doOutputDebugInfo) {
+					audioFeature.Image = scmsMatrix.DrawMatrixImageLogValues(fileName + "_featuredata.png", true, false, 0, 0, true);
+				}
+
+				// Store bitstring hash as well
+				string hashString = GetBitString(scmsMatrix);
+				audioFeature.BitString = hashString;
+				
+				// Store duration
+				audioFeature.Duration = (long) duration;
+				
+				// Store file name
+				audioFeature.Name = fullFilePath;
+				
+				// Add to database
+				int id = trackId;
+				if (db.AddTrack(ref id, audioFeature) == -1) {
+					Console.Out.WriteLine("Failed! Could not add audioFeature to database {0}!", fileName);
+					return false;
+				} else {
+					return true;
+				}
+			} else {
+				return false;
+			}
+		}
+		
+		/// <summary>
+		/// Query the database for similar tracks using the sound fingerprinting methods
 		/// </summary>
 		/// <param name="filePath">input file</param>
 		/// <returns>a dictionary of similar tracks</returns>
@@ -771,7 +800,7 @@ namespace Mirage
 			}
 
 			// Name of file being processed
-			string name = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
+			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
 			
 			// Calculate duration in ms
 			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
@@ -803,19 +832,9 @@ namespace Mirage
 			param.StartAtMilliseconds = 0;
 			
 			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(25, 4, 2, param);
+			Dbg.WriteLine ("SimilarTracksSoundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			
 			return candidates;
-			
-			/*
-			// Use var keyword to enumerate dictionary
-			foreach (var pair in candidates)
-			{
-				Console.WriteLine("{0} - {1:0.00}",
-				                  pair.Key.Title,
-				                  pair.Value);
-			}
-			 */
-			
-			Dbg.WriteLine ("Soundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 		}
 		
 		/// <summary>

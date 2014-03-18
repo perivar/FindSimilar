@@ -71,39 +71,15 @@ namespace FindSimilar
 			this.db = new Db();
 			this.databaseService = DatabaseService.Instance;
 			
+			if (rbScms.Checked) {
+				IgnoreFileLengthCheckBox.Visible = true;
+				DistanceTypeCombo.Visible = true;
+			} else {
+				IgnoreFileLengthCheckBox.Visible = false;
+				DistanceTypeCombo.Visible = false;
+			}
+			
 			ReadAllTracks();
-		}
-		
-		private void ReadAllTracksOld() {
-			
-			// Clear all rows
-			this.dataGridView1.Rows.Clear();
-			
-			Dictionary<string, KeyValuePair<int, long>> filesProcessed = db.GetTracks();
-			Console.Out.WriteLine("Database contains {0} processed files.", filesProcessed.Count);
-			
-			int counter = 0;
-			foreach (string filePath in filesProcessed.Keys) {
-				this.dataGridView1.Rows.Add(filesProcessed[filePath].Key, filePath, filesProcessed[filePath].Value);
-				if (counter == DEFAULT_NUM_TO_TAKE) break;
-				counter++;
-			}
-		}
-
-		private void ReadAllTracks() {
-			
-			// Clear all rows
-			this.dataGridView1.Rows.Clear();
-			
-			IList<Track> tracks = databaseService.ReadTracks();
-			Console.Out.WriteLine("Database contains {0} processed files.", tracks.Count);
-			
-			int counter = 0;
-			foreach (Track track in tracks) {
-				this.dataGridView1.Rows.Add(track.Id, track.FilePath, track.TrackLengthMs);
-				if (counter == DEFAULT_NUM_TO_TAKE) break;
-				counter++;
-			}
 		}
 		
 		#region Play
@@ -343,9 +319,51 @@ namespace FindSimilar
 			if (player != null) player.Dispose();
 		}
 		#endregion
+
+		#region ReadAllTracks
+		private void ReadAllTracks() {
+			if (rbScms.Checked) {
+				ReadAllTraksScms();
+			} else if (rbSoundfingerprinting.Checked) {
+				ReadAllTracksSoundfingerprinting();
+			}
+		}
 		
-		#region Old Find methods
-		private void FindByFilePathOld(string queryPath) {
+		private void ReadAllTraksScms() {
+			
+			// Clear all rows
+			this.dataGridView1.Rows.Clear();
+			
+			Dictionary<string, KeyValuePair<int, long>> filesProcessed = db.GetTracks();
+			Console.Out.WriteLine("Database contains {0} processed files.", filesProcessed.Count);
+			
+			int counter = 0;
+			foreach (string filePath in filesProcessed.Keys) {
+				this.dataGridView1.Rows.Add(filesProcessed[filePath].Key, filePath, filesProcessed[filePath].Value);
+				if (counter == DEFAULT_NUM_TO_TAKE) break;
+				counter++;
+			}
+		}
+
+		private void ReadAllTracksSoundfingerprinting() {
+			
+			// Clear all rows
+			this.dataGridView1.Rows.Clear();
+			
+			IList<Track> tracks = databaseService.ReadTracks();
+			Console.Out.WriteLine("Database contains {0} processed files.", tracks.Count);
+			
+			int counter = 0;
+			foreach (Track track in tracks) {
+				this.dataGridView1.Rows.Add(track.Id, track.FilePath, track.TrackLengthMs);
+				if (counter == DEFAULT_NUM_TO_TAKE) break;
+				counter++;
+			}
+		}
+		#endregion
+		
+		#region Find Scsm methods
+		private void FindByFilePathScms(string queryPath) {
 			if (queryPath != "") {
 				FileInfo fi = new FileInfo(queryPath);
 				if (fi.Exists) {
@@ -368,7 +386,7 @@ namespace FindSimilar
 			}
 		}
 
-		private void FindByIdOld(int queryId) {
+		private void FindByIdScms(int queryId) {
 			if (queryId != -1) {
 				int[] seedTrackIds = new int[] { queryId };
 				
@@ -393,7 +411,7 @@ namespace FindSimilar
 			}
 		}
 		
-		private void FindByStringOld(string queryString) {
+		private void FindByStringScms(string queryString) {
 
 			if (queryString != "") {
 				
@@ -414,11 +432,10 @@ namespace FindSimilar
 				}
 			}
 		}
-		
 		#endregion
 
-		#region Find methods
-		private void FindByFilePath(string queryPath) {
+		#region Find Soundfingerprinting methods
+		private void FindByFilePathSoundfingerprinting(string queryPath) {
 			if (queryPath != "") {
 				FileInfo fi = new FileInfo(queryPath);
 				if (fi.Exists) {
@@ -439,7 +456,7 @@ namespace FindSimilar
 			}
 		}
 		
-		private void FindById(int queryId) {
+		private void FindByIdSoundfingerprinting(int queryId) {
 			
 			if (queryId != -1) {
 				
@@ -464,7 +481,7 @@ namespace FindSimilar
 			}
 		}
 		
-		private void FindByString(string queryString) {
+		private void FindByStringSoundfingerprinting(string queryString) {
 			
 			if (queryString != "") {
 				
@@ -472,7 +489,7 @@ namespace FindSimilar
 				this.dataGridView1.Rows.Clear();
 				
 				// search for tracks
-				string whereClause = string.Format("WHERE filePath like '%{0}%'", queryString);
+				string whereClause = string.Format("WHERE tags like '%{0}%'", queryString);
 				IList<Track> tracks = databaseService.ReadTracks(whereClause);
 				Console.Out.WriteLine("Database contains {0} files that matches the query '{1}'.", tracks.Count, queryString);
 				
@@ -486,6 +503,33 @@ namespace FindSimilar
 		}
 		#endregion
 		
+		#region Find methods
+		private void FindByFilePath(string queryPath) {
+			if (rbScms.Checked) {
+				FindByFilePathScms(queryPath);
+			} else if (rbSoundfingerprinting.Checked) {
+				FindByFilePathSoundfingerprinting(queryPath);
+			}
+		}
+		
+		private void FindById(int queryId) {
+			if (rbScms.Checked) {
+				FindByIdScms(queryId);
+			} else if (rbSoundfingerprinting.Checked) {
+				FindByIdSoundfingerprinting(queryId);
+			}
+		}
+		
+		private void FindByString(string queryString) {
+			if (rbScms.Checked) {
+				FindByStringScms(queryString);
+			} else if (rbSoundfingerprinting.Checked) {
+				FindByStringSoundfingerprinting(queryString);
+			}
+		}
+		#endregion
+		
+		#region Query Field Actions
 		void QueryIdTextBoxKeyPress(object sender, KeyPressEventArgs e)
 		{
 			if (e.KeyChar == (char) Keys.Enter) {
@@ -510,7 +554,7 @@ namespace FindSimilar
 				FindByString(queryString);
 			}
 		}
-		
+		#endregion
 		
 		void AudioFilePlayBtnClick(object sender, EventArgs e)
 		{
@@ -519,5 +563,24 @@ namespace FindSimilar
 				Play(queryPath);
 			}
 		}
+		
+		#region Radio Button Change Events
+		void RbScmsCheckedChanged(object sender, EventArgs e)
+		{
+			if (rbScms.Checked) {
+				IgnoreFileLengthCheckBox.Visible = true;
+				DistanceTypeCombo.Visible = true;
+			} else {
+				IgnoreFileLengthCheckBox.Visible = false;
+				DistanceTypeCombo.Visible = false;
+			}
+			ReadAllTracks();
+		}
+		
+		void RbSoundfingerprintingCheckedChanged(object sender, EventArgs e)
+		{
+			ReadAllTracks();
+		}
+		#endregion
 	}
 }

@@ -54,6 +54,8 @@
 			this.IgnoreFileLengthCheckBox = new System.Windows.Forms.CheckBox();
 			this.versionLabel = new System.Windows.Forms.Label();
 			this.version = new System.Windows.Forms.Label();
+			this.rbScms = new System.Windows.Forms.RadioButton();
+			this.rbSoundfingerprinting = new System.Windows.Forms.RadioButton();
 			this.tabControl1.SuspendLayout();
 			this.tabFileSearch.SuspendLayout();
 			this.tabIdSearch.SuspendLayout();
@@ -94,6 +96,7 @@
 			// 
 			// AudioFilePlayBtn
 			// 
+			this.AudioFilePlayBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.AudioFilePlayBtn.Location = new System.Drawing.Point(627, 2);
 			this.AudioFilePlayBtn.Name = "AudioFilePlayBtn";
 			this.AudioFilePlayBtn.Size = new System.Drawing.Size(38, 23);
@@ -307,12 +310,38 @@
 			this.version.TabIndex = 10;
 			this.version.Text = "version_number";
 			// 
+			// rbScms
+			// 
+			this.rbScms.Anchor = System.Windows.Forms.AnchorStyles.Top;
+			this.rbScms.Location = new System.Drawing.Point(244, 0);
+			this.rbScms.Name = "rbScms";
+			this.rbScms.Size = new System.Drawing.Size(58, 24);
+			this.rbScms.TabIndex = 11;
+			this.rbScms.Text = "Scms";
+			this.rbScms.UseVisualStyleBackColor = true;
+			this.rbScms.CheckedChanged += new System.EventHandler(this.RbScmsCheckedChanged);
+			// 
+			// rbSoundfingerprinting
+			// 
+			this.rbSoundfingerprinting.Anchor = System.Windows.Forms.AnchorStyles.Top;
+			this.rbSoundfingerprinting.Checked = true;
+			this.rbSoundfingerprinting.Location = new System.Drawing.Point(299, 0);
+			this.rbSoundfingerprinting.Name = "rbSoundfingerprinting";
+			this.rbSoundfingerprinting.Size = new System.Drawing.Size(120, 24);
+			this.rbSoundfingerprinting.TabIndex = 12;
+			this.rbSoundfingerprinting.TabStop = true;
+			this.rbSoundfingerprinting.Text = "Soundfingerprinting";
+			this.rbSoundfingerprinting.UseVisualStyleBackColor = true;
+			this.rbSoundfingerprinting.CheckedChanged += new System.EventHandler(this.RbSoundfingerprintingCheckedChanged);
+			// 
 			// FindSimilarClientForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(700, 395);
 			this.ContextMenuStrip = this.contextMenuStrip1;
+			this.Controls.Add(this.rbSoundfingerprinting);
+			this.Controls.Add(this.rbScms);
 			this.Controls.Add(this.version);
 			this.Controls.Add(this.versionLabel);
 			this.Controls.Add(this.IgnoreFileLengthCheckBox);
@@ -336,6 +365,8 @@
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
 		}
+		private System.Windows.Forms.RadioButton rbSoundfingerprinting;
+		private System.Windows.Forms.RadioButton rbScms;
 		private System.Windows.Forms.Button AudioFilePlayBtn;
 		private System.Windows.Forms.ToolStripMenuItem dumpDebugInfoToolStripMenuItem;
 		private System.Windows.Forms.Label version;

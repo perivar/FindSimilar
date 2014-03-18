@@ -203,10 +203,6 @@ namespace Soundfingerprinting.Audio.Services
 
 				for (int k = lowBound; k < higherBound; k++)
 				{
-					//double re = spectrum[2 * k] / ((double)width / 2);
-					//double img = spectrum[(2 * k) + 1] / ((double)width / 2);
-					//sumFreq[i] += (double)((re * re) + (img * img));
-
 					double re = spectrum[2 * k];
 					double img = spectrum[(2 * k) + 1];
 					

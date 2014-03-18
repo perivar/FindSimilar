@@ -51,7 +51,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.11";
+		public static string VERSION = "1.0.12";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -325,7 +325,7 @@ namespace Mirage
 				                 		    || skipDurationAboveSeconds <= 0
 				                 		    || duration < 0) {
 
-				                 			if(!Analyzer.AnalyzeAndAdd(fileInfo, db, databaseService)) {
+				                 			if(!Analyzer.AnalyzeAndAddComplete(fileInfo, db, databaseService)) {
 				                 				Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 				                 				IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
 				                 			} else {

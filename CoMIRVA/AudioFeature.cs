@@ -36,19 +36,6 @@ namespace Comirva.Audio.Feature
 		
 		private string bitString;
 		private Image image;
-		private List<bool[]> signatures = new List<bool[]>();
-
-		/// <summary>
-		/// Signatures
-		/// </summary>
-		public List<bool[]> Signatures {
-			get {
-				return signatures;
-			}
-			set {
-				signatures = value;
-			}
-		}
 		
 		/// <summary>
 		/// Bitstring that represents the audio feature.
