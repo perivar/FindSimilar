@@ -271,10 +271,10 @@ namespace Mirage
 		/// <summary>
 		/// Scan a directory recursively and add all the audio files found to the database
 		/// </summary>
-		/// <param name="path">path to directory</param>
-		/// <param name="db">MandelEllis or SCMS Database Instance</param>
+		/// <param name="path">Path to directory</param>
+		/// <param name="db">MandelEllis or Scms Database Instance</param>
 		/// <param name="databaseService">Fingerprinting Database Instance</param>
-		/// <param name="skipDurationAboveSeconds">skip files with duration longer than this number of seconds (0 or less disables this)</param>
+		/// <param name="skipDurationAboveSeconds">Skip files with duration longer than this number of seconds (0 or less disables this)</param>
 		public static void ScanDirectory(string path, Db db, DatabaseService databaseService, double skipDurationAboveSeconds) {
 			
 			Stopwatch stopWatch = Stopwatch.StartNew();
@@ -325,7 +325,9 @@ namespace Mirage
 				                 		    || skipDurationAboveSeconds <= 0
 				                 		    || duration < 0) {
 
-				                 			if(!Analyzer.AnalyzeAndAddComplete(fileInfo, db, databaseService)) {
+				                 			//if(!Analyzer.AnalyzeAndAddComplete(fileInfo, db, databaseService)) {
+				                 			//if(!Analyzer.AnalyzeAndAddSoundfingerprinting(fileInfo)) {
+				                 			if(!Analyzer.AnalyzeAndAddScms(fileInfo, db)) {
 				                 				Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 				                 				IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
 				                 			} else {
@@ -461,15 +463,15 @@ namespace Mirage
 				}
 				
 				// Get database
-				Db mandelEllisSCMSDatabase = new Db(); // For MandelEllis and SCMS
+				Db mandelEllisScmsDatabase = new Db(); // For MandelEllis and SCMS
 				DatabaseService databaseService = DatabaseService.Instance; // For AudioFingerprinting
 
 				if (scanPath != "") {
 					if (IOUtils.IsDirectory(scanPath)) {
 						if (resetdb) {
-							// For MandelEllis and SCMS
-							mandelEllisSCMSDatabase.RemoveTable();
-							mandelEllisSCMSDatabase.AddTable();
+							// For MandelEllis and Scms
+							mandelEllisScmsDatabase.RemoveTable();
+							mandelEllisScmsDatabase.AddTable();
 							
 							// For AudioFingerprinting
 							databaseService.RemoveFingerprintTable();
@@ -479,7 +481,7 @@ namespace Mirage
 							databaseService.RemoveTrackTable();
 							databaseService.AddTrackTable();
 						}
-						ScanDirectory(scanPath, mandelEllisSCMSDatabase, databaseService, skipDurationAboveSeconds);
+						ScanDirectory(scanPath, mandelEllisScmsDatabase, databaseService, skipDurationAboveSeconds);
 					} else {
 						Console.Out.WriteLine("No directory found {0}!", scanPath);
 					}
@@ -488,14 +490,14 @@ namespace Mirage
 				if (queryPath != "") {
 					FileInfo fi = new FileInfo(queryPath);
 					if (fi.Exists) {
-						FindSimilar(queryPath, mandelEllisSCMSDatabase, analysisMethod, numToTake, percentage, distanceType);
+						FindSimilar(queryPath, mandelEllisScmsDatabase, analysisMethod, numToTake, percentage, distanceType);
 					} else {
 						Console.Out.WriteLine("No file found {0}!", queryPath);
 					}
 				}
 				
 				if (queryId != -1) {
-					FindSimilar(new int[] { queryId }, mandelEllisSCMSDatabase, analysisMethod, numToTake, percentage, distanceType);
+					FindSimilar(new int[] { queryId }, mandelEllisScmsDatabase, analysisMethod, numToTake, percentage, distanceType);
 				}
 				
 				System.Console.ReadLine();

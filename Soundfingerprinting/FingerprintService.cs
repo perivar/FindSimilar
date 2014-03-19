@@ -76,8 +76,8 @@ namespace Soundfingerprinting.Fingerprinting
 				logarithmizedSpectrum, stride, fingerprintLength, overlap);
 
 			WaveletService.ApplyWaveletTransformInPlace(spectralImages);
+			
 			List<bool[]> fingerprints = new List<bool[]>();
-
 			foreach (var spectralImage in spectralImages)
 			{
 				bool[] image = FingerprintDescriptor.ExtractTopWavelets(spectralImage, topWavelets);

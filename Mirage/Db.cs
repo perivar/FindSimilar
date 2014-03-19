@@ -173,6 +173,47 @@ namespace Mirage
 		}
 
 		/// <summary>
+		/// Add a track to the database
+		/// </summary>
+		/// <param name="audioFeature">the audiofeature object</param>
+		/// <returns>-1 if failed otherwise the track-id passed</returns>
+		public int AddTrack(AudioFeature audioFeature)
+		{
+			IDbDataParameter dbAudioFeatureParam = new SQLiteParameter("@audioFeature", DbType.Binary);
+			IDbDataParameter dbNameParam = new SQLiteParameter("@name", DbType.String);
+			IDbDataParameter dbDurationParam = new SQLiteParameter("@duration", DbType.Int64);
+			IDbDataParameter dbBitStringParam = new SQLiteParameter("@bitstring", DbType.String);
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+			dbcmd.CommandText = "INSERT INTO mirage (audioFeature, name, duration, bitstring) " +
+				"VALUES (@audioFeature, @name, @duration, @bitstring); SELECT last_insert_rowid();";
+			
+			dbcmd.Parameters.Add(dbAudioFeatureParam);
+			dbcmd.Parameters.Add(dbNameParam);
+			dbcmd.Parameters.Add(dbDurationParam);
+			dbcmd.Parameters.Add(dbBitStringParam);
+
+			dbAudioFeatureParam.Value = audioFeature.ToBytes();
+			dbNameParam.Value = audioFeature.Name;
+			dbDurationParam.Value = audioFeature.Duration;
+			dbBitStringParam.Value = audioFeature.BitString;
+			
+			int trackid = -1;
+			try {
+				dbcmd.Prepare();
+				//dbcmd.ExecuteNonQuery();
+				trackid = Convert.ToInt32(dbcmd.ExecuteScalar());
+				dbcmd.Dispose();
+			} catch (Exception e) {
+				return -1;
+			}
+			return trackid;
+		}
+
+		/// <summary>
 		/// Remove a track from the database using the given track-id
 		/// </summary>
 		/// <param name="trackid">track-id to delete</param>

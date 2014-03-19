@@ -360,7 +360,7 @@ namespace Comirva.Audio
 			// Compress
 			Matrix waveletCompressed = wavelet.Resize(numberCoefficients, wavelet.Columns);
 			
-			Mirage.Dbg.WriteLine("Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("ApplyWaveletCompression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return waveletCompressed;
 		}
 		
@@ -408,7 +408,7 @@ namespace Comirva.Audio
 			// 6. Perform the Wavelet Transform and Compress
 			Matrix waveletCompressed = ApplyWaveletCompression(ref mel, out lastHeight, out lastWidth);
 			
-			Mirage.Dbg.WriteLine("Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("ApplyMelScaleWaveletCompression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return waveletCompressed;
 		}
 

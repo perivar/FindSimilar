@@ -1,24 +1,9 @@
 /*
- * Mirage - High Performance Music Similarity and Automatic Playlist Generator
+ * The code is originally based on Mirage - High Performance Music Similarity Generator
  * http://hop.at/mirage
  *
  * Copyright (C) 2007-2008 Dominik Schnitzer <dominik@schnitzer.at>
- * Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
- * 
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA.
+ * Changed and heavily modified by Per Ivar Nerseth <perivar@nerseth.com>
  */
 
 using System;
@@ -61,14 +46,15 @@ using Soundfingerprinting.DbStorage.Entities;
 using Soundfingerprinting.SoundTools;
 using Soundfingerprinting.Audio.Strides;
 
-// Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
 	public class Analyzer
 	{
-		public const bool DEBUG_INFO_VERBOSE = false;
+		public const bool DEBUG_INFO_VERBOSE = true;
+		public const bool DEFAULT_DEBUG_INFO = true;
+		
 		public const bool DEBUG_OUTPUT_TEXT = false;
-		public const bool DEFAULT_DEBUG_INFO = false;
+		public const bool DEBUG_DO_INVERSE_TESTS = false;
 		
 		public enum AnalysisMethod {
 			SCMS = 1,
@@ -110,7 +96,6 @@ namespace Mirage
 		// distance between slices: 1024 / 44100 * 1000 =  23.22 ms
 		
 		// Create the STFS object with 50% overlap (half of the window size);
-		//private static Stft stft = new Stft(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
 
 		// Soundfingerprinting static variables
@@ -161,10 +146,12 @@ namespace Mirage
 			return audioFeature;
 		}
 		
-		public static Scms AnalyzeScms(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true)
+		public static AudioFeature AnalyzeScms(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start ();
+
+			// used to save wave files in the debug inverse methods
 			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
 
 			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
@@ -206,14 +193,10 @@ namespace Mirage
 			// 3. FFT
 			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audiodata);
 
-			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				if (DEBUG_OUTPUT_TEXT) {
-					stftdata.WriteAscii(fileName + "_stftdata.ascii");
-					stftdata.WriteCSV(fileName + "_stftdata.csv", ";");
-				}
+			if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
+				stftdata.WriteAscii(fileName + "_stftdata.ascii");
+				stftdata.WriteCSV(fileName + "_stftdata.csv", ";");
 			}
-			#endif
 
 			if (doOutputDebugInfo) {
 				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
@@ -223,8 +206,7 @@ namespace Mirage
 				stftdata.DrawMatrixImageLogY(fileName + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			}
 			
-			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE & false) {
+			if (DEBUG_DO_INVERSE_TESTS) {
 				#region Inverse STFT
 				double[] audiodata_inverse_stft = stftMirage.InverseStft(stftdata);
 				
@@ -243,7 +225,6 @@ namespace Mirage
 				bass.SaveFile(audiodata_inverse_float, fileName + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
 				#endregion
 			}
-			#endif
 			
 			// 4. Mel Scale Filterbank
 			// Mel-frequency is proportional to the logarithm of the linear frequency,
@@ -251,8 +232,7 @@ namespace Mirage
 			// 5. Take Logarithm
 			// 6. DCT (Discrete Cosine Transform)
 
-			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE) {
+			if (DEBUG_INFO_VERBOSE) {
 				#region Mel Scale and Log Values
 				Comirva.Audio.Util.Maths.Matrix mellog = mfccMirage.ApplyMelScaleAndLog(ref stftdata);
 				
@@ -266,7 +246,7 @@ namespace Mirage
 				#endregion
 				
 				#region Inverse Mel Scale and Log Values
-				if (false) {
+				if (DEBUG_DO_INVERSE_TESTS) {
 					Comirva.Audio.Util.Maths.Matrix inverse_mellog = mfccMirage.InverseMelScaleAndLog(ref mellog);
 
 					inverse_mellog.WriteCSV(fileName + "_mel_log_inverse.csv", ";");
@@ -288,7 +268,6 @@ namespace Mirage
 				}
 				#endregion
 			}
-			#endif
 
 			Comirva.Audio.Util.Maths.Matrix featureData = null;
 			if (useHaarWavelet) {
@@ -297,18 +276,15 @@ namespace Mirage
 				int lastWidth = 0;
 				featureData = mfccMirage.ApplyMelScaleWaveletCompression(ref stftdata, out lastHeight, out lastWidth);
 
-				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE) {
-					if (DEBUG_OUTPUT_TEXT) featureData.WriteAscii(fileName + "_waveletdata.ascii");
+				if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
+					featureData.WriteAscii(fileName + "_waveletdata.ascii");
 				}
-				#endif
 
 				if (doOutputDebugInfo) {
 					featureData.DrawMatrixImageLogValues(fileName + "_waveletdata.png", true);
 				}
 				
-				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE  & false) {
+				if (DEBUG_DO_INVERSE_TESTS) {
 					#region Inverse Wavelet
 					// try to do an inverse wavelet transform
 					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseMelScaleWaveletCompression(ref featureData, lastHeight, lastWidth);
@@ -324,7 +300,6 @@ namespace Mirage
 					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_wavelet), fileName + "_inverse_wavelet.wav", Analyzer.SAMPLING_RATE);
 					#endregion
 				}
-				#endif
 				#endregion
 			} else {
 				#region DCT Transform
@@ -333,18 +308,15 @@ namespace Mirage
 				featureData = mfccMirage.ApplyMelScaleDCT(ref stftdata);
 				//featureData = mfccMirage.ApplyComirvaWay(ref stftdata);
 
-				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE) {
-					if (DEBUG_OUTPUT_TEXT) featureData.WriteAscii(fileName + "_mfccdata.ascii");
+				if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
+					featureData.WriteAscii(fileName + "_mfccdata.ascii");
 				}
-				#endif
 
 				if (doOutputDebugInfo) {
 					featureData.DrawMatrixImageLogValues(fileName + "_mfccdata.png", true);
 				}
 
-				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE & false) {
+				if (DEBUG_DO_INVERSE_TESTS) {
 					#region Inverse MFCC
 					// try to do an inverse mfcc
 					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMelScaleDCT(ref featureData);
@@ -360,7 +332,6 @@ namespace Mirage
 					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), fileName + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
 					#endregion
 				}
-				#endif
 				#endregion
 			}
 			
@@ -386,11 +357,17 @@ namespace Mirage
 				audioFeature.Name = filePath.FullName;
 			}
 			
-			Dbg.WriteLine ("Mirage - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
-
+			Dbg.WriteLine ("AnalyzeScms - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return audioFeature;
 		}
 		
+		/// <summary>
+		/// Method to analyze and add using the soundfingerprinting methods
+		/// </summary>
+		/// <param name="filePath">full file path</param>
+		/// <param name="doOutputDebugInfo">decide whether to output debug info like spectrogram and audiofile (default value can be set)</param>
+		/// <param name="useHaarWavelet">decide whether to use haar wavelet compression or DCT compression</param>
+		/// <returns>true if successful</returns>
 		public static bool AnalyzeAndAddSoundfingerprinting(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
@@ -401,15 +378,11 @@ namespace Mirage
 				return false;
 			}
 			
-			// Read TAGs using BASS
-			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
-			Un4seen.Bass.AddOn.Tags.TAG_INFO tag_info = bass.GetTagInfoFromFile(filePath.FullName);
-
 			// Name of file being processed
 			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
 			
 			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE) {
+			if (DEBUG_INFO_VERBOSE) {
 				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, fileName + "_audiodata.ascii");
 				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, fileName + "_audiodata.txt");
 			}
@@ -451,48 +424,8 @@ namespace Mirage
 			track.Title = fileName;
 			track.TrackLengthMs = (int) duration;
 			track.FilePath = filePath.FullName;
+			track.Tags = GetTagInfoFromFile(filePath.FullName);
 			track.Id = -1; // this will be set by the insert method
-			
-			#region Parse tag_info
-			if (tag_info != null) {
-				Dictionary<string, string> tags = new Dictionary<string, string>();
-				
-				//if (tag_info.title != string.Empty) tags.Add("title", tag_info.title);
-				if (tag_info.artist != string.Empty) tags.Add("artist", tag_info.artist);
-				if (tag_info.album != string.Empty) tags.Add("album", tag_info.album);
-				if (tag_info.albumartist != string.Empty) tags.Add("albumartist", tag_info.albumartist);
-				if (tag_info.year != string.Empty) tags.Add("year", tag_info.year);
-				if (tag_info.comment != string.Empty) tags.Add("comment", tag_info.comment);
-				if (tag_info.genre != string.Empty) tags.Add("genre", tag_info.genre);
-				if (tag_info.track != string.Empty) tags.Add("track", tag_info.track);
-				if (tag_info.disc != string.Empty) tags.Add("disc", tag_info.disc);
-				if (tag_info.copyright != string.Empty) tags.Add("copyright", tag_info.copyright);
-				if (tag_info.encodedby != string.Empty) tags.Add("encodedby", tag_info.encodedby);
-				if (tag_info.composer != string.Empty) tags.Add("composer", tag_info.composer);
-				if (tag_info.publisher != string.Empty) tags.Add("publisher", tag_info.publisher);
-				if (tag_info.lyricist != string.Empty) tags.Add("lyricist", tag_info.lyricist);
-				if (tag_info.remixer != string.Empty) tags.Add("remixer", tag_info.remixer);
-				if (tag_info.producer != string.Empty) tags.Add("producer", tag_info.producer);
-				if (tag_info.bpm != string.Empty) tags.Add("bpm", tag_info.bpm);
-				//if (tag_info.filename != string.Empty) tags.Add("filename", tag_info.filename);
-				tags.Add("channelinfo", tag_info.channelinfo.ToString());
-				//if (tag_info.duration > 0) tags.Add("duration", tag_info.duration.ToString());
-				if (tag_info.bitrate > 0) tags.Add("bitrate", tag_info.bitrate.ToString());
-				if (tag_info.replaygain_track_gain != -100f) tags.Add("replaygain_track_gain", tag_info.replaygain_track_gain.ToString());
-				if (tag_info.replaygain_track_peak != -1f) tags.Add("replaygain_track_peak", tag_info.replaygain_track_peak.ToString());
-				if (tag_info.conductor != string.Empty) tags.Add("conductor", tag_info.conductor);
-				if (tag_info.grouping != string.Empty) tags.Add("grouping", tag_info.grouping);
-				if (tag_info.mood != string.Empty) tags.Add("mood", tag_info.mood);
-				if (tag_info.rating != string.Empty) tags.Add("rating", tag_info.rating);
-				if (tag_info.isrc != string.Empty) tags.Add("isrc", tag_info.isrc);
-				
-				foreach(var nativeTag in tag_info.NativeTags) {
-					string[] keyvalue = nativeTag.Split('=');
-					tags.Add(keyvalue[0], keyvalue[1]);
-				}
-				track.Tags = tags;
-			}
-			#endregion
 			
 			double[][] logSpectrogram;
 			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram)) {
@@ -519,18 +452,18 @@ namespace Mirage
 				return false;
 			}
 
-			Dbg.WriteLine ("AnalyzeAndAdd - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			Dbg.WriteLine ("AnalyzeAndAddSoundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return true;
 		}
-		
+
 		/// <summary>
 		/// Method to analyse and add all the different types of audio features
 		/// </summary>
 		/// <param name="filePath">full file path</param>
 		/// <param name="db">Scms database (Mirage)</param>
 		/// <param name="databaseService">soundfingerprinting database</param>
-		/// <param name="doOutputDebugInfo"></param>
-		/// <param name="useHaarWavelet"></param>
+		/// <param name="doOutputDebugInfo">decide whether to output debug info like spectrogram and audiofile (default value can be set)</param>
+		/// <param name="useHaarWavelet">decide whether to use haar wavelet compression or DCT compression</param>
 		/// <returns>true if successful</returns>
 		public static bool AnalyzeAndAddComplete(FileInfo filePath, Db db, DatabaseService databaseService, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
@@ -542,15 +475,11 @@ namespace Mirage
 				return false;
 			}
 			
-			// Read TAGs using BASS
-			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
-			Un4seen.Bass.AddOn.Tags.TAG_INFO tag_info = bass.GetTagInfoFromFile(filePath.FullName);
-
 			// Name of file being processed
 			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
 			
 			#if DEBUG
-			if (Analyzer.DEBUG_INFO_VERBOSE) {
+			if (DEBUG_INFO_VERBOSE) {
 				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, fileName + "_audiodata.ascii");
 				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, fileName + "_audiodata.txt");
 			}
@@ -591,48 +520,8 @@ namespace Mirage
 			track.Title = fileName;
 			track.TrackLengthMs = (int) duration;
 			track.FilePath = filePath.FullName;
+			track.Tags = GetTagInfoFromFile(filePath.FullName);
 			track.Id = -1; // this will be set by the insert method
-			
-			#region Parse tag_info
-			if (tag_info != null) {
-				Dictionary<string, string> tags = new Dictionary<string, string>();
-				
-				//if (tag_info.title != string.Empty) tags.Add("title", tag_info.title);
-				if (tag_info.artist != string.Empty) tags.Add("artist", tag_info.artist);
-				if (tag_info.album != string.Empty) tags.Add("album", tag_info.album);
-				if (tag_info.albumartist != string.Empty) tags.Add("albumartist", tag_info.albumartist);
-				if (tag_info.year != string.Empty) tags.Add("year", tag_info.year);
-				if (tag_info.comment != string.Empty) tags.Add("comment", tag_info.comment);
-				if (tag_info.genre != string.Empty) tags.Add("genre", tag_info.genre);
-				if (tag_info.track != string.Empty) tags.Add("track", tag_info.track);
-				if (tag_info.disc != string.Empty) tags.Add("disc", tag_info.disc);
-				if (tag_info.copyright != string.Empty) tags.Add("copyright", tag_info.copyright);
-				if (tag_info.encodedby != string.Empty) tags.Add("encodedby", tag_info.encodedby);
-				if (tag_info.composer != string.Empty) tags.Add("composer", tag_info.composer);
-				if (tag_info.publisher != string.Empty) tags.Add("publisher", tag_info.publisher);
-				if (tag_info.lyricist != string.Empty) tags.Add("lyricist", tag_info.lyricist);
-				if (tag_info.remixer != string.Empty) tags.Add("remixer", tag_info.remixer);
-				if (tag_info.producer != string.Empty) tags.Add("producer", tag_info.producer);
-				if (tag_info.bpm != string.Empty) tags.Add("bpm", tag_info.bpm);
-				//if (tag_info.filename != string.Empty) tags.Add("filename", tag_info.filename);
-				tags.Add("channelinfo", tag_info.channelinfo.ToString());
-				//if (tag_info.duration > 0) tags.Add("duration", tag_info.duration.ToString());
-				if (tag_info.bitrate > 0) tags.Add("bitrate", tag_info.bitrate.ToString());
-				if (tag_info.replaygain_track_gain != -100f) tags.Add("replaygain_track_gain", tag_info.replaygain_track_gain.ToString());
-				if (tag_info.replaygain_track_peak != -1f) tags.Add("replaygain_track_peak", tag_info.replaygain_track_peak.ToString());
-				if (tag_info.conductor != string.Empty) tags.Add("conductor", tag_info.conductor);
-				if (tag_info.grouping != string.Empty) tags.Add("grouping", tag_info.grouping);
-				if (tag_info.mood != string.Empty) tags.Add("mood", tag_info.mood);
-				if (tag_info.rating != string.Empty) tags.Add("rating", tag_info.rating);
-				if (tag_info.isrc != string.Empty) tags.Add("isrc", tag_info.isrc);
-				
-				foreach(var nativeTag in tag_info.NativeTags) {
-					string[] keyvalue = nativeTag.Split('=');
-					tags.Add(keyvalue[0], keyvalue[1]);
-				}
-				track.Tags = tags;
-			}
-			#endregion
 			
 			double[][] logSpectrogram;
 			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram)) {
@@ -664,7 +553,231 @@ namespace Mirage
 				return false;
 			}
 
-			Dbg.WriteLine ("AnalyzeAndAdd - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			Dbg.WriteLine ("AnalyzeAndAddComplete - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return true;
+		}
+
+		/// <summary>
+		/// Method to analyse and add a Statistical Cluster Model Similarity class to the database
+		/// </summary>
+		/// <param name="filePath">full file path</param>
+		/// <param name="db">Scms database (Mirage)</param>
+		/// <param name="doOutputDebugInfo">decide whether to output debug info like spectrogram and audiofile (default value can be set)</param>
+		/// <param name="useHaarWavelet">decide whether to use haar wavelet compression or DCT compression</param>
+		/// <returns>true if successful</returns>
+		public static bool AnalyzeAndAddScms(FileInfo filePath, Db db, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+
+			// used to save wave files in the debug inverse methods
+			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
+			
+			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
+			if (audiodata == null || audiodata.Length == 0)  {
+				Dbg.WriteLine("Error! - No Audio Found");
+				return false;
+			}
+			
+			// Name of file being processed
+			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
+			
+			if (DEBUG_INFO_VERBOSE) {
+				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, fileName + "_audiodata.ascii");
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, fileName + "_audiodata.txt");
+			}
+			
+			if (doOutputDebugInfo) {
+				DrawGraph(MathUtils.FloatToDouble(audiodata), fileName + "_audiodata.png");
+			}
+			
+			// Calculate duration in ms
+			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
+			
+			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
+			// Matlab multiplies with 2^15 (32768)
+			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
+			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER); // 65536
+			
+			// zero pad if the audio file is too short to perform a mfcc
+			if (audiodata.Length < (fingerprintingConfigCreation.WdftSize + fingerprintingConfigCreation.Overlap))
+			{
+				int lenNew = fingerprintingConfigCreation.WdftSize + fingerprintingConfigCreation.Overlap;
+				Array.Resize<float>(ref audiodata, lenNew);
+			}
+			
+			// 2. Windowing
+			// 3. FFT
+			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audiodata);
+
+			if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
+				stftdata.WriteAscii(fileName + "_stftdata.ascii");
+				stftdata.WriteCSV(fileName + "_stftdata.csv", ";");
+			}
+
+			if (doOutputDebugInfo) {
+				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
+				//stftdata.DrawMatrixImageLogValues(fileName + "_specgram.png", true);
+				
+				// spec gram with log values for the y axis (frequency)
+				stftdata.DrawMatrixImageLogY(fileName + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+			}
+			
+			if (DEBUG_DO_INVERSE_TESTS) {
+				#region Inverse STFT
+				double[] audiodata_inverse_stft = stftMirage.InverseStft(stftdata);
+				
+				// divide
+				//MathUtils.Divide(ref audiodata_inverse_stft, AUDIO_MULTIPLIER);
+				MathUtils.Normalize(ref audiodata_inverse_stft);
+
+				if (DEBUG_OUTPUT_TEXT) {
+					WriteAscii(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.ascii");
+					WriteF3Formatted(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.txt");
+				}
+				
+				DrawGraph(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.png");
+				
+				float[] audiodata_inverse_float = MathUtils.DoubleToFloat(audiodata_inverse_stft);
+				bass.SaveFile(audiodata_inverse_float, fileName + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
+				#endregion
+			}
+			
+			// 4. Mel Scale Filterbank
+			// Mel-frequency is proportional to the logarithm of the linear frequency,
+			// reflecting similar effects in the human's subjective aural perception)
+			// 5. Take Logarithm
+			// 6. DCT (Discrete Cosine Transform)
+
+			if (DEBUG_INFO_VERBOSE) {
+				#region Mel Scale and Log Values
+				Comirva.Audio.Util.Maths.Matrix mellog = mfccMirage.ApplyMelScaleAndLog(ref stftdata);
+				
+				if (DEBUG_OUTPUT_TEXT) {
+					mellog.WriteCSV(fileName + "_mel_log.csv", ";");
+				}
+				
+				if (doOutputDebugInfo) {
+					mellog.DrawMatrixImage(fileName + "_mel_log.png", 600, 400, true, true);
+				}
+				#endregion
+				
+				#region Inverse Mel Scale and Log Values
+				if (DEBUG_DO_INVERSE_TESTS) {
+					Comirva.Audio.Util.Maths.Matrix inverse_mellog = mfccMirage.InverseMelScaleAndLog(ref mellog);
+
+					inverse_mellog.WriteCSV(fileName + "_mel_log_inverse.csv", ";");
+					inverse_mellog.DrawMatrixImageLogValues(fileName + "_mel_log_inverse.png", true);
+					
+					double[] audiodata_inverse_mellog = stftMirage.InverseStft(inverse_mellog);
+					//MathUtils.Divide(ref audiodata_inverse_mellog, AUDIO_MULTIPLIER/100);
+					MathUtils.Normalize(ref audiodata_inverse_mellog);
+
+					if (DEBUG_OUTPUT_TEXT) {
+						WriteAscii(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.ascii");
+						WriteF3Formatted(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.txt");
+					}
+					
+					DrawGraph(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.png");
+					
+					float[] audiodata_inverse_mellog_float = MathUtils.DoubleToFloat(audiodata_inverse_mellog);
+					bass.SaveFile(audiodata_inverse_mellog_float, fileName + "_inverse_mellog.wav", Analyzer.SAMPLING_RATE);
+				}
+				#endregion
+			}
+
+			Comirva.Audio.Util.Maths.Matrix featureData = null;
+			if (useHaarWavelet) {
+				#region Wavelet Transform
+				int lastHeight = 0;
+				int lastWidth = 0;
+				featureData = mfccMirage.ApplyMelScaleWaveletCompression(ref stftdata, out lastHeight, out lastWidth);
+
+				if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
+					featureData.WriteAscii(fileName + "_waveletdata.ascii");
+				}
+
+				if (doOutputDebugInfo) {
+					featureData.DrawMatrixImageLogValues(fileName + "_waveletdata.png", true);
+				}
+				
+				if (DEBUG_DO_INVERSE_TESTS) {
+					#region Inverse Wavelet
+					// try to do an inverse wavelet transform
+					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseMelScaleWaveletCompression(ref featureData, lastHeight, lastWidth);
+
+					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_wavelet.WriteCSV(fileName + "_specgramlog_inverse_wavelet.csv", ";");
+					stftdata_inverse_wavelet.DrawMatrixImageLogValues(fileName + "_specgramlog_inverse_wavelet.png", true);
+					
+					double[] audiodata_inverse_wavelet = stftMirage.InverseStft(stftdata_inverse_wavelet);
+					MathUtils.Normalize(ref audiodata_inverse_wavelet);
+					
+					if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_wavelet, fileName + "_audiodata_inverse_wavelet.txt");
+					DrawGraph(audiodata_inverse_wavelet, fileName + "_audiodata_inverse_wavelet.png");
+					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_wavelet), fileName + "_inverse_wavelet.wav", Analyzer.SAMPLING_RATE);
+					#endregion
+				}
+				#endregion
+			} else {
+				#region DCT Transform
+				// It seems the Mirage way of applying the DCT is slightly faster than the
+				// Comirva way due to less loops
+				featureData = mfccMirage.ApplyMelScaleDCT(ref stftdata);
+
+				if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
+					featureData.WriteAscii(fileName + "_mfccdata.ascii");
+				}
+
+				if (doOutputDebugInfo) {
+					featureData.DrawMatrixImageLogValues(fileName + "_mfccdata.png", true);
+				}
+
+				if (DEBUG_DO_INVERSE_TESTS) {
+					#region Inverse MFCC
+					// try to do an inverse mfcc
+					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMelScaleDCT(ref featureData);
+					
+					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_mfcc.WriteCSV(fileName + "_stftdata_inverse_mfcc.csv", ";");
+					stftdata_inverse_mfcc.DrawMatrixImageLogValues(fileName + "_specgramlog_inverse_mfcc.png", true);
+					
+					double[] audiodata_inverse_mfcc = stftMirage.InverseStft(stftdata_inverse_mfcc);
+					MathUtils.Normalize(ref audiodata_inverse_mfcc);
+
+					if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mfcc, fileName + "_audiodata_inverse_mfcc.txt");
+					DrawGraph(audiodata_inverse_mfcc, fileName + "_audiodata_inverse_mfcc.png");
+					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), fileName + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
+					#endregion
+				}
+				#endregion
+			}
+			
+			// Store in a Statistical Cluster Model Similarity class.
+			// A Gaussian representation of a song
+			Scms audioFeature = Scms.GetScms(featureData, fileName);
+			
+			if (audioFeature != null) {
+				
+				// Store image if debugging
+				if (doOutputDebugInfo) {
+					audioFeature.Image = featureData.DrawMatrixImageLogValues(fileName + "_featuredata.png", true, false, 0, 0, true);
+				}
+
+				// Store bitstring hash as well
+				audioFeature.BitString = GetBitString(featureData);
+				
+				// Store duration
+				audioFeature.Duration = (long) duration;
+				
+				// Store file name
+				audioFeature.Name = filePath.FullName;
+				
+				// Add to database
+				if (db.AddTrack(audioFeature) == -1) {
+					Console.Out.WriteLine("Failed! Could not add audioFeature to database {0}!", fileName);
+					return false;
+				}
+			}
+			
+			Dbg.WriteLine ("AnalyzeAndAddScms - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return true;
 		}
 		
@@ -677,8 +790,8 @@ namespace Mirage
 		/// <param name="duration">duration in ms</param>
 		/// <param name="db">database</param>
 		/// <param name="trackId">track id to insert</param>
-		/// <param name="doOutputDebugInfo"></param>
-		/// <param name="useHaarWavelet"></param>
+		/// <param name="doOutputDebugInfo">decide whether to output debug info like spectrogram and audiofile (default value can be set)</param>
+		/// <param name="useHaarWavelet">decide whether to use haar wavelet compression or DCT compression</param>
 		/// <returns>true if successful</returns>
 		private static bool AnalyseAndAddScms(Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix,
 		                                      string fileName,
@@ -698,7 +811,7 @@ namespace Mirage
 				scmsMatrix = mfccMirage.ApplyWaveletCompression(ref logSpectrogramMatrix, out lastHeight, out lastWidth);
 
 				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (DEBUG_INFO_VERBOSE) {
 					if (DEBUG_OUTPUT_TEXT) scmsMatrix.WriteAscii(fileName + "_waveletdata.ascii");
 				}
 				#endif
@@ -708,7 +821,7 @@ namespace Mirage
 				}
 				
 				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (DEBUG_DO_INVERSE_TESTS) {
 					#region Inverse Wavelet
 					// try to do an inverse wavelet transform
 					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseWaveletCompression(ref scmsMatrix, lastHeight, lastWidth, logSpectrogramMatrix.Rows, logSpectrogramMatrix.Columns);
@@ -726,7 +839,7 @@ namespace Mirage
 				scmsMatrix = mfccMirage.ApplyDCT(ref logSpectrogramMatrix);
 
 				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (DEBUG_INFO_VERBOSE) {
 					if (DEBUG_OUTPUT_TEXT) scmsMatrix.WriteAscii(fileName + "_mfccdata.ascii");
 				}
 				#endif
@@ -736,7 +849,7 @@ namespace Mirage
 				}
 
 				#if DEBUG
-				if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (DEBUG_DO_INVERSE_TESTS) {
 					#region Inverse MFCC
 					// try to do an inverse mfcc
 					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseDCT(ref scmsMatrix);
@@ -791,7 +904,6 @@ namespace Mirage
 		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
-			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
 
 			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
 			if (audiodata == null || audiodata.Length == 0)  {
@@ -837,6 +949,57 @@ namespace Mirage
 			return candidates;
 		}
 		
+		/// <summary>
+		/// Read tags from file using the BASS plugin
+		/// </summary>
+		/// <param name="filePath">filepath to file</param>
+		/// <returns>a dictionary with tag names and tag values</returns>
+		private static Dictionary<string, string> GetTagInfoFromFile(string filePath) {
+			
+			// Read TAGs using BASS
+			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
+			Un4seen.Bass.AddOn.Tags.TAG_INFO tag_info = bass.GetTagInfoFromFile(filePath);
+
+			Dictionary<string, string> tags = new Dictionary<string, string>();
+			if (tag_info != null) {
+				//if (tag_info.title != string.Empty) tags.Add("title", tag_info.title);
+				if (tag_info.artist != string.Empty) tags.Add("artist", tag_info.artist);
+				if (tag_info.album != string.Empty) tags.Add("album", tag_info.album);
+				if (tag_info.albumartist != string.Empty) tags.Add("albumartist", tag_info.albumartist);
+				if (tag_info.year != string.Empty) tags.Add("year", tag_info.year);
+				if (tag_info.comment != string.Empty) tags.Add("comment", tag_info.comment);
+				if (tag_info.genre != string.Empty) tags.Add("genre", tag_info.genre);
+				if (tag_info.track != string.Empty) tags.Add("track", tag_info.track);
+				if (tag_info.disc != string.Empty) tags.Add("disc", tag_info.disc);
+				if (tag_info.copyright != string.Empty) tags.Add("copyright", tag_info.copyright);
+				if (tag_info.encodedby != string.Empty) tags.Add("encodedby", tag_info.encodedby);
+				if (tag_info.composer != string.Empty) tags.Add("composer", tag_info.composer);
+				if (tag_info.publisher != string.Empty) tags.Add("publisher", tag_info.publisher);
+				if (tag_info.lyricist != string.Empty) tags.Add("lyricist", tag_info.lyricist);
+				if (tag_info.remixer != string.Empty) tags.Add("remixer", tag_info.remixer);
+				if (tag_info.producer != string.Empty) tags.Add("producer", tag_info.producer);
+				if (tag_info.bpm != string.Empty) tags.Add("bpm", tag_info.bpm);
+				//if (tag_info.filename != string.Empty) tags.Add("filename", tag_info.filename);
+				tags.Add("channelinfo", tag_info.channelinfo.ToString());
+				//if (tag_info.duration > 0) tags.Add("duration", tag_info.duration.ToString());
+				if (tag_info.bitrate > 0) tags.Add("bitrate", tag_info.bitrate.ToString());
+				if (tag_info.replaygain_track_gain != -100f) tags.Add("replaygain_track_gain", tag_info.replaygain_track_gain.ToString());
+				if (tag_info.replaygain_track_peak != -1f) tags.Add("replaygain_track_peak", tag_info.replaygain_track_peak.ToString());
+				if (tag_info.conductor != string.Empty) tags.Add("conductor", tag_info.conductor);
+				if (tag_info.grouping != string.Empty) tags.Add("grouping", tag_info.grouping);
+				if (tag_info.mood != string.Empty) tags.Add("mood", tag_info.mood);
+				if (tag_info.rating != string.Empty) tags.Add("rating", tag_info.rating);
+				if (tag_info.isrc != string.Empty) tags.Add("isrc", tag_info.isrc);
+				
+				foreach(var nativeTag in tag_info.NativeTags) {
+					string[] keyvalue = nativeTag.Split('=');
+					tags.Add(keyvalue[0], keyvalue[1]);
+				}
+			}
+			return tags;
+		}
+
+		#region Utility Methods to draw graphs and output text or text files
 		/// <summary>
 		/// Graphs an array of doubles varying between -1 and 1
 		/// </summary>
@@ -931,6 +1094,7 @@ namespace Mirage
 			}
 			pw.Close();
 		}
+		#endregion
 		
 		/// <summary>
 		/// Computes the perceptual hash of an audio file using the mfcc matrix

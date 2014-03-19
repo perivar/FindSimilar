@@ -83,7 +83,7 @@ namespace Mirage
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				mean.WriteText(name + "_mean.txt");
+				if (Analyzer.DEBUG_OUTPUT_TEXT) mean.WriteText(name + "_mean.txt");
 				mean.DrawMatrixGraph(name + "_mean.png");
 			}
 			#endif
@@ -92,7 +92,7 @@ namespace Mirage
 			Comirva.Audio.Util.Maths.Matrix covarMatrix = mfccs.Cov(mean);
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				covarMatrix.WriteText(name + "_covariance.txt");
+				if (Analyzer.DEBUG_OUTPUT_TEXT) covarMatrix.WriteText(name + "_covariance.txt");
 				covarMatrix.DrawMatrixGraph(name + "_covariance.png");
 			}
 			#endif
@@ -107,7 +107,7 @@ namespace Mirage
 			}
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				covarMatrixInv.WriteAscii(name + "_inverse_covariance.ascii");
+				if (Analyzer.DEBUG_OUTPUT_TEXT) covarMatrixInv.WriteAscii(name + "_inverse_covariance.ascii");
 				covarMatrixInv.DrawMatrixGraph(name + "_inverse_covariance.png");
 			}
 			#endif
@@ -125,8 +125,7 @@ namespace Mirage
 				}
 			}
 
-			Dbg.WriteLine("(Comirva) - scms created in: {0} ms", t.Stop().TotalMilliseconds);
-
+			Dbg.WriteLine("Scms created in: {0} ms", t.Stop().TotalMilliseconds);
 			return s;
 		}
 		
@@ -145,7 +144,7 @@ namespace Mirage
 			
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				m.WriteText(name + "_mean_orig.txt");
+				if (Analyzer.DEBUG_OUTPUT_TEXT) m.WriteText(name + "_mean_orig.txt");
 				m.DrawMatrixGraph(name + "_mean_orig.png");
 			}
 			#endif
@@ -155,7 +154,7 @@ namespace Mirage
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				c.WriteText(name + "_covariance_orig.txt");
+				if (Analyzer.DEBUG_OUTPUT_TEXT) c.WriteText(name + "_covariance_orig.txt");
 				c.DrawMatrixGraph(name + "_covariance_orig.png");
 			}
 			#endif
@@ -172,7 +171,7 @@ namespace Mirage
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {
-				ic.WriteAscii(name + "_inverse_covariance_orig.txt");
+				if (Analyzer.DEBUG_OUTPUT_TEXT) ic.WriteAscii(name + "_inverse_covariance_orig.txt");
 				ic.DrawMatrixGraph(name + "_inverse_covariance_orig.png");
 			}
 			#endif

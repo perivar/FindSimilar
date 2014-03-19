@@ -93,8 +93,8 @@
 			WorkUnitParameterObject param) {
 			
 			// Get fingerprints
-			double[][] LogSpectrogram;
-			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out LogSpectrogram);
+			double[][] logSpectrogram;
+			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram);
 
 			long elapsedMiliseconds = 0;
 			
