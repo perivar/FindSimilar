@@ -69,7 +69,7 @@ namespace Mirage
 		
 		// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
 		// Matlab multiplies with 2^15 (32768)
-		public const int AUDIO_MULTIPLIER = 32768;
+		public const int AUDIO_MULTIPLIER = 65536; // 32768 still makes alot of mfcc feature computations fail?!
 		
 		//private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
 		private static MfccMirage mfccMirage = new MfccMirage(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
@@ -136,7 +136,7 @@ namespace Mirage
 			t.Start ();
 
 			// get work config from the audio file
-			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
+			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath, doOutputDebugInfo);
 			string fileName = param.FileName;
 			
 			// used to save wave files in the debug inverse methods
@@ -153,7 +153,7 @@ namespace Mirage
 
 			if (doOutputDebugInfo) {
 				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
-				stftdata.DrawMatrixImageLogValues(fileName + "_specgram.png", true);
+				//stftdata.DrawMatrixImageLogValues(fileName + "_specgram.png", true);
 				
 				// spec gram with log values for the y axis (frequency)
 				stftdata.DrawMatrixImageLogY(fileName + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
@@ -308,6 +308,9 @@ namespace Mirage
 				
 				// Store file name
 				audioFeature.Name = filePath.FullName;
+			} else {
+				// failed creating the Scms class
+				Console.Out.WriteLine("Failed! Could not compute the Scms {0}!", fileName);
 			}
 			
 			Dbg.WriteLine ("AnalyzeScms - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
@@ -1017,6 +1020,24 @@ namespace Mirage
 			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(25, 4, 1, param);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return candidates;
+		}
+		
+		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath) {
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+
+			// get work config from the audio file
+			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
+			param.FingerprintingConfiguration = fingerprintingConfigQuerying;
+			
+			// Get database
+			DatabaseService databaseService = DatabaseService.Instance;
+			Repository repository = new Repository(permutations, databaseService, fingerprintService);
+
+			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(25, 4, 1, param);
+
+			Dbg.WriteLine ("SimilarTracksSoundfingerprintingList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;
 		}
 		

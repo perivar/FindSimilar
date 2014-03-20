@@ -58,6 +58,7 @@
 			this.rbSoundfingerprinting = new System.Windows.Forms.RadioButton();
 			this.txtFilterResults = new System.Windows.Forms.TextBox();
 			this.lblFilterResults = new System.Windows.Forms.Label();
+			this.btnClearFilter = new System.Windows.Forms.Button();
 			this.tabControl1.SuspendLayout();
 			this.tabFileSearch.SuspendLayout();
 			this.tabIdSearch.SuspendLayout();
@@ -253,9 +254,9 @@
 			// 
 			// GoBtn
 			// 
-			this.GoBtn.Location = new System.Drawing.Point(12, 87);
+			this.GoBtn.Location = new System.Drawing.Point(12, 88);
 			this.GoBtn.Name = "GoBtn";
-			this.GoBtn.Size = new System.Drawing.Size(123, 23);
+			this.GoBtn.Size = new System.Drawing.Size(95, 23);
 			this.GoBtn.TabIndex = 5;
 			this.GoBtn.Text = "Go!";
 			this.GoBtn.UseVisualStyleBackColor = true;
@@ -338,19 +339,29 @@
 			// 
 			// txtFilterResults
 			// 
-			this.txtFilterResults.Location = new System.Drawing.Point(219, 90);
+			this.txtFilterResults.Location = new System.Drawing.Point(197, 90);
 			this.txtFilterResults.Name = "txtFilterResults";
-			this.txtFilterResults.Size = new System.Drawing.Size(186, 20);
+			this.txtFilterResults.Size = new System.Drawing.Size(149, 20);
 			this.txtFilterResults.TabIndex = 13;
 			this.txtFilterResults.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtFilterResultsKeyPress);
 			// 
 			// lblFilterResults
 			// 
-			this.lblFilterResults.Location = new System.Drawing.Point(141, 93);
+			this.lblFilterResults.Location = new System.Drawing.Point(125, 93);
 			this.lblFilterResults.Name = "lblFilterResults";
-			this.lblFilterResults.Size = new System.Drawing.Size(81, 19);
+			this.lblFilterResults.Size = new System.Drawing.Size(72, 19);
 			this.lblFilterResults.TabIndex = 14;
 			this.lblFilterResults.Text = "Filter Results:";
+			// 
+			// btnClearFilter
+			// 
+			this.btnClearFilter.Location = new System.Drawing.Point(352, 88);
+			this.btnClearFilter.Name = "btnClearFilter";
+			this.btnClearFilter.Size = new System.Drawing.Size(42, 23);
+			this.btnClearFilter.TabIndex = 15;
+			this.btnClearFilter.Text = "Clear";
+			this.btnClearFilter.UseVisualStyleBackColor = true;
+			this.btnClearFilter.Click += new System.EventHandler(this.BtnClearFilterClick);
 			// 
 			// FindSimilarClientForm
 			// 
@@ -358,6 +369,7 @@
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(700, 395);
 			this.ContextMenuStrip = this.contextMenuStrip1;
+			this.Controls.Add(this.btnClearFilter);
 			this.Controls.Add(this.lblFilterResults);
 			this.Controls.Add(this.txtFilterResults);
 			this.Controls.Add(this.rbSoundfingerprinting);
@@ -386,6 +398,7 @@
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
+		private System.Windows.Forms.Button btnClearFilter;
 		private System.Windows.Forms.Label lblFilterResults;
 		private System.Windows.Forms.TextBox txtFilterResults;
 		private System.Windows.Forms.RadioButton rbSoundfingerprinting;
@@ -414,7 +427,7 @@
 		private System.Windows.Forms.Button AudioFileQueryBtn;
 		private System.Windows.Forms.TabPage tabIdSearch;
 		private System.Windows.Forms.TabPage tabFileSearch;
-		private System.Windows.Forms.TabControl tabControl1;				
-
+		private System.Windows.Forms.TabControl tabControl1;
+		
 	}
 }

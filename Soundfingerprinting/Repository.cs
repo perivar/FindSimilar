@@ -146,6 +146,60 @@
 		}
 		
 		/// <summary>
+		/// Find Similar Tracks using passed audio samples as input
+		/// </summary>
+		/// <param name="lshHashTables">Number of hash tables from the database</param>
+		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
+		/// <param name="thresholdTables">Threshold percentage [0.07 for 20 LHash Tables, 0.17 for 25 LHashTables]</param>
+		/// <param name="param">Audio File Work Unit Parameter Object</param>
+		/// <returns>a list of perceptually similar tracks</returns>
+		public List<FindSimilar.QueryResult> FindSimilarFromAudioSamplesList(
+			int lshHashTables,
+			int lshGroupsPerKey,
+			int thresholdTables,
+			WorkUnitParameterObject param) {
+			
+			// Get fingerprints
+			double[][] logSpectrogram;
+			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram);
+
+			long elapsedMiliseconds = 0;
+			
+			// Query the database using Min Hash
+			Dictionary<int, QueryStats> allCandidates = QueryFingerprintManager.QueryOneSongMinHash(
+				signatures,
+				dbService,
+				minHash,
+				lshHashTables,
+				lshGroupsPerKey,
+				thresholdTables,
+				ref elapsedMiliseconds);
+
+			IEnumerable<int> ids = allCandidates.Select(p => p.Key);
+			IList<Track> tracks = dbService.ReadTrackById(ids);
+
+			// Order by Hamming Similarity
+			// Using PLINQ
+			//OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
+			IOrderedEnumerable<KeyValuePair<int, QueryStats>> order = allCandidates
+				.OrderBy((pair) => pair.Value.OrderingValue =
+				         pair.Value.HammingDistance / pair.Value.NumberOfTotalTableVotes
+				         + 0.4 * pair.Value.MinHammingDistance);
+			
+			// Join on the ID properties.
+			var fingerprintList = (from o in order
+			                       join track in tracks on o.Key equals track.Id
+			                       select new FindSimilar.QueryResult {
+			                       	Id = track.Id,
+			                       	Path = track.FilePath,
+			                       	Duration = track.TrackLengthMs,
+			                       	Similarity = o.Value.Similarity
+			                       }).ToList();
+			
+			return fingerprintList;
+		}
+		
+		/// <summary>
 		/// Insert track into database
 		/// </summary>
 		/// <param name="track">Track</param>

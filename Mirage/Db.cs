@@ -367,6 +367,50 @@ namespace Mirage
 			reader.Close();
 			return trackNames;
 		}
+		
+		/// <summary>
+		/// Return a defined number of (or all) tracks from the database specified by a optional where clause
+		/// </summary>
+		/// <param name="numberToRead">number of items to read</param>
+		/// <param name="whereClause">where clause</param>
+		/// <returns>a list with queryresult items</returns>
+		public List<FindSimilar.QueryResult> GetTracksList(int numberToRead, string whereClause = null) {
+			
+			List<FindSimilar.QueryResult> queryResultList = new List<FindSimilar.QueryResult>();
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			string query = "SELECT trackid, name, duration FROM mirage";
+			if (whereClause != null && whereClause != "") {
+				query = string.Format("{0} {1}", query, whereClause);
+			}
+			
+			if (numberToRead > 0) {
+				query += " LIMIT @limit";
+			}
+			
+			dbcmd.CommandText = query;
+			dbcmd.Parameters.Add(new SQLiteParameter("@limit") { Value = numberToRead });
+			dbcmd.CommandType = CommandType.Text;
+			dbcmd.Prepare();
+
+			IDataReader reader = dbcmd.ExecuteReader();
+			while (reader.Read()) {
+				FindSimilar.QueryResult queryResult = new FindSimilar.QueryResult();
+				queryResult.Id = reader.GetInt32(0);
+				queryResult.Path = reader.GetString(1);
+				queryResult.Duration = reader.GetInt64(2);
+				queryResultList.Add(queryResult);
+			}
+			
+			reader.Close();
+			dbcmd.Dispose();
+
+			return queryResultList;
+		}
 
 		/// <summary>
 		/// Return all tracks from the database except the trackids

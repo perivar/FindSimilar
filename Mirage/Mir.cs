@@ -145,6 +145,71 @@ namespace Mirage
 		}
 
 		/// <summary>
+		/// Find Similar Tracks to an audio file using its file path
+		/// </summary>
+		/// <param name="searchForPath">audio file path</param>
+		/// <param name="db">database</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
+		/// <param name="numToTake">max number of entries to return</param>
+		/// <param name="percentage">percentage below and above the duration in ms when querying (used if between 0.1 - 0.9)</param>
+		/// <param name="distanceType">distance method to use (KullbackLeiblerDivergence is default)</param>
+		/// <returns>a  list of query results</returns>
+		public static List<FindSimilar.QueryResult> SimilarTracksList(string searchForPath, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
+
+			FileInfo fi = new FileInfo(searchForPath);
+			AudioFeature seedAudioFeature = null;
+			AudioFeature[] audioFeatures = null;
+			switch (analysisMethod) {
+				case Analyzer.AnalysisMethod.MandelEllis:
+					seedAudioFeature = Analyzer.AnalyzeMandelEllis(fi);
+					audioFeatures = new MandelEllis[100];
+					break;
+				case Analyzer.AnalysisMethod.SCMS:
+					seedAudioFeature = Analyzer.AnalyzeScms(fi);
+					audioFeatures = new Scms[100];
+					break;
+			}
+			
+			// Get all tracks from the DB except the seedSongs
+			IDataReader r = db.GetTracks(null, seedAudioFeature.Duration, percentage);
+			
+			// store results in a query results list
+			List<FindSimilar.QueryResult> queryResultList = new List<FindSimilar.QueryResult>();
+			
+			int[] mapping = new int[100];
+			int read = 1;
+			double dcur;
+			
+			while (read > 0) {
+				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100, analysisMethod);
+				for (int i = 0; i < read; i++) {
+					dcur = seedAudioFeature.GetDistance(audioFeatures[i], distanceType);
+					
+					// convert to positive values
+					dcur = Math.Abs(dcur);
+					
+					QueryResult queryResult = new QueryResult();
+					queryResult.Id = mapping[i];
+					queryResult.Path = audioFeatures[i].Name;
+					queryResult.Duration = audioFeatures[i].Duration;
+					queryResult.Similarity = dcur;
+					queryResultList.Add(queryResult);
+				}
+			}
+			
+			var sortedList = (from row in queryResultList
+			                  orderby row.Similarity ascending
+			                  select new QueryResult {
+			                  	Id = row.Id,
+			                  	Path = row.Path,
+			                  	Duration = row.Duration,
+			                  	Similarity = row.Similarity
+			                  }).Take(numToTake).ToList();
+			
+			return sortedList;
+		}
+		
+		/// <summary>
 		/// Find Similar Tracks to one or many audio files using their unique database id(s)
 		/// </summary>
 		/// <param name="id">an array of unique database ids for the audio files to search for similar matches</param>
@@ -218,6 +283,86 @@ namespace Mirage
 
 			Console.Out.WriteLine(String.Format("Found Similar to ({0}) in {1} ms", String.Join(",", seedAudioFeatures.Select(p=>p.Name)), t.Stop().TotalMilliseconds));
 			return sortedDict;
+		}
+		
+		/// <summary>
+		/// Find Similar Tracks to one or many audio files using their unique database id(s)
+		/// </summary>
+		/// <param name="id">an array of unique database ids for the audio files to search for similar matches</param>
+		/// <param name="exclude">an array of unique database ids to ignore (normally the same as the id array)</param>
+		/// <param name="db">database</param>
+		/// <param name="analysisMethod">analysis method (SCMS or MandelEllis)</param>
+		/// <param name="numToTake">max number of entries to return</param>
+		/// <param name="percentage">percentage below and above the duration in ms when querying (used if between 0.1 - 0.9)</param>
+		/// <param name="distanceType">distance method to use (KullbackLeiblerDivergence is default)</param>
+		/// <returns>a  list of query results</returns>
+		public static List<FindSimilar.QueryResult> SimilarTracksList(int[] id, int[] exclude, Db db, Analyzer.AnalysisMethod analysisMethod, int numToTake=25, double percentage=0.2, AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence) {
+
+			AudioFeature[] seedAudioFeatures = null;
+			AudioFeature[] audioFeatures = null;
+			switch (analysisMethod) {
+				case Analyzer.AnalysisMethod.MandelEllis:
+					seedAudioFeatures = new MandelEllis[id.Length];
+					audioFeatures = new MandelEllis[100];
+					break;
+				case Analyzer.AnalysisMethod.SCMS:
+					seedAudioFeatures = new Scms[id.Length];
+					audioFeatures = new Scms[100];
+					break;
+			}
+			
+			for (int i = 0; i < seedAudioFeatures.Length; i++) {
+				seedAudioFeatures[i] = db.GetTrack(id[i], analysisMethod);
+			}
+			
+			// Get all tracks from the DB except the seedSongs
+			IDataReader r = db.GetTracks(exclude, seedAudioFeatures[0].Duration, percentage);
+			
+			// store results in a query results list
+			List<FindSimilar.QueryResult> queryResultList = new List<FindSimilar.QueryResult>();
+			
+			int[] mapping = new int[100];
+			int read = 1;
+			double d;
+			double dcur;
+			float count;
+			
+			while (read > 0) {
+				read = db.GetNextTracks(ref r, ref audioFeatures, ref mapping, 100, analysisMethod);
+				for (int i = 0; i < read; i++) {
+					
+					d = 0;
+					count = 0;
+					for (int j = 0; j < seedAudioFeatures.Length; j++) {
+						dcur = seedAudioFeatures[j].GetDistance(audioFeatures[i], distanceType);
+						
+						// convert to positive values
+						dcur = Math.Abs(dcur);
+
+						d += dcur;
+						count++;
+					}
+					if (d > 0) {
+						QueryResult queryResult = new QueryResult();
+						queryResult.Id = mapping[i];
+						queryResult.Path = audioFeatures[i].Name;
+						queryResult.Duration = audioFeatures[i].Duration;
+						queryResult.Similarity = d/count;
+						queryResultList.Add(queryResult);
+					}
+				}
+			}
+			
+			var sortedList = (from row in queryResultList
+			                  orderby row.Similarity ascending
+			                  select new QueryResult {
+			                  	Id = row.Id,
+			                  	Path = row.Path,
+			                  	Duration = row.Duration,
+			                  	Similarity = row.Similarity
+			                  }).Take(numToTake).ToList();
+			
+			return sortedList;
 		}
 		#endregion
 		
@@ -505,7 +650,7 @@ namespace Mirage
 			
 			private static void PrintUsage() {
 				Console.WriteLine("FindSimilar. Version {0}.", VERSION);
-				Console.WriteLine("Copyright (C) 2012-2013 Per Ivar Nerseth.");
+				Console.WriteLine("Copyright (C) 2012-2014 Per Ivar Nerseth.");
 				Console.WriteLine();
 				Console.WriteLine("Usage: FindSimilar.exe <Arguments>");
 				Console.WriteLine();

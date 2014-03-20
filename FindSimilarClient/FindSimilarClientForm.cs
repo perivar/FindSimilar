@@ -6,6 +6,7 @@ using System.Data;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 
 using System.Diagnostics;
@@ -45,6 +46,9 @@ namespace FindSimilar
 		private double percentage = DEFAULT_PERCENTAGE_ENABLED;
 		
 		private DatabaseService databaseService = null;
+		
+		BindingSource bs = new BindingSource();
+		BindingList<QueryResult> queryResultList; // = new BindingList<QueryResult>();
 
 		public FindSimilarClientForm()
 		{
@@ -59,6 +63,7 @@ namespace FindSimilar
 			this.version.Text = Mirage.Mir.VERSION;
 			this.DistanceTypeCombo.DataSource = Enum.GetValues(typeof(AudioFeature.DistanceType));
 			
+			/*
 			this.dataGridView1.Columns.Add("Id", "Id");
 			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
@@ -67,7 +72,8 @@ namespace FindSimilar
 			
 			this.dataGridView1.Columns.Add("Duration_Similarity", "Duration (ms) / Similarity");
 			this.dataGridView1.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-
+			 */
+			
 			this.db = new Db();
 			this.databaseService = DatabaseService.Instance;
 			
@@ -83,6 +89,14 @@ namespace FindSimilar
 		}
 		
 		#region Play
+		void AudioFilePlayBtnClick(object sender, EventArgs e)
+		{
+			string queryPath = AudioFileQueryTextBox.Text;
+			if (player != null && !queryPath.Equals("")) {
+				Play(queryPath);
+			}
+		}
+		
 		private void Play(string filePath) {
 			
 			// return if play is auto play is disabled
@@ -331,45 +345,35 @@ namespace FindSimilar
 		
 		private void ReadAllTracksScms() {
 			
-			// Clear all rows
-			this.dataGridView1.Rows.Clear();
+			queryResultList = new BindingList<QueryResult>( db.GetTracksList(DEFAULT_NUM_TO_TAKE) );
 			
-			Dictionary<string, KeyValuePair<int, long>> filesProcessed = db.GetTracks();
-			Console.Out.WriteLine("Database contains {0} processed files.", filesProcessed.Count);
+			bs.DataSource = queryResultList;
+			dataGridView1.DataSource = queryResultList;
 			
-			int counter = 0;
-			foreach (string filePath in filesProcessed.Keys) {
-				this.dataGridView1.Rows.Add(filesProcessed[filePath].Key, filePath, filesProcessed[filePath].Value);
-				if (counter == DEFAULT_NUM_TO_TAKE) break;
-				counter++;
-			}
-			
-			/*
-			var _scmsArray = (from row in filesProcessed
-			                  orderby filesProcessed[row.Key].Value
-			                  select new {
-			                  	Id = filesProcessed[row.Key].Key,
-			                  	Path = row.Key,
-			                  	Duration_Similarity = filesProcessed[row.Key].Value }
-			                 ).Take(DEFAULT_NUM_TO_TAKE);
-			dataGridView1.DataSource = _scmsArray.ToArray();
-			 */
+			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 		}
 
 		private void ReadAllTracksSoundfingerprinting() {
 			
-			// Clear all rows
-			this.dataGridView1.Rows.Clear();
+			string limitClause = string.Format("LIMIT {0}", DEFAULT_NUM_TO_TAKE);
+			IList<Track> tracks = databaseService.ReadTracks(limitClause);
 			
-			IList<Track> tracks = databaseService.ReadTracks();
-			Console.Out.WriteLine("Database contains {0} processed files.", tracks.Count);
+			var fingerprintList = (from row in tracks
+			                       orderby row.Id
+			                       select new QueryResult {
+			                       	Id = row.Id,
+			                       	Path = row.FilePath,
+			                       	Duration = row.TrackLengthMs
+			                       }).ToList();
 			
-			int counter = 0;
-			foreach (Track track in tracks) {
-				this.dataGridView1.Rows.Add(track.Id, track.FilePath, track.TrackLengthMs);
-				if (counter == DEFAULT_NUM_TO_TAKE) break;
-				counter++;
-			}
+			queryResultList = new BindingList<QueryResult>( fingerprintList );
+			
+			bs.DataSource = queryResultList;
+			dataGridView1.DataSource = queryResultList;
+			
+			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 		}
 		#endregion
 		
@@ -377,20 +381,23 @@ namespace FindSimilar
 		private void FindByFilePathScms(string queryPath) {
 			if (queryPath != "") {
 				FileInfo fi = new FileInfo(queryPath);
+
 				if (fi.Exists) {
 					
-					// Clear all rows
-					this.dataGridView1.Rows.Clear();
-
-					// Add the one we are querying with
-					this.dataGridView1.Rows.Add(-1, queryPath, 0);
-					
 					// Add the found similar tracks
-					var similarTracks = Mir.SimilarTracks(queryPath, db, analysisMethod, DEFAULT_NUM_TO_TAKE, percentage, distanceType);
-					foreach (var entry in similarTracks)
-					{
-						this.dataGridView1.Rows.Add(entry.Key.Key, entry.Key.Value, entry.Value);
-					}
+					var similarTracks = Mir.SimilarTracksList(queryPath, db, analysisMethod, DEFAULT_NUM_TO_TAKE, percentage, distanceType);
+					
+					// Add the one we are querying with at the top
+					similarTracks.Insert(0, new QueryResult(0, queryPath, 0, 0));
+					
+					queryResultList = new BindingList<QueryResult>( similarTracks );
+					
+					bs.DataSource = queryResultList;
+					dataGridView1.DataSource = queryResultList;
+					
+					this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+					this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+
 				} else {
 					MessageBox.Show("File does not exist!");
 				}
@@ -401,21 +408,23 @@ namespace FindSimilar
 			if (queryId != -1) {
 				int[] seedTrackIds = new int[] { queryId };
 				
-				// Clear all rows
-				this.dataGridView1.Rows.Clear();
-
-				// Add the one we are querying with
 				AudioFeature m1 = db.GetTrack(queryId, analysisMethod);
 				
 				if (m1 != null) {
-					this.dataGridView1.Rows.Add(queryId, m1.Name, 0);
-					
 					// Add the found similar tracks
-					var similarTracks = Mir.SimilarTracks(seedTrackIds, seedTrackIds, db, analysisMethod, DEFAULT_NUM_TO_TAKE, percentage, distanceType);
-					foreach (var entry in similarTracks)
-					{
-						this.dataGridView1.Rows.Add(entry.Key.Key, entry.Key.Value, entry.Value);
-					}
+					var similarTracks = Mir.SimilarTracksList(seedTrackIds, seedTrackIds, db, analysisMethod, DEFAULT_NUM_TO_TAKE, percentage, distanceType);
+					
+					// Add the one we are querying with at the top
+					similarTracks.Insert(0, new QueryResult(queryId, m1.Name, m1.Duration, 0));
+					
+					queryResultList = new BindingList<QueryResult>( similarTracks );
+					
+					bs.DataSource = queryResultList;
+					dataGridView1.DataSource = queryResultList;
+					
+					this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+					this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+
 				} else {
 					MessageBox.Show("File-id does not exist!");
 				}
@@ -426,21 +435,14 @@ namespace FindSimilar
 
 			if (queryString != "") {
 				
-				// Clear all rows
-				this.dataGridView1.Rows.Clear();
-
 				// search for tracks
 				string whereClause = string.Format("WHERE name like '%{0}%'", queryString);
-
-				Dictionary<string, KeyValuePair<int, long>> filesFound = db.GetTracks(whereClause);
-				Console.Out.WriteLine("Database contains {0} files that matches the query '{1}'.", filesFound.Count, queryString);
+				queryResultList = new BindingList<QueryResult>( db.GetTracksList(DEFAULT_NUM_TO_TAKE, whereClause) );
 				
-				int counter = 0;
-				foreach (string filePath in filesFound.Keys) {
-					this.dataGridView1.Rows.Add(filesFound[filePath].Key, filePath, filesFound[filePath].Value);
-					if (counter == DEFAULT_NUM_TO_TAKE) break;
-					counter++;
-				}
+				bs.DataSource = queryResultList;
+				dataGridView1.DataSource = queryResultList;
+				
+				this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 			}
 		}
 		#endregion
@@ -451,16 +453,15 @@ namespace FindSimilar
 				FileInfo fi = new FileInfo(queryPath);
 				if (fi.Exists) {
 					
-					// Clear all rows
-					this.dataGridView1.Rows.Clear();
+					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(fi);
+					queryResultList = new BindingList<QueryResult>( queryList );
 					
-					Dictionary<Track, double> candidates = Analyzer.SimilarTracksSoundfingerprinting(fi);
+					bs.DataSource = queryResultList;
+					dataGridView1.DataSource = queryResultList;
 					
-					// Add the found similar tracks
-					foreach (var entry in candidates)
-					{
-						this.dataGridView1.Rows.Add(entry.Key.Id, entry.Key.FilePath, entry.Value);
-					}
+					this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+					this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+
 				} else {
 					MessageBox.Show("File does not exist!");
 				}
@@ -471,21 +472,18 @@ namespace FindSimilar
 			
 			if (queryId != -1) {
 				
-				// Clear all rows
-				this.dataGridView1.Rows.Clear();
-
 				Track track = databaseService.ReadTrackById(queryId);
 				if (track != null) {
 					
-					Dictionary<Track, double> candidates = Analyzer.SimilarTracksSoundfingerprinting(new FileInfo(track.FilePath));
+					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(new FileInfo(track.FilePath));
+					queryResultList = new BindingList<QueryResult>( queryList );
 					
-					if (candidates != null) {
-						// Add the found similar tracks
-						foreach (var entry in candidates)
-						{
-							this.dataGridView1.Rows.Add(entry.Key.Id, entry.Key.FilePath, entry.Value);
-						}
-					}
+					bs.DataSource = queryResultList;
+					dataGridView1.DataSource = queryResultList;
+					
+					this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+					this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+
 				} else {
 					MessageBox.Show("File-id does not exist!");
 				}
@@ -496,20 +494,24 @@ namespace FindSimilar
 			
 			if (queryString != "") {
 				
-				// Clear all rows
-				this.dataGridView1.Rows.Clear();
-				
 				// search for tracks
 				string whereClause = string.Format("WHERE tags like '%{0}%' or title like '%{0}%'", queryString);
 				IList<Track> tracks = databaseService.ReadTracks(whereClause);
-				Console.Out.WriteLine("Database contains {0} files that matches the query '{1}'.", tracks.Count, queryString);
+
+				var fingerprintList = (from row in tracks
+				                       orderby row.Id ascending
+				                       select new QueryResult {
+				                       	Id = row.Id,
+				                       	Path = row.FilePath,
+				                       	Duration = row.TrackLengthMs
+				                       }).ToList();
 				
-				int counter = 0;
-				foreach (Track track in tracks) {
-					this.dataGridView1.Rows.Add(track.Id, track.FilePath, track.TrackLengthMs);
-					if (counter == DEFAULT_NUM_TO_TAKE) break;
-					counter++;
-				}
+				queryResultList = new BindingList<QueryResult>( fingerprintList );
+				
+				bs.DataSource = queryResultList;
+				dataGridView1.DataSource = queryResultList;
+				
+				this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 			}
 		}
 		#endregion
@@ -567,14 +569,6 @@ namespace FindSimilar
 		}
 		#endregion
 		
-		void AudioFilePlayBtnClick(object sender, EventArgs e)
-		{
-			string queryPath = AudioFileQueryTextBox.Text;
-			if (player != null && !queryPath.Equals("")) {
-				Play(queryPath);
-			}
-		}
-		
 		#region Radio Button Change Events
 		void RbScmsCheckedChanged(object sender, EventArgs e)
 		{
@@ -594,13 +588,44 @@ namespace FindSimilar
 		}
 		#endregion
 		
+		#region Filtering of the query results
 		void TxtFilterResultsKeyPress(object sender, KeyPressEventArgs e)
 		{
 			if (e.KeyChar == (char) Keys.Enter) {
-				string filterString = txtFilterResults.Text;
-				//(dataGridView1.DataSource as DataTable).DefaultView.RowFilter = string.Format("Field = '{0}'", filterString);
-				MessageBox.Show("Not implemented yet!");
+				if (queryResultList != null) {
+					BindingList<QueryResult> filtered = new BindingList<QueryResult>(
+						queryResultList.Where(result => result.Path.ToLower().Contains(txtFilterResults.Text.ToLower())).ToList());
+					dataGridView1.DataSource = filtered;
+					dataGridView1.Update();
+				}
 			}
 		}
+		
+		void BtnClearFilterClick(object sender, EventArgs e)
+		{
+			txtFilterResults.Text = "";
+			if (queryResultList != null) {
+				dataGridView1.DataSource = queryResultList;
+				dataGridView1.Update();
+			}
+		}
+		#endregion
+	}
+	
+	// http://stackoverflow.com/questions/17309270/datagridview-binding-source-filter
+	public class QueryResult {
+		public QueryResult() { }
+		
+		public QueryResult(int Id, string Path, long Duration, double Similarity) {
+			this.Id = Id;
+			this.Path = Path;
+			this.Duration = Duration;
+			this.Similarity = Similarity;
+		}
+		
+		public int Id { get; set; }
+		public string Path { get; set; }
+		public long Duration { get; set; }
+		public double Similarity { get; set; }
 	}
 }

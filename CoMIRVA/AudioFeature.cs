@@ -31,7 +31,6 @@ namespace Comirva.Audio.Feature
 			UCR_Dtw = 6,
 			CosineSimilarity = 7,
 			BitStringHamming = 8,
-			JaqSimilarity = 9
 		}
 		
 		private string bitString;

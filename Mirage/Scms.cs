@@ -234,9 +234,6 @@ namespace Mirage
 					return CosineSimilarity(this, other);
 				case AudioFeature.DistanceType.BitStringHamming:
 					return Imghash.ImagePHash.HammingDistance(this.BitString, other.BitString);
-				case AudioFeature.DistanceType.JaqSimilarity:
-					//return Soundfingerprinting.Hashing.MinHash.CalculateJaqSimilarity(this.Signature, other.Signature);
-					break;
 				case AudioFeature.DistanceType.KullbackLeiblerDivergence:
 				default:
 					return Distance(this, other, new ScmsConfiguration(Analyzer.MFCC_COEFFICIENTS));
