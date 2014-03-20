@@ -61,7 +61,7 @@ namespace Comirva.Audio {
 				fft.ComputeComirvaMatrixUsingLomontRealFFT(ref stft, i, audiodata, i*hopsize);
 			}
 			
-			Mirage.Dbg.WriteLine("stft (ComputeComirvaMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Perform Short Term Fourier Transform (ComputeComirvaMatrix) - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return stft;
 		}
 		
@@ -88,7 +88,7 @@ namespace Comirva.Audio {
 				//fft.ComputeInverseComirvaMatrixUsingLomontRealFFT(stft, i, ref signal, winsize, hopsize);
 			}
 			
-			Mirage.Dbg.WriteLine("istft (ComputeComirvaMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Perform Inverse Short Term Fourier Transform (ComputeComirvaMatrix) - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			
 			return signal;
 		}

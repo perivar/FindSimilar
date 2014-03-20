@@ -304,7 +304,7 @@ namespace Comirva.Audio
 			}
 			Matrix wavelet = WaveletUtils.HaarWaveletTransform(resizedMatrix.MatrixData, true);
 			
-			Mirage.Dbg.WriteLine("Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Wavelet Mel Scale And Wavelet Compression Padding - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return wavelet;
 		}
 		
@@ -340,7 +340,7 @@ namespace Comirva.Audio
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
 			InverseMelScaling(mel, m);
 
-			Mirage.Dbg.WriteLine("Inverse Wavelet Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Inverse Mel Scale And Wavelet Compression Padding - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
 		
@@ -360,7 +360,7 @@ namespace Comirva.Audio
 			// Compress
 			Matrix waveletCompressed = wavelet.Resize(numberCoefficients, wavelet.Columns);
 			
-			Mirage.Dbg.WriteLine("ApplyWaveletCompression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Wavelet Compression - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return waveletCompressed;
 		}
 		
@@ -380,7 +380,7 @@ namespace Comirva.Audio
 			Matrix m = wavelet.Copy();
 			Wavelets.Compress.WaveletDecompress.Decompress2D(m.MatrixData, numberWaveletTransforms, firstHeight, firstWidth);
 			
-			Mirage.Dbg.WriteLine("Inverse Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Inverse Wavelet Compression - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
 		
@@ -389,7 +389,7 @@ namespace Comirva.Audio
 		/// </summary>
 		/// <param name="m">matrix (stftdata)</param>
 		/// <returns>matrix mel scaled and wavelet'ed</returns>
-		public Matrix ApplyMelScaleWaveletCompression(ref Matrix m, out int lastHeight, out int lastWidth) {
+		public Matrix ApplyMelScaleAndWaveletCompress(ref Matrix m, out int lastHeight, out int lastWidth) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
@@ -408,7 +408,7 @@ namespace Comirva.Audio
 			// 6. Perform the Wavelet Transform and Compress
 			Matrix waveletCompressed = ApplyWaveletCompression(ref mel, out lastHeight, out lastWidth);
 			
-			Mirage.Dbg.WriteLine("ApplyMelScaleWaveletCompression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Mel Scale And Wavelet Compression - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return waveletCompressed;
 		}
 
@@ -417,7 +417,7 @@ namespace Comirva.Audio
 		/// </summary>
 		/// <param name="wavelet">wavelet matrix</param>
 		/// <returns>matrix inverse wavelet'ed and mel removed (e.g. stftdata)</returns>
-		public Matrix InverseMelScaleWaveletCompression(ref Matrix wavelet, int firstHeight, int firstWidth) {
+		public Matrix InverseMelScaleAndWaveletCompress(ref Matrix wavelet, int firstHeight, int firstWidth) {
 			Mirage.DbgTimer t = new Mirage.DbgTimer();
 			t.Start();
 			
@@ -441,7 +441,7 @@ namespace Comirva.Audio
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
 			InverseMelScaling(mel, m);
 
-			Mirage.Dbg.WriteLine("Inverse Wavelet Compression Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Inverse Mel Scale and Wavelet Compression - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
 		
@@ -467,7 +467,7 @@ namespace Comirva.Audio
 				}
 			}
 			
-			Mirage.Dbg.WriteLine("MelScaleAndLog Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Mel Scale And Log - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return mel;
 		}
 		
@@ -497,7 +497,7 @@ namespace Comirva.Audio
 			Matrix m = new Matrix(filterWeights.Columns, mel.Columns);
 			InverseMelScaling(mel, m);
 			
-			Mirage.Dbg.WriteLine("InverseMelScaleAndLog Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+			Mirage.Dbg.WriteLine("Inverse Mel Scale And Log - Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return m;
 		}
 		

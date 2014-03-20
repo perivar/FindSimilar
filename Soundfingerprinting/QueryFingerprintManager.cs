@@ -23,7 +23,7 @@
 		/// <param name="lshHashTables">Number of hash tables from the database</param>
 		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
 		/// <param name="thresholdTables">Threshold percentage [0.07 for 20 LHash Tables, 0.17 for 25 LHashTables]</param>
-		/// <param name="queryTime">Set buy the method, representing the query length</param>
+		/// <param name="queryTime">Set by the method, representing the query length</param>
 		/// <returns>Dictionary with Tracks ID's and the Query Statistics</returns>
 		public static Dictionary<Int32, QueryStats> QueryOneSongMinHash(
 			IEnumerable<bool[]> signatures,

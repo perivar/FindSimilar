@@ -41,7 +41,15 @@
 			this.dbService = dbService;
 			this.fingerprintService = fingerprintService;
 		}
-
+		
+		/// <summary>
+		/// Find Similar Tracks using passed audio file as input
+		/// </summary>
+		/// <param name="lshHashTables">Number of hash tables from the database</param>
+		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
+		/// <param name="thresholdTables">Threshold percentage [0.07 for 20 LHash Tables, 0.17 for 25 LHashTables]</param>
+		/// <param name="param">Audio File Work Unit Parameter Object</param>
+		/// <returns>a dictionary of perceptually similar tracks</returns>
 		public Dictionary<Track, QueryStats> FindSimilarFromAudioFile(
 			int lshHashTables,
 			int lshGroupsPerKey,
@@ -70,8 +78,8 @@
 
 			// Order by Hamming Similarity
 			// Using PLINQ
-			OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
-				//IOrderedEnumerable<KeyValuePair<int, QueryStats>> order = allCandidates
+			//OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
+			IOrderedEnumerable<KeyValuePair<int, QueryStats>> order = allCandidates
 				.OrderBy((pair) => pair.Value.OrderingValue =
 				         pair.Value.HammingDistance / pair.Value.NumberOfTotalTableVotes
 				         + 0.4 * pair.Value.MinHammingDistance);
@@ -86,6 +94,14 @@
 			return stats;
 		}
 		
+		/// <summary>
+		/// Find Similar Tracks using passed audio samples as input
+		/// </summary>
+		/// <param name="lshHashTables">Number of hash tables from the database</param>
+		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
+		/// <param name="thresholdTables">Threshold percentage [0.07 for 20 LHash Tables, 0.17 for 25 LHashTables]</param>
+		/// <param name="param">Audio File Work Unit Parameter Object</param>
+		/// <returns>a dictionary of perceptually similar tracks</returns>
 		public Dictionary<Track, double> FindSimilarFromAudioSamples(
 			int lshHashTables,
 			int lshGroupsPerKey,

@@ -125,7 +125,7 @@ namespace Mirage
 				}
 			}
 
-			Dbg.WriteLine("Scms created in: {0} ms", t.Stop().TotalMilliseconds);
+			Dbg.WriteLine("Compute Scms - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return s;
 		}
 		

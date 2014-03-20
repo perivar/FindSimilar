@@ -51,7 +51,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.12";
+		public static string VERSION = "1.0.13";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -291,8 +291,7 @@ namespace Mirage
 					.Where(f => extensions.Contains(Path.GetExtension(f).ToLower()));
 				Console.Out.WriteLine("Found {0} files in scan directory.", filesAll.Count());
 				
-				// get all already processed files stored in the database
-				// store in memory
+				// Get all already processed files stored in the database and store in memory
 				// It seems to work well with huge volumes of file (200k)
 				IList<string> filesAlreadyProcessed = databaseService.ReadTrackFilenames();
 				Console.Out.WriteLine("Database contains {0} already processed files.", filesAlreadyProcessed.Count);
@@ -325,9 +324,10 @@ namespace Mirage
 				                 		    || skipDurationAboveSeconds <= 0
 				                 		    || duration < 0) {
 
-				                 			//if(!Analyzer.AnalyzeAndAddComplete(fileInfo, db, databaseService)) {
-				                 			//if(!Analyzer.AnalyzeAndAddSoundfingerprinting(fileInfo)) {
-				                 			if(!Analyzer.AnalyzeAndAddScms(fileInfo, db)) {
+				                 			if(!Analyzer.AnalyzeAndAddComplete(fileInfo, db, databaseService)) {
+				                 				//if(!Analyzer.AnalyzeAndAddComplete2(fileInfo, db, databaseService)) {
+				                 				//if(!Analyzer.AnalyzeAndAddSoundfingerprinting(fileInfo)) {
+				                 				//if(!Analyzer.AnalyzeAndAddScms(fileInfo, db)) {
 				                 				Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 				                 				IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
 				                 			} else {

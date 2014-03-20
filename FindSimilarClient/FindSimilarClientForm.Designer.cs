@@ -56,6 +56,8 @@
 			this.version = new System.Windows.Forms.Label();
 			this.rbScms = new System.Windows.Forms.RadioButton();
 			this.rbSoundfingerprinting = new System.Windows.Forms.RadioButton();
+			this.txtFilterResults = new System.Windows.Forms.TextBox();
+			this.lblFilterResults = new System.Windows.Forms.Label();
 			this.tabControl1.SuspendLayout();
 			this.tabFileSearch.SuspendLayout();
 			this.tabIdSearch.SuspendLayout();
@@ -253,7 +255,7 @@
 			// 
 			this.GoBtn.Location = new System.Drawing.Point(12, 87);
 			this.GoBtn.Name = "GoBtn";
-			this.GoBtn.Size = new System.Drawing.Size(154, 23);
+			this.GoBtn.Size = new System.Drawing.Size(123, 23);
 			this.GoBtn.TabIndex = 5;
 			this.GoBtn.Text = "Go!";
 			this.GoBtn.UseVisualStyleBackColor = true;
@@ -286,9 +288,9 @@
 			// IgnoreFileLengthCheckBox
 			// 
 			this.IgnoreFileLengthCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.IgnoreFileLengthCheckBox.Location = new System.Drawing.Point(412, 87);
+			this.IgnoreFileLengthCheckBox.Location = new System.Drawing.Point(413, 88);
 			this.IgnoreFileLengthCheckBox.Name = "IgnoreFileLengthCheckBox";
-			this.IgnoreFileLengthCheckBox.Size = new System.Drawing.Size(120, 24);
+			this.IgnoreFileLengthCheckBox.Size = new System.Drawing.Size(119, 24);
 			this.IgnoreFileLengthCheckBox.TabIndex = 8;
 			this.IgnoreFileLengthCheckBox.Text = "Ignore File Length";
 			this.IgnoreFileLengthCheckBox.UseVisualStyleBackColor = true;
@@ -334,12 +336,30 @@
 			this.rbSoundfingerprinting.UseVisualStyleBackColor = true;
 			this.rbSoundfingerprinting.CheckedChanged += new System.EventHandler(this.RbSoundfingerprintingCheckedChanged);
 			// 
+			// txtFilterResults
+			// 
+			this.txtFilterResults.Location = new System.Drawing.Point(219, 90);
+			this.txtFilterResults.Name = "txtFilterResults";
+			this.txtFilterResults.Size = new System.Drawing.Size(186, 20);
+			this.txtFilterResults.TabIndex = 13;
+			this.txtFilterResults.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtFilterResultsKeyPress);
+			// 
+			// lblFilterResults
+			// 
+			this.lblFilterResults.Location = new System.Drawing.Point(141, 93);
+			this.lblFilterResults.Name = "lblFilterResults";
+			this.lblFilterResults.Size = new System.Drawing.Size(81, 19);
+			this.lblFilterResults.TabIndex = 14;
+			this.lblFilterResults.Text = "Filter Results:";
+			// 
 			// FindSimilarClientForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(700, 395);
 			this.ContextMenuStrip = this.contextMenuStrip1;
+			this.Controls.Add(this.lblFilterResults);
+			this.Controls.Add(this.txtFilterResults);
 			this.Controls.Add(this.rbSoundfingerprinting);
 			this.Controls.Add(this.rbScms);
 			this.Controls.Add(this.version);
@@ -364,7 +384,10 @@
 			((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
+			this.PerformLayout();
 		}
+		private System.Windows.Forms.Label lblFilterResults;
+		private System.Windows.Forms.TextBox txtFilterResults;
 		private System.Windows.Forms.RadioButton rbSoundfingerprinting;
 		private System.Windows.Forms.RadioButton rbScms;
 		private System.Windows.Forms.Button AudioFilePlayBtn;

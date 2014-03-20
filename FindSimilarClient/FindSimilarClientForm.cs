@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Data;
 
 using System.IO;
 using System.Collections;
@@ -322,13 +323,13 @@ namespace FindSimilar
 		#region ReadAllTracks
 		private void ReadAllTracks() {
 			if (rbScms.Checked) {
-				ReadAllTraksScms();
+				ReadAllTracksScms();
 			} else if (rbSoundfingerprinting.Checked) {
 				ReadAllTracksSoundfingerprinting();
 			}
 		}
 		
-		private void ReadAllTraksScms() {
+		private void ReadAllTracksScms() {
 			
 			// Clear all rows
 			this.dataGridView1.Rows.Clear();
@@ -342,6 +343,17 @@ namespace FindSimilar
 				if (counter == DEFAULT_NUM_TO_TAKE) break;
 				counter++;
 			}
+			
+			/*
+			var _scmsArray = (from row in filesProcessed
+			                  orderby filesProcessed[row.Key].Value
+			                  select new {
+			                  	Id = filesProcessed[row.Key].Key,
+			                  	Path = row.Key,
+			                  	Duration_Similarity = filesProcessed[row.Key].Value }
+			                 ).Take(DEFAULT_NUM_TO_TAKE);
+			dataGridView1.DataSource = _scmsArray.ToArray();
+			 */
 		}
 
 		private void ReadAllTracksSoundfingerprinting() {
@@ -488,7 +500,7 @@ namespace FindSimilar
 				this.dataGridView1.Rows.Clear();
 				
 				// search for tracks
-				string whereClause = string.Format("WHERE tags like '%{0}%'", queryString);
+				string whereClause = string.Format("WHERE tags like '%{0}%' or title like '%{0}%'", queryString);
 				IList<Track> tracks = databaseService.ReadTracks(whereClause);
 				Console.Out.WriteLine("Database contains {0} files that matches the query '{1}'.", tracks.Count, queryString);
 				
@@ -581,5 +593,14 @@ namespace FindSimilar
 			ReadAllTracks();
 		}
 		#endregion
+		
+		void TxtFilterResultsKeyPress(object sender, KeyPressEventArgs e)
+		{
+			if (e.KeyChar == (char) Keys.Enter) {
+				string filterString = txtFilterResults.Text;
+				//(dataGridView1.DataSource as DataTable).DefaultView.RowFilter = string.Format("Field = '{0}'", filterString);
+				MessageBox.Show("Not implemented yet!");
+			}
+		}
 	}
 }
