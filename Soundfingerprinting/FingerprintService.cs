@@ -53,11 +53,12 @@ namespace Soundfingerprinting.Fingerprinting
 				MinFrequency = configuration.MinFrequency,
 				Overlap = configuration.Overlap,
 				SampleRate = configuration.SampleRate,
-				WdftSize = configuration.WdftSize,
+				WindowSize = configuration.WindowSize,
 				NormalizeSignal = configuration.NormalizeSignal,
 				UseDynamicLogBase = configuration.UseDynamicLogBase
 			};
 
+			// store the log spectrogram in the out variable
 			logSpectrogram = AudioService.CreateLogSpectrogram(
 				samples, configuration.WindowFunction, audioServiceConfiguration);
 			
@@ -72,11 +73,18 @@ namespace Soundfingerprinting.Fingerprinting
 		public List<bool[]> CreateFingerprintsFromLogSpectrum(
 			double[][] logarithmizedSpectrum, IStride stride, int fingerprintLength, int overlap, int topWavelets)
 		{
+			// Cut the logaritmic spectrogram into smaller spectrograms with one stride between each
 			List<double[][]> spectralImages = SpectrumService.CutLogarithmizedSpectrum(
 				logarithmizedSpectrum, stride, fingerprintLength, overlap);
 
+			// Then apply the wavelet transform on them to lated reduce the resolution
+			// do this in place
 			WaveletService.ApplyWaveletTransformInPlace(spectralImages);
 			
+			// Then for each of the wavelet reduce the resolution by only keeping the top wavelets
+			// and ignore the magnitude of the top wavelets.
+			// Instead, we can simply keep the sign of it (+/-).
+			// This information is enough to keep the extract perceptual characteristics of a song.
 			List<bool[]> fingerprints = new List<bool[]>();
 			foreach (var spectralImage in spectralImages)
 			{

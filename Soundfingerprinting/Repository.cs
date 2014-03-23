@@ -15,6 +15,9 @@
 	using Soundfingerprinting.DbStorage.Entities;
 	
 	using Soundfingerprinting.SoundTools;
+	
+	// for debuggin and outputting images
+	using Soundfingerprinting.Image;
 
 	/// <summary>
 	/// Singleton class for repository container
@@ -179,6 +182,9 @@
 			IList<Track> tracks = dbService.ReadTrackById(ids);
 
 			// Order by Hamming Similarity
+			// TODO: What does the 0.4 number do here?
+			// there doesn't seem to be any change using another number?!
+
 			// Using PLINQ
 			//OrderedParallelQuery<KeyValuePair<int, QueryStats>> order = allCandidates.AsParallel()
 			IOrderedEnumerable<KeyValuePair<int, QueryStats>> order = allCandidates
@@ -210,6 +216,19 @@
 		{
 			if (dbService.InsertTrack(track)) {
 				List<bool[]> images = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram);
+
+				#if DEBUG
+				if (Mirage.Analyzer.DEBUG_INFO_VERBOSE) {
+					// Image Service
+					ImageService imageService =
+						new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+					
+					int width = param.FingerprintingConfiguration.FingerprintLength;
+					int height = param.FingerprintingConfiguration.LogBins;
+					imageService.GetImageForFingerprints(images, width, height, 2).Save(param.FileName + "_fingerprints.png");
+				}
+				#endif
+
 				List<Fingerprint> inserted = AssociateFingerprintsToTrack(images, track.Id);
 				if (dbService.InsertFingerprint(inserted)) {
 					return HashFingerprintsUsingMinHash(inserted, track, hashTables, hashKeys);

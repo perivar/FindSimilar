@@ -129,27 +129,22 @@ namespace Soundfingerprinting.Audio.Services
 		public double[][] CreateLogSpectrogram(
 			float[] samples, IWindowFunction windowFunction, AudioServiceConfiguration configuration)
 		{
-			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
-			// Matlab multiplies with 2^15 (32768)
-			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
-			//MathUtils.Multiply(ref samples, Analyzer.AUDIO_MULTIPLIER); // 65536
-			
 			if (configuration.NormalizeSignal)
 			{
 				NormalizeInPlace(samples);
 			}
 
-			int width = (samples.Length - configuration.WdftSize) / configuration.Overlap; /*width of the image*/
+			int width = (samples.Length - configuration.WindowSize) / configuration.Overlap; /*width of the image*/
 			double[][] frames = new double[width][];
 			int[] logFrequenciesIndexes = GenerateLogFrequencies(configuration);
-			//double[] window = windowFunction.GetWindow(configuration.WdftSize);
 			double[] window = windowFunction.GetWindow();
 			for (int i = 0; i < width; i++)
 			{
-				double[] complexSignal = new double[2 * configuration.WdftSize]; /*even - Re, odd - Img, thats how Exocortex works*/
+				double[] complexSignal = new double[2 * configuration.WindowSize]; /*even - Re, odd - Img, thats how Exocortex works*/
 
-				// take 371 ms each 11.6 ms (2048 samples each 64 samples)
-				for (int j = 0; j < configuration.WdftSize; j++)
+				// take 371 ms each 11.6 ms (2048 samples each 64 samples, samplerate 5512)
+				// or 256 ms each 16 ms (8192 samples each 512 samples, samplerate 32000)
+				for (int j = 0; j < configuration.WindowSize; j++)
 				{
 					// Weight by Hann Window
 					complexSignal[2 * j] = window[j] * samples[(i * configuration.Overlap) + j];
@@ -220,7 +215,7 @@ namespace Soundfingerprinting.Audio.Services
 			double logBase =
 				Math.Exp(
 					Math.Log((double)configuration.MaxFrequency / configuration.MinFrequency) / configuration.LogBins);
-			double mincoef = (double)configuration.WdftSize / configuration.SampleRate * configuration.MinFrequency;
+			double mincoef = (double)configuration.WindowSize / configuration.SampleRate * configuration.MinFrequency;
 			int[] indexes = new int[configuration.LogBins + 1];
 			for (int j = 0; j < configuration.LogBins + 1; j++)
 			{
@@ -265,7 +260,7 @@ namespace Soundfingerprinting.Audio.Services
 				double freq = (double)Math.Pow(configuration.LogBase, logMin + accDelta);
 				accDelta += delta; // accDelta = delta * i
 				/*Find the start index in array from which to start the summation*/
-				indexes[i] = FreqToIndex(freq, configuration.SampleRate, configuration.WdftSize);
+				indexes[i] = FreqToIndex(freq, configuration.SampleRate, configuration.WindowSize);
 			}
 
 			return indexes;

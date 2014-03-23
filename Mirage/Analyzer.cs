@@ -61,41 +61,37 @@ namespace Mirage
 			AudioFingerprinting = 3
 		}
 		
-		public const int SAMPLING_RATE = 44100; //22050;
-		private const int WINDOW_SIZE = 2048; //2048 1024;
-		private const int MEL_COEFFICIENTS = 40; // 36 filters (SPHINX-III uses 40)
-		public const int MFCC_COEFFICIENTS = 20; //20
-		public const int SECONDS_TO_ANALYZE = 60;
-		
-		// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
-		// Matlab multiplies with 2^15 (32768)
-		public const int AUDIO_MULTIPLIER = 65536; // 32768 still makes alot of mfcc feature computations fail?!
-		
-		//private static MfccLessOptimized mfcc = new MfccLessOptimized(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		private static MfccMirage mfccMirage = new MfccMirage(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-
-		#if DEBUG
-		//private static Mfcc mfccOptimized = new Mfcc(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
-		//private static MFCC mfccComirva = new MFCC(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, true, 20.0, SAMPLING_RATE/2, MEL_COEFFICIENTS);
-		#endif
-		
-		// http://www.codeproject.com/Articles/206507/Duplicates-detector-via-audio-fingerprinting
-		// The parameters used in the Duplicates-detector-via-audio-fingerprinting transformation steps
-		// is equal to those that have been found work well in other audio fingerprinting studies
-		// (specifically in A Highly Robust Audio Fingerprinting System):
-		// audio frames that are 371 ms long (2048 samples), taken every 11.6 ms (64 samples),
-		// thus having an overlap of 31/32
-		//
 		// parameters: samplerate: 5512 hz, overlap: 31/32, window length: 2048
 		// slice (window) size: 2048 / 5512 * 1000 =  371 ms
-		// distance between slices: 64 / 5512 * 1000 =  11.6 ms
+		// distance between slices: 64 / 5512 * 1000 =  11,6 ms
 
 		// parameters: samplerate: 44100 hz, overlap: 1024 samples, window length: 2048
 		// slice (window) size: 2048 / 44100 * 1000 =  46.44 ms
 		// distance between slices: 1024 / 44100 * 1000 =  23.22 ms
+
+		// parameters: samplerate: 32000 hz, overlap: 372 samples, window length: 11889
+		// slice (window) size: 11889 / 32000 * 1000 =  371 ms
+		// distance between slices: 372 / 32000 * 1000 =  11,6 ms
+
+		public const int SAMPLING_RATE = 32000; 	// Using 32000 (instead of 44100) gives us a max of 16 khz resolution, which is OK for normal adult human hearing
+
+		// 8192 / 32000 = 256 ms
+		private const int WINDOW_SIZE = 8192; 		// 371 ms 	is	2048/5512	or 	16384/44100	or 11889/32000
+
+		// Note! Due to the way we compute the mfcc we cannot use another overlap than half the window size
+		// 4096 / 32000 = 128 ms
+		private const int OVERLAP = WINDOW_SIZE/2;	// 11,6 ms	is 	64/5512		or	512/44100	or 372/32000
+		private const int MEL_COEFFICIENTS = 40;	// Originally Mirage uses 36 filters but SPHINX-III uses 40
+		public const int MFCC_COEFFICIENTS = 20; 	// 20 seems like a good number of mfcc coefficients
+		public const int SECONDS_TO_ANALYZE = 60;
 		
-		// Create the STFS object with 50% overlap (half of the window size);
-		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, WINDOW_SIZE/2, new HannWindow());
+		// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
+		// Matlab multiplies with 2^15 (32768)
+		public const int AUDIO_MULTIPLIER = 65536; // 32768 still makes alot of mfcc feature computations fail!
+		
+		// The MfccMirage methods of calculating the filters only supports an overlap that is half the window size
+		private static MfccMirage mfccMirage = new MfccMirage(WINDOW_SIZE, SAMPLING_RATE, MEL_COEFFICIENTS, MFCC_COEFFICIENTS);
+		private static StftMirage stftMirage = new StftMirage(WINDOW_SIZE, OVERLAP, new HannWindow());
 
 		// Create a static mandel ellis extractor
 		private static MandelEllisExtractor mandelEllisExtractor = new MandelEllisExtractor(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, MEL_COEFFICIENTS);
@@ -352,12 +348,12 @@ namespace Mirage
 			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
 			// Matlab multiplies with 2^15 (32768)
 			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
-			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER); // 65536
+			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER);
 			
 			// zero pad if the audio file is too short to perform a mfcc
-			if (audiodata.Length < (fingerprintingConfigCreation.WdftSize + fingerprintingConfigCreation.Overlap))
+			if (audiodata.Length < (WINDOW_SIZE + OVERLAP))
 			{
-				int lenNew = fingerprintingConfigCreation.WdftSize + fingerprintingConfigCreation.Overlap;
+				int lenNew = WINDOW_SIZE + OVERLAP;
 				Array.Resize<float>(ref audiodata, lenNew);
 			}
 			
@@ -496,7 +492,7 @@ namespace Mirage
 			return true;
 		}
 
-		public static bool AnalyzeAndAddComplete2(FileInfo filePath, Db db, DatabaseService databaseService, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
+		public static bool AnalyzeAndAddCompleteNew(FileInfo filePath, Db db, DatabaseService databaseService, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -585,101 +581,6 @@ namespace Mirage
 			}
 			#endregion
 
-			Comirva.Audio.Util.Maths.Matrix featureData = null;
-			if (useHaarWavelet) {
-				#region Wavelet Transform
-				int lastHeight = 0;
-				int lastWidth = 0;
-				featureData = mfccMirage.ApplyWaveletCompression(ref mellog, out lastHeight, out lastWidth);
-
-				if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
-					featureData.WriteAscii(fileName + "_waveletdata.ascii");
-				}
-
-				if (doOutputDebugInfo) {
-					featureData.DrawMatrixImageLogValues(fileName + "_waveletdata.png", true);
-				}
-				
-				if (DEBUG_DO_INVERSE_TESTS) {
-					#region Inverse Wavelet
-					// try to do an inverse wavelet transform
-					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_wavelet = mfccMirage.InverseMelScaleAndWaveletCompress(ref featureData, lastHeight, lastWidth);
-
-					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_wavelet.WriteCSV(fileName + "_specgramlog_inverse_wavelet.csv", ";");
-					stftdata_inverse_wavelet.DrawMatrixImageLogValues(fileName + "_specgramlog_inverse_wavelet.png", true);
-					
-					double[] audiodata_inverse_wavelet = stftMirage.InverseStft(stftdata_inverse_wavelet);
-					MathUtils.Normalize(ref audiodata_inverse_wavelet);
-					
-					if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_wavelet, fileName + "_audiodata_inverse_wavelet.txt");
-					DrawGraph(audiodata_inverse_wavelet, fileName + "_audiodata_inverse_wavelet.png");
-					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_wavelet), fileName + "_inverse_wavelet.wav", Analyzer.SAMPLING_RATE);
-					#endregion
-				}
-				#endregion
-			} else {
-				#region DCT Transform
-				// It seems the Mirage way of applying the DCT is slightly faster than the
-				// Comirva way due to less loops
-				featureData = mfccMirage.ApplyDCT(ref mellog);
-
-				if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
-					featureData.WriteAscii(fileName + "_mfccdata.ascii");
-				}
-
-				if (doOutputDebugInfo) {
-					featureData.DrawMatrixImageLogValues(fileName + "_mfccdata.png", true);
-				}
-
-				if (DEBUG_DO_INVERSE_TESTS) {
-					#region Inverse MFCC
-					// try to do an inverse mfcc
-					Comirva.Audio.Util.Maths.Matrix stftdata_inverse_mfcc = mfccMirage.InverseMelScaleDCT(ref featureData);
-					
-					if (DEBUG_OUTPUT_TEXT) stftdata_inverse_mfcc.WriteCSV(fileName + "_stftdata_inverse_mfcc.csv", ";");
-					stftdata_inverse_mfcc.DrawMatrixImageLogValues(fileName + "_specgramlog_inverse_mfcc.png", true);
-					
-					double[] audiodata_inverse_mfcc = stftMirage.InverseStft(stftdata_inverse_mfcc);
-					MathUtils.Normalize(ref audiodata_inverse_mfcc);
-
-					if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata_inverse_mfcc, fileName + "_audiodata_inverse_mfcc.txt");
-					DrawGraph(audiodata_inverse_mfcc, fileName + "_audiodata_inverse_mfcc.png");
-					bass.SaveFile(MathUtils.DoubleToFloat(audiodata_inverse_mfcc), fileName + "_inverse_mfcc.wav", Analyzer.SAMPLING_RATE);
-					#endregion
-				}
-				#endregion
-			}
-			
-			// Store in a Statistical Cluster Model Similarity class.
-			// A Gaussian representation of a song
-			Scms audioFeature = Scms.GetScms(featureData, fileName);
-			
-			if (audioFeature != null) {
-				
-				// Store image if debugging
-				if (doOutputDebugInfo) {
-					audioFeature.Image = featureData.DrawMatrixImageLogValues(fileName + "_featuredata.png", true, false, 0, 0, true);
-				}
-
-				// Store bitstring hash as well
-				audioFeature.BitString = GetBitString(featureData);
-				
-				// Store duration
-				audioFeature.Duration = (long) param.DurationInMs;
-				
-				// Store file name
-				audioFeature.Name = filePath.FullName;
-				
-				// Add to database
-				if (db.AddTrack(audioFeature) == -1) {
-					Console.Out.WriteLine("Failed! Could not add audioFeature to database {0}!", fileName);
-					return false;
-				}
-			} else {
-				// failed creating the Scms class
-				Console.Out.WriteLine("Failed! Could not compute the Scms {0}!", fileName);
-				return false;
-			}
 			
 			Dbg.WriteLine ("AnalyzeAndAddComplete2 - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return true;
@@ -1035,7 +936,11 @@ namespace Mirage
 			DatabaseService databaseService = DatabaseService.Instance;
 			Repository repository = new Repository(permutations, databaseService, fingerprintService);
 
-			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(25, 4, 1, param);
+			// TODO: i don't really know how the threshold tables work.
+			// 1 returns more similar hits
+			// 2 returns sometimes only the one we search for
+			// even 0 seem to work (like 1)
+			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(25, 4, 0, param);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprintingList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;

@@ -19,7 +19,7 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
         /// <summary>
         ///   Gets size of the WDFT block, 371 ms
         /// </summary>
-        int WdftSize { get; }
+        int WindowSize { get; }
 
         /// <summary>
         ///   Gets frequency range which is taken into account

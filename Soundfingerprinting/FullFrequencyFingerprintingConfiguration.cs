@@ -8,40 +8,49 @@
 	{
 		public FullFrequencyFingerprintingConfiguration(bool useRandomStride = false)
 		{
+			// http://www.codeproject.com/Articles/206507/Duplicates-detector-via-audio-fingerprinting
 			// The parameters used in these transformation steps will be equal to those that have been found to work well in other audio fingerprinting studies
 			// (specifically in A Highly Robust Audio Fingerprinting System):
-			// audio frames that are 371 ms long (2048 samples),
-			// taken every 11.6 ms (64 samples),
+			// audio frames that are 371 ms long
+			// taken every 11.6 ms,
 			// thus having an overlap of 31/32
 			FingerprintLength = 128;
-			WdftSize = 16384; 		// 2048/5512 	= 371 ms 	(16384/44100)
-			Overlap = 512; 			// 64/5512 		= 11,6 ms 	(512/44100)
+			
+			// 8192 / 32000 = 256 ms
+			WindowSize = 8192; 	// 371 ms 	is	2048/5512	or 	16384/44100	or 11889/32000
+			
+			// 512 / 32000 = 16 ms
+			Overlap = 512; 			// 11,6 ms	is 	64/5512		or	512/44100	or 372/32000
 			SamplesPerFingerprint = FingerprintLength * Overlap;
-			MinFrequency = 20; 		// 318;
-			MaxFrequency = 22050; 	// 2000;
-			SampleRate = 44100; 	// 5512;
-			LogBase = Math.E; 		// 2 or 10;
+			
+			MinFrequency = 20; 		// 318; 	Full Frequency: 20
+			MaxFrequency = 16000; 	// 2000; 	Full Frequency: 22050
+			
+			// Using 32000 (instead of 44100) gives us a max of 16 khz resolution, which is OK for normal adult human hearing
+			SampleRate = 32000; 	// 5512 or 44100
+			LogBase = Math.E; 		// Math.E, 2 or 10;
 			
 			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation,
 			// and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
 			if (useRandomStride) {
-				// 2028 / 44100 = 0,046 sec
-				Stride = new IncrementalRandomStride(0, 2028, SamplesPerFingerprint);
+				// 0,046 sec is 2028 / 44100	or 	1472/32000
+				// use a 128 ms random stride instead = 4096 (way too many fingerprints to query efficiently)
+				Stride = new IncrementalRandomStride(0, 4096, SamplesPerFingerprint);
 			} else {
-				// 5115 / 5512 = 0,928 sec
-				// 40924 / 44100 = 0,928 sec
-				Stride = new IncrementalStaticStride(40924, SamplesPerFingerprint);
+				// 0,928 sec is	5115 / 5512 or 40924 / 44100	or	29695/32000
+				Stride = new IncrementalStaticStride(29695, SamplesPerFingerprint);
 			}
 			
 			TopWavelets = 200;
-			LogBins = 40; // 40; // 32; (Originally this was 32, but 40 seems to work better with SCMS?!)
-			WindowFunction = new HannWindow(WdftSize);
+			LogBins = 40; 	// (Originally this was 32, but 40 seems to work better with SCMS?!)
+			WindowFunction = new HannWindow(WindowSize);
 			NormalizeSignal = true; 	// true;
 			UseDynamicLogBase = false;	// false;
 		}
 		
 		/// <summary>
-		/// Gets number of samples to read in order to create single signature. The granularity is 1.48 seconds
+		/// Gets number of samples to read in order to create single signature.
+		/// The granularity is 1.48 seconds
 		/// </summary>
 		/// <remarks>
 		///   Default = 8192
@@ -62,7 +71,7 @@
 		/// <remarks>
 		///   Default = 2048
 		/// </remarks>
-		public int WdftSize { get; private set; }
+		public int WindowSize { get; private set; }
 
 		/// <summary>
 		/// Gets frequency range which is taken into account when creating the signature

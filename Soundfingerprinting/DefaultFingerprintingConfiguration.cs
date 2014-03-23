@@ -14,7 +14,7 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 			// taken every 11.6 ms (64 samples),
 			// thus having an overlap of 31/32
 			FingerprintLength = 128;
-			WdftSize = 2048; 	// 2048/5512 	= 371 ms
+			WindowSize = 2048; 	// 2048/5512 	= 371 ms
 			Overlap = 64;		// 64/5512 		= 11,6 ms
 			SamplesPerFingerprint = FingerprintLength * Overlap;
 			MinFrequency = 318;
@@ -28,7 +28,7 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 			
 			TopWavelets = 200;
 			LogBins = 32;
-			WindowFunction = new HannWindow(WdftSize);
+			WindowFunction = new HannWindow(WindowSize);
 			NormalizeSignal = true;
 			UseDynamicLogBase = false;
 		}
@@ -55,7 +55,7 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 		/// <remarks>
 		///   Default = 2048
 		/// </remarks>
-		public int WdftSize { get; private set; }
+		public int WindowSize { get; private set; }
 
 		/// <summary>
 		/// Gets frequency range which is taken into account when creating the signature

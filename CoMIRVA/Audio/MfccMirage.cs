@@ -34,6 +34,7 @@ namespace Comirva.Audio
 		/// Create a Mfcc object
 		/// This method is not optimized in the sense that the Mel Filter Bands
 		/// and the DCT is created here (and not read in)
+		/// Only support an overlap of half the window size
 		/// </summary>
 		/// <param name="winsize">window size</param>
 		/// <param name="srate">sample rate</param>
