@@ -34,7 +34,7 @@
 			// and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
 			if (useRandomStride) {
 				// 0,046 sec is 2028 / 44100	or 	1472/32000
-				// use a 128 ms random stride instead = 4096 (way too many fingerprints to query efficiently)
+				// use a 128 ms random stride instead = 4096, since every 46 ms gives way too many fingerprints to query efficiently
 				Stride = new IncrementalRandomStride(0, 4096, SamplesPerFingerprint);
 			} else {
 				// 0,928 sec is	5115 / 5512 or 40924 / 44100	or	29695/32000
