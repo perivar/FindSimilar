@@ -132,6 +132,52 @@ namespace Mirage
 		/// <summary>
 		/// Computes a Scms model from the MFCC representation of a song.
 		/// </summary>
+		/// <param name="mfcc">Comirva.Audio.Util.Maths.Matrix mfcc</param>
+		/// <returns></returns>
+		public static Scms GetScmsNoInverse(Comirva.Audio.Util.Maths.Matrix mfccs, string name) {
+			DbgTimer t = new DbgTimer();
+			t.Start();
+			
+			Comirva.Audio.Util.Maths.Matrix mean = mfccs.Mean(2);
+
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (Analyzer.DEBUG_OUTPUT_TEXT) mean.WriteText(name + "_mean.txt");
+				mean.DrawMatrixGraph(name + "_mean.png");
+			}
+			#endif
+
+			// Covariance
+			Comirva.Audio.Util.Maths.Matrix covarMatrix = mfccs.Cov(mean);
+			#if DEBUG
+			if (Analyzer.DEBUG_INFO_VERBOSE) {
+				if (Analyzer.DEBUG_OUTPUT_TEXT) covarMatrix.WriteText(name + "_covariance.txt");
+				covarMatrix.DrawMatrixGraph(name + "_covariance.png");
+			}
+			#endif
+			
+			Comirva.Audio.Util.Maths.Matrix covarMatrixInv = new Comirva.Audio.Util.Maths.Matrix(covarMatrix.Rows, covarMatrix.Columns);
+			
+			// Store the Mean, Covariance, Inverse Covariance in an optimal format.
+			int dim = mean.Rows;
+			Scms s = new Scms(dim);
+			int l = 0;
+			for (int i = 0; i < dim; i++) {
+				s.mean[i] = (float) mean.MatrixData[i][0];
+				for (int j = i; j < dim; j++) {
+					s.cov[l] = (float) covarMatrix.MatrixData[i][j];
+					s.icov[l] = (float) covarMatrixInv.MatrixData[i][j];
+					l++;
+				}
+			}
+
+			Dbg.WriteLine("GetScmsNoInverse - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return s;
+		}
+		
+		/// <summary>
+		/// Computes a Scms model from the MFCC representation of a song.
+		/// </summary>
 		/// <param name="mfcc">Mirage.Matrix mfcc</param>
 		/// <returns></returns>
 		public static Scms GetScms(Matrix mfcc, string name)

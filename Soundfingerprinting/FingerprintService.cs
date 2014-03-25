@@ -12,6 +12,8 @@ namespace Soundfingerprinting.Fingerprinting
 	using Soundfingerprinting.Fingerprinting.WorkUnitBuilder;
 	using Soundfingerprinting.Fingerprinting.Configuration;
 
+	using Mirage; // for debug
+	
 	public class FingerprintService
 	{
 		public readonly SpectrumService SpectrumService;
@@ -39,10 +41,11 @@ namespace Soundfingerprinting.Fingerprinting
 				param.MillisecondsToProcess,
 				param.StartAtMilliseconds);
 
-			return CreateFingerprintsFromAudioSamples(samples, param, out logSpectrogram);
+			List<double[][]> spectralImages;
+			return CreateFingerprintsFromAudioSamples(samples, param, out logSpectrogram, out spectralImages);
 		}
 
-		public List<bool[]> CreateFingerprintsFromAudioSamples(float[] samples, WorkUnitParameterObject param, out double[][] logSpectrogram)
+		public List<bool[]> CreateFingerprintsFromAudioSamples(float[] samples, WorkUnitParameterObject param, out double[][] logSpectrogram, out List<double[][]> spectralImages)
 		{
 			IFingerprintingConfiguration configuration = param.FingerprintingConfiguration;
 			AudioServiceConfiguration audioServiceConfiguration = new AudioServiceConfiguration
@@ -57,7 +60,7 @@ namespace Soundfingerprinting.Fingerprinting
 				NormalizeSignal = configuration.NormalizeSignal,
 				UseDynamicLogBase = configuration.UseDynamicLogBase
 			};
-
+			
 			// store the log spectrogram in the out variable
 			logSpectrogram = AudioService.CreateLogSpectrogram(
 				samples, configuration.WindowFunction, audioServiceConfiguration);
@@ -67,15 +70,18 @@ namespace Soundfingerprinting.Fingerprinting
 				configuration.Stride,
 				configuration.FingerprintLength,
 				configuration.Overlap,
-				configuration.TopWavelets);
+				configuration.TopWavelets,
+				out spectralImages);
 		}
 
 		public List<bool[]> CreateFingerprintsFromLogSpectrum(
-			double[][] logarithmizedSpectrum, IStride stride, int fingerprintLength, int overlap, int topWavelets)
+			double[][] logarithmizedSpectrum, IStride stride, int fingerprintLength, int overlap, int topWavelets, out List<double[][]> spectralImages)
 		{
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+
 			// Cut the logaritmic spectrogram into smaller spectrograms with one stride between each
-			List<double[][]> spectralImages = SpectrumService.CutLogarithmizedSpectrum(
-				logarithmizedSpectrum, stride, fingerprintLength, overlap);
+			spectralImages = SpectrumService.CutLogarithmizedSpectrum(logarithmizedSpectrum, stride, fingerprintLength, overlap);
 
 			// Then apply the wavelet transform on them to lated reduce the resolution
 			// do this in place
@@ -92,6 +98,7 @@ namespace Soundfingerprinting.Fingerprinting
 				fingerprints.Add(image);
 			}
 
+			Dbg.WriteLine ("Created {1} Fingerprints from Log Spectrum - Execution Time: {0} ms", t.Stop().TotalMilliseconds, fingerprints.Count);
 			return fingerprints;
 		}
 	}

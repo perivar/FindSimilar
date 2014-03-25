@@ -12,6 +12,7 @@ using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 using Comirva.Audio;
 using Comirva.Audio.Extraction;
@@ -400,7 +401,9 @@ namespace Mirage
 			Repository repository = new Repository(permutations, databaseService, fingerprintService);
 
 			double[][] logSpectrogram;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram)) {
+			List<bool[]> fingerprints;
+			List<double[][]> spectralImages;
+			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram, out fingerprints, out spectralImages)) {
 
 				// store logSpectrogram as Matrix
 				Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
@@ -459,7 +462,9 @@ namespace Mirage
 			Repository repository = new Repository(permutations, databaseService, fingerprintService);
 
 			double[][] logSpectrogram;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram)) {
+			List<bool[]> fingerprints;
+			List<double[][]> spectralImages;
+			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram, out fingerprints, out spectralImages)) {
 
 				// store logSpectrogram as Matrix
 				Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
@@ -481,7 +486,7 @@ namespace Mirage
 				
 				// Insert Statistical Cluster Model Similarity Audio Feature as well
 				if (!AnalyseAndAddScmsUsingLogSpectrogram(logSpectrogramMatrix, param, db, track.Id, doOutputDebugInfo, useHaarWavelet)) {
-					// failed, but ignore?
+					// Failed, but ignore?
 				}
 			} else {
 				// failed
@@ -491,98 +496,59 @@ namespace Mirage
 			Dbg.WriteLine ("AnalyzeAndAddComplete - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return true;
 		}
-
+		
 		public static bool AnalyzeAndAddCompleteNew(FileInfo filePath, Db db, DatabaseService databaseService, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
 			// get work config from the audio file
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
+			param.FingerprintingConfiguration = fingerprintingConfigCreation;
 			string fileName = param.FileName;
-			
-			// used to save wave files in the debug inverse methods
-			FindSimilar.AudioProxies.BassProxy bass = FindSimilar.AudioProxies.BassProxy.Instance;
-			
-			// 2. Windowing
-			// 3. FFT
-			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(param.AudioSamples);
 
-			if (DEBUG_INFO_VERBOSE & DEBUG_OUTPUT_TEXT) {
-				stftdata.WriteAscii(fileName + "_stftdata.ascii");
-				stftdata.WriteCSV(fileName + "_stftdata.csv", ";");
-			}
+			// build track
+			Track track = new Track();
+			track.Title = param.FileName;
+			track.TrackLengthMs = (int) param.DurationInMs;
+			track.FilePath = param.PathToAudioFile;
+			track.Tags = param.Tags;
+			track.Id = -1; // this will be set by the insert method
+			
+			// Get fingerprint signatures using the Soundfingerprinting methods
+			Repository repository = new Repository(permutations, databaseService, fingerprintService);
 
-			if (doOutputDebugInfo) {
-				// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
-				//stftdata.DrawMatrixImageLogValues(fileName + "_specgram.png", true);
+			double[][] logSpectrogram;
+			List<bool[]> fingerprints;
+			List<double[][]> spectralImages;
+			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram, out fingerprints, out spectralImages)) {
 				
-				// spec gram with log values for the y axis (frequency)
-				stftdata.DrawMatrixImageLogY(fileName + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
-			}
-			
-			if (DEBUG_DO_INVERSE_TESTS) {
-				#region Inverse STFT
-				double[] audiodata_inverse_stft = stftMirage.InverseStft(stftdata);
-				
-				// divide
-				//MathUtils.Divide(ref audiodata_inverse_stft, AUDIO_MULTIPLIER);
-				MathUtils.Normalize(ref audiodata_inverse_stft);
+				#region Debug for Soundfingerprinting Method
+				if (doOutputDebugInfo) {
+					// Image Service
+					ImageService imageService = new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
 
-				if (DEBUG_OUTPUT_TEXT) {
-					WriteAscii(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.ascii");
-					WriteF3Formatted(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.txt");
+					// store logSpectrogram as Matrix
+					Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
+					logSpectrogramMatrix = logSpectrogramMatrix.Transpose();
+					logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
+					
+					if (DEBUG_OUTPUT_TEXT) {
+						logSpectrogramMatrix.WriteCSV(fileName + "_specgram_log.csv", ";");
+					}
 				}
-				
-				DrawGraph(audiodata_inverse_stft, fileName + "_audiodata_inverse_stft.png");
-				
-				float[] audiodata_inverse_float = MathUtils.DoubleToFloat(audiodata_inverse_stft);
-				bass.SaveFile(audiodata_inverse_float, fileName + "_inverse_stft.wav", Analyzer.SAMPLING_RATE);
 				#endregion
-			}
-			
-			// 4. Mel Scale Filterbank
-			// Mel-frequency is proportional to the logarithm of the linear frequency,
-			// reflecting similar effects in the human's subjective aural perception)
-			// 5. Take Logarithm
-			// 6. DCT (Discrete Cosine Transform)
-
-			#region Mel Scale and Log Values
-			Comirva.Audio.Util.Maths.Matrix mellog = mfccMirage.ApplyMelScaleAndLog(ref stftdata);
-			
-			if (DEBUG_OUTPUT_TEXT) {
-				mellog.WriteCSV(fileName + "_mel_log.csv", ";");
-			}
-			
-			if (doOutputDebugInfo) {
-				mellog.DrawMatrixImage(fileName + "_mel_log.png", 600, 400, true, true);
-			}
-			#endregion
-			
-			#region Inverse Mel Scale and Log Values
-			if (DEBUG_DO_INVERSE_TESTS) {
-				Comirva.Audio.Util.Maths.Matrix inverse_mellog = mfccMirage.InverseMelScaleAndLog(ref mellog);
-
-				inverse_mellog.WriteCSV(fileName + "_mel_log_inverse.csv", ";");
-				inverse_mellog.DrawMatrixImageLogValues(fileName + "_mel_log_inverse.png", true);
 				
-				double[] audiodata_inverse_mellog = stftMirage.InverseStft(inverse_mellog);
-				//MathUtils.Divide(ref audiodata_inverse_mellog, AUDIO_MULTIPLIER/100);
-				MathUtils.Normalize(ref audiodata_inverse_mellog);
-
-				if (DEBUG_OUTPUT_TEXT) {
-					WriteAscii(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.ascii");
-					WriteF3Formatted(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.txt");
+				// Insert Statistical Cluster Model Similarity Audio Feature as well
+				if (!AnalyseAndAddScmsUsingFingerprintsConcat(fingerprints, param, db, track.Id, doOutputDebugInfo)) {
+					// Failed, but ignore?
 				}
-				
-				DrawGraph(audiodata_inverse_mellog, fileName + "_audiodata_inverse_mellog.png");
-				
-				float[] audiodata_inverse_mellog_float = MathUtils.DoubleToFloat(audiodata_inverse_mellog);
-				bass.SaveFile(audiodata_inverse_mellog_float, fileName + "_inverse_mellog.wav", Analyzer.SAMPLING_RATE);
+			} else {
+				// failed
+				return false;
 			}
-			#endregion
 
-			
-			Dbg.WriteLine ("AnalyzeAndAddComplete2 - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			Dbg.WriteLine ("AnalyzeAndAddCompleteNew - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return true;
 		}
 		
@@ -901,6 +867,200 @@ namespace Mirage
 			}
 		}
 		
+		private static bool AnalyseAndAddScmsUsingFingerprints(List<bool[]> fingerprints,
+		                                                       WorkUnitParameterObject param,
+		                                                       Db db,
+		                                                       int trackId,
+		                                                       bool doOutputDebugInfo=DEFAULT_DEBUG_INFO) {
+			
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+			
+			// Insert Statistical Cluster Model Similarity Audio Feature
+			string fileName = param.FileName;
+
+			int fingerprintWidth = param.FingerprintingConfiguration.FingerprintLength;
+			int fingerprintHeight = param.FingerprintingConfiguration.LogBins;
+			int fingerprintCount = 0;
+			
+			foreach (bool[] fingerprint in fingerprints) {
+				fingerprintCount++;
+				Comirva.Audio.Util.Maths.Matrix scmsMatrix = new Comirva.Audio.Util.Maths.Matrix(fingerprintWidth, fingerprintHeight);
+
+				for (int i = 0; i < fingerprintWidth /*128*/; i++) {
+					for (int j = 0; j < fingerprintHeight /*32*/; j++) {
+						// Negative Numbers = 01
+						// Positive Numbers = 10
+						// Zeros            = 00
+						bool v1 = fingerprint[(2 * fingerprintHeight * i) + (2 * j)];
+						bool v2 = fingerprint[(2 * fingerprintHeight * i) + (2 * j) + 1];
+						
+						if (v1) {
+							scmsMatrix.MatrixData[i][j] = 2.0;
+						} else if (v2) {
+							scmsMatrix.MatrixData[i][j] = 0.0;
+						} else {
+							scmsMatrix.MatrixData[i][j] = 1.0;
+						}
+					}
+				}
+				
+				if (doOutputDebugInfo) {
+					scmsMatrix.DrawMatrixImage(String.Format("{0}_fingerprint_{1}.png", fileName, fingerprintCount), fingerprintWidth, fingerprintHeight);
+				}
+				
+				#region Store in a Statistical Cluster Model Similarity class.
+				Scms audioFeature = Scms.GetScmsNoInverse(scmsMatrix, fileName);
+				
+				if (audioFeature != null) {
+					
+					// Store bitstring hash as well
+					audioFeature.BitString = GetBitString(fingerprint);
+					
+					// Store duration
+					audioFeature.Duration = (long) param.DurationInMs;
+					
+					// Store file name
+					audioFeature.Name = param.PathToAudioFile;
+					
+					// Add to database
+					int id = trackId;
+					if (db.AddTrack(audioFeature) == -1) {
+						Console.Out.WriteLine("Failed! Could not add audio feature to database ({0})!", fileName);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				#endregion
+			}
+			
+			Dbg.WriteLine ("AnalyseAndAddScmsUsingFingerprints - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return true;
+		}
+		
+		
+		private static bool AnalyseAndAddScmsUsingFingerprintsConcat(List<bool[]> fingerprints,
+		                                                             WorkUnitParameterObject param,
+		                                                             Db db,
+		                                                             int trackId,
+		                                                             bool doOutputDebugInfo=DEFAULT_DEBUG_INFO) {
+			
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+			
+			// Insert Statistical Cluster Model Similarity Audio Feature
+			string fileName = param.FileName;
+			int fingerprintWidth = fingerprints.Count;
+			int fingerprintHeight = fingerprints.First().Length / 2;
+			
+			// Merge the arrays in the List using Linq
+			var concatFingerprints = fingerprints.SelectMany(i => i).ToArray();
+			
+			Comirva.Audio.Util.Maths.Matrix scmsMatrix = new Comirva.Audio.Util.Maths.Matrix(fingerprintWidth, fingerprintHeight);
+
+			for (int i = 0; i < fingerprintWidth /*128*/; i++) {
+				for (int j = 0; j < fingerprintHeight /*32*/; j++) {
+
+					// Negative Numbers = 01
+					// Positive Numbers = 10
+					// Zeros            = 00
+					bool v1 = concatFingerprints[(2 * fingerprintHeight * i) + (2 * j)];
+					bool v2 = concatFingerprints[(2 * fingerprintHeight * i) + (2 * j) + 1];
+					
+					if (v1) {
+						scmsMatrix.MatrixData[i][j] = 2.0;
+					} else if (v2) {
+						scmsMatrix.MatrixData[i][j] = 0.0;
+					} else {
+						scmsMatrix.MatrixData[i][j] = 1.0;
+					}
+				}
+			}
+			
+			if (doOutputDebugInfo) {
+				scmsMatrix.DrawMatrixImage(String.Format("{0}_fingerprint.png", fileName), fingerprintWidth, fingerprintHeight);
+			}
+			
+			#region Store in a Statistical Cluster Model Similarity class.
+			Scms audioFeature = Scms.GetScms(scmsMatrix, fileName);
+			
+			if (audioFeature != null) {
+				
+				// Store bitstring hash as well
+				audioFeature.BitString = GetBitString(concatFingerprints);
+				
+				// Store duration
+				audioFeature.Duration = (long) param.DurationInMs;
+				
+				// Store file name
+				audioFeature.Name = param.PathToAudioFile;
+				
+				// Add to database
+				int id = trackId;
+				if (db.AddTrack(ref id, audioFeature) == -1) {
+					Console.Out.WriteLine("Failed! Could not add audio feature to database ({0})!", fileName);
+					return false;
+				}
+			} else {
+				return false;
+			}
+			#endregion
+			
+			Dbg.WriteLine ("AnalyseAndAddScmsUsingFingerprintsConcat - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return true;
+		}
+		
+		private static bool AnalyseAndAddScmsUsingFingerprints(List<double[][]> spectralImages,
+		                                                       List<bool[]> fingerprints,
+		                                                       WorkUnitParameterObject param,
+		                                                       Db db,
+		                                                       int trackId,
+		                                                       bool doOutputDebugInfo=DEFAULT_DEBUG_INFO) {
+			
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+			
+			// Insert Statistical Cluster Model Similarity Audio Feature
+			string fileName = param.FileName;
+			
+			// Merge the arrays in the List using Linq
+			var result = spectralImages.SelectMany(i => i).ToArray();
+			Comirva.Audio.Util.Maths.Matrix scmsMatrix = new Comirva.Audio.Util.Maths.Matrix(result);
+
+			if (doOutputDebugInfo) {
+				scmsMatrix.DrawMatrixImage(String.Format("{0}_spectral.png", fileName));
+			}
+			
+			#region Store in a Statistical Cluster Model Similarity class.
+			Scms audioFeature = Scms.GetScms(scmsMatrix, fileName);
+			
+			if (audioFeature != null) {
+				
+				// Store bitstring hash as well
+				audioFeature.BitString = GetBitString(scmsMatrix);
+				
+				// Store duration
+				audioFeature.Duration = (long) param.DurationInMs;
+				
+				// Store file name
+				audioFeature.Name = param.PathToAudioFile;
+				
+				// Add to database
+				int id = trackId;
+				if (db.AddTrack(audioFeature) == -1) {
+					Console.Out.WriteLine("Failed! Could not add audio feature to database ({0})!", fileName);
+					return false;
+				}
+			} else {
+				return false;
+			}
+			#endregion
+			
+			Dbg.WriteLine ("AnalyseAndAddScmsUsingFingerprints2 - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return true;
+		}
+		
 		/// <summary>
 		/// Query the database for perceptually similar tracks using the sound fingerprinting methods
 		/// </summary>
@@ -1142,6 +1302,23 @@ namespace Mirage
 			return hash;
 		}
 		
+		/// <summary>
+		/// Returns a bitstring from a bool array
+		/// </summary>
+		/// <param name="fingerprint"></param>
+		/// <returns>Returns a 'binary string' (aka bitstring) (like. 001010111011100010) which is easy to do a hamming distance on.</returns>
+		private static string GetBitString(bool[] fingerprint) {
+			
+			var sb = new StringBuilder();
+
+			for (int i = 0; i < fingerprint.Length; i++) {
+				char c = fingerprint[i] ? '1' : '0';
+				sb.Append(c);
+			}
+
+			return sb.ToString();
+		}
+		
 		private static FingerprintService GetSoundfingerprintingService() {
 
 			// Audio service
@@ -1177,7 +1354,8 @@ namespace Mirage
 			
 			// Get fingerprints
 			double[][] LogSpectrogram;
-			List<bool[]> fingerprints = fingerprintService.CreateFingerprintsFromAudioSamples(samples, param, out LogSpectrogram);
+			List<double[][]> spectralImages;
+			List<bool[]> fingerprints = fingerprintService.CreateFingerprintsFromAudioSamples(samples, param, out LogSpectrogram, out spectralImages);
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {

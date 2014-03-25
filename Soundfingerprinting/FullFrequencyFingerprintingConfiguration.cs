@@ -9,26 +9,41 @@
 		public FullFrequencyFingerprintingConfiguration(bool useRandomStride = false)
 		{
 			// http://www.codeproject.com/Articles/206507/Duplicates-detector-via-audio-fingerprinting
-			// The parameters used in these transformation steps will be equal to those that have been found to work well in other audio fingerprinting studies
+			// The parameters used in these transformation steps will be close to those that have been found to work well in other audio fingerprinting studies
 			// (specifically in A Highly Robust Audio Fingerprinting System):
 			// audio frames that are 371 ms long
 			// taken every 11.6 ms,
 			// thus having an overlap of 31/32
+			
+			// 371 ms 	is	2048/5512	or 	16384/44100	or 11889/32000
+			// The closest power of 2 in 2's complement format: 8192 / 32000 = 256 ms
+			WindowSize = 8192;
+			
+			// 11,6 ms	is 	64/5512		or	512/44100	or 372/32000
+			// The closest power of 2 in 2's complement format: 512 / 32000 = 16 ms
+			// 1024 / 32000 = 32 ms
+			Overlap = 1024;
+			
+			// Gets number of samples to read in order to create single signature.
+			// The granularity is 1.48 seconds (11,6 ms	* 128) for SR 5512 hz
+			// The granularity is 2.048 seconds (16 ms	* 128) for SR 32000 hz
+			// 512 * 128 = 65536
 			FingerprintLength = 128;
-			
-			// 8192 / 32000 = 256 ms
-			WindowSize = 8192; 	// 371 ms 	is	2048/5512	or 	16384/44100	or 11889/32000
-			
-			// 512 / 32000 = 16 ms
-			Overlap = 512; 			// 11,6 ms	is 	64/5512		or	512/44100	or 372/32000
 			SamplesPerFingerprint = FingerprintLength * Overlap;
 			
-			MinFrequency = 20; 		// 318; 	Full Frequency: 20
+			// (Originally this was 32, but 40 seems to work better with SCMS?!)
+			// Each fingerprint will be LogBins x FingerprintLength x 2 Bits long
+			// e.g. 128 x 32 x 2 = 8192
+			// or 128 x 40 x 2 = 10240
+			LogBins = 40;
+			
+			// Reduce the frequency range
+			MinFrequency = 40; 		// 318; 	Full Frequency: 20
 			MaxFrequency = 16000; 	// 2000; 	Full Frequency: 22050
 			
 			// Using 32000 (instead of 44100) gives us a max of 16 khz resolution, which is OK for normal adult human hearing
 			SampleRate = 32000; 	// 5512 or 44100
-			LogBase = Math.E; 		// Math.E, 2 or 10;
+			LogBase = 10; 		// Math.E, 2 or 10;
 			
 			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation,
 			// and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
@@ -42,7 +57,6 @@
 			}
 			
 			TopWavelets = 200;
-			LogBins = 40; 	// (Originally this was 32, but 40 seems to work better with SCMS?!)
 			WindowFunction = new HannWindow(WindowSize);
 			NormalizeSignal = true; 	// true;
 			UseDynamicLogBase = false;	// false;
@@ -50,26 +64,26 @@
 		
 		/// <summary>
 		/// Gets number of samples to read in order to create single signature.
-		/// The granularity is 1.48 seconds
+		/// The granularity is 2.048 seconds
 		/// </summary>
 		/// <remarks>
-		///   Default = 8192
+		///   Default = 65536
 		/// </remarks>
 		public int SamplesPerFingerprint { get; private set; }
 
 		/// <summary>
-		/// Gets overlap between the sub fingerprints, 11.6 ms
+		/// Gets overlap between the sub fingerprints, 16 ms
 		/// </summary>
 		/// <remarks>
-		///   Default = 64
+		///   Default = 512
 		/// </remarks>
 		public int Overlap { get; private set; }
 
 		/// <summary>
-		///   Gets size of the WDFT block, 371 ms
+		///   Gets size of the WindowSize block, 256 ms
 		/// </summary>
 		/// <remarks>
-		///   Default = 2048
+		///   Default = 8192
 		/// </remarks>
 		public int WindowSize { get; private set; }
 
@@ -77,7 +91,7 @@
 		/// Gets frequency range which is taken into account when creating the signature
 		/// </summary>
 		/// <remarks>
-		///   Default = 318
+		///   Default = 40
 		/// </remarks>
 		public int MinFrequency { get; private set; }
 
@@ -85,7 +99,7 @@
 		/// Gets frequency range which is taken into account when creating the signature
 		/// </summary>
 		/// <remarks>
-		///   Default = 2000
+		///   Default = 16000
 		/// </remarks>
 		public int MaxFrequency { get; private set; }
 
@@ -101,7 +115,7 @@
 		/// Gets sample rate at which the audio file will be pre-processed
 		/// </summary>
 		/// <remarks>
-		///   Default = 5512
+		///   Default = 32000
 		/// </remarks>
 		public int SampleRate { get; private set; }
 
@@ -116,25 +130,40 @@
 		/// <summary>
 		/// Gets number of logarithmically spaced bins between the frequency components computed by Fast Fourier Transform.
 		/// </summary>
+		/// <remarks>
+		///   Default = 40
+		/// </remarks>
 		public int LogBins { get; private set; }
 
 		/// <summary>
 		/// Gets signature's length
 		/// </summary>
+		/// <remarks>
+		///   Default = 128
+		/// </remarks>
 		public int FingerprintLength { get; private set; }
 
 		/// <summary>
 		/// Gets default stride size between 2 consecutive signature
 		/// </summary>
 		/// <remarks>
-		///  Default = 5115
+		///  Default = a static 928 ms stride was used in database creation, and a random 0-46 ms stride was used in querying.
 		/// </remarks>
 		public IStride Stride { get; private set; }
 
+		/// <summary>
+		/// Window Function to use, typicall HannWindow
+		/// </summary>
 		public IWindowFunction WindowFunction { get; private set; }
 
+		/// <summary>
+		/// Whether to normalize the signal
+		/// </summary>
 		public bool NormalizeSignal { get; private set; }
 
+		/// <summary>
+		/// Whether to use a dynamic log base
+		/// </summary>
 		public bool UseDynamicLogBase { get; private set; }
 	}
 }

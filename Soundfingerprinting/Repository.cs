@@ -113,7 +113,8 @@
 			
 			// Get fingerprints
 			double[][] logSpectrogram;
-			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram);
+			List<double[][]> spectralImages;
+			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram, out spectralImages);
 
 			long elapsedMiliseconds = 0;
 			
@@ -164,7 +165,8 @@
 			
 			// Get fingerprints
 			double[][] logSpectrogram;
-			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram);
+			List<double[][]> spectralImages;
+			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram, out spectralImages);
 
 			long elapsedMiliseconds = 0;
 			
@@ -212,24 +214,14 @@
 		/// <param name="hashTables">Number of hash tables (e.g. 25)</param>
 		/// <param name="hashKeys">Number of hash keys (e.g. 4)</param>
 		/// <param name="param">WorkUnitParameterObject parameters</param>
-		public bool InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param, out double[][] logSpectrogram)
+		public bool InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param, out double[][] logSpectrogram, out List<bool[]> fingerprints, out List<double[][]> spectralImages)
 		{
 			if (dbService.InsertTrack(track)) {
-				List<bool[]> images = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram);
 
-				#if DEBUG
-				if (Mirage.Analyzer.DEBUG_INFO_VERBOSE) {
-					// Image Service
-					ImageService imageService =
-						new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
-					
-					int width = param.FingerprintingConfiguration.FingerprintLength;
-					int height = param.FingerprintingConfiguration.LogBins;
-					imageService.GetImageForFingerprints(images, width, height, 2).Save(param.FileName + "_fingerprints.png");
-				}
-				#endif
+				// return both logSpectrogram and fingerprints in the out variables
+				fingerprints = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram, out spectralImages);
 
-				List<Fingerprint> inserted = AssociateFingerprintsToTrack(images, track.Id);
+				List<Fingerprint> inserted = AssociateFingerprintsToTrack(fingerprints, track.Id);
 				if (dbService.InsertFingerprint(inserted)) {
 					return HashFingerprintsUsingMinHash(inserted, track, hashTables, hashKeys);
 				} else {
@@ -237,6 +229,8 @@
 				}
 			} else {
 				logSpectrogram = null;
+				fingerprints = null;
+				spectralImages = null;
 				return false;
 			}
 		}

@@ -66,18 +66,12 @@ namespace Soundfingerprinting.Audio.Services
 		{
 			// read 5512 Hz, Mono, PCM, with a specific proxy
 			float[] samples = ReadMonoFromFile(pathToFilename, sampleRate, 0, 0);
-
-			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
-			// Matlab multiplies with 2^15 (32768)
-			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
-			//MathUtils.Multiply(ref samples, Analyzer.AUDIO_MULTIPLIER); // 65536
 			
 			NormalizeInPlace(samples);
 
 			int width = (samples.Length - wdftSize) / overlap; /*width of the image*/
 			double[][] frames = new double[width][];
 			double[] complexSignal = new double[2 * wdftSize]; /*even - Re, odd - Img, thats how Exocortex works*/
-			//double[] window = windowFunction.GetWindow(wdftSize);
 			double[] window = windowFunction.GetWindow();
 			for (int i = 0; i < width; i++)
 			{
@@ -129,6 +123,9 @@ namespace Soundfingerprinting.Audio.Services
 		public double[][] CreateLogSpectrogram(
 			float[] samples, IWindowFunction windowFunction, AudioServiceConfiguration configuration)
 		{
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+
 			if (configuration.NormalizeSignal)
 			{
 				NormalizeInPlace(samples);
@@ -158,9 +155,10 @@ namespace Soundfingerprinting.Audio.Services
 				frames[i] = ExtractLogBins(complexSignal, logFrequenciesIndexes, configuration.LogBins);
 			}
 			
+			Dbg.WriteLine ("Create Log Spectrogram - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return frames;
 		}
-
+		
 		private void NormalizeInPlace(float[] samples)
 		{
 			double squares = samples.AsParallel().Aggregate<float, double>(0, (current, t) => current + (t * t));
