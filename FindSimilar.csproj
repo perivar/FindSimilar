@@ -223,6 +223,7 @@
     <Compile Include="Soundfingerprinting\IWaveletService.cs" />
     <Compile Include="Soundfingerprinting\LocalPermutations.cs" />
     <Compile Include="Soundfingerprinting\MinHash.cs" />
+    <Compile Include="Soundfingerprinting\PermutationGeneratorService.cs" />
     <Compile Include="Soundfingerprinting\QueryFingerprintManager.cs" />
     <Compile Include="Soundfingerprinting\QueryStats.cs" />
     <Compile Include="Soundfingerprinting\Repository.cs" />

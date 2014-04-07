@@ -120,5 +120,15 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 		public bool NormalizeSignal { get; private set; }
 
 		public bool UseDynamicLogBase { get; private set; }
+		
+		/// <summary>
+		///   Number of LSH tables
+		/// </summary>
+		public int NumberOfHashTables { get; private set; }
+		
+		/// <summary>
+		///   Number of Min Hash keys per 1 hash function (1 LSH table)
+		/// </summary>
+		public int NumberOfKeys { get; private set; }
 	}
 }

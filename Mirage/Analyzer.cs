@@ -101,8 +101,9 @@ namespace Mirage
 		private static FingerprintService fingerprintService = GetSoundfingerprintingService();
 		private static IFingerprintingConfiguration fingerprintingConfigCreation = new FullFrequencyFingerprintingConfiguration();
 		private static IFingerprintingConfiguration fingerprintingConfigQuerying = new FullFrequencyFingerprintingConfiguration(true);
+		private static PermutationGeneratorService permutationGenerator = new PermutationGeneratorService();
 		private static IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-
+		
 		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
 		{
 			DbgTimer t = new DbgTimer();
@@ -403,7 +404,7 @@ namespace Mirage
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
 			List<double[][]> spectralImages;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram, out fingerprints, out spectralImages)) {
+			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints, out spectralImages)) {
 
 				// store logSpectrogram as Matrix
 				Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
@@ -464,7 +465,7 @@ namespace Mirage
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
 			List<double[][]> spectralImages;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram, out fingerprints, out spectralImages)) {
+			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints, out spectralImages)) {
 
 				// store logSpectrogram as Matrix
 				Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
@@ -520,7 +521,7 @@ namespace Mirage
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
 			List<double[][]> spectralImages;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, 25, 4, param, out logSpectrogram, out fingerprints, out spectralImages)) {
+			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints, out spectralImages)) {
 				
 				#region Debug for Soundfingerprinting Method
 				if (doOutputDebugInfo) {
@@ -1078,7 +1079,7 @@ namespace Mirage
 			DatabaseService databaseService = DatabaseService.Instance;
 			Repository repository = new Repository(permutations, databaseService, fingerprintService);
 
-			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(25, 4, 1, param);
+			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  1, param);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;
@@ -1100,7 +1101,7 @@ namespace Mirage
 			// 1 returns more similar hits
 			// 2 returns sometimes only the one we search for
 			// even 0 seem to work (like 1)
-			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(25, 4, 0, param);
+			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  0, param);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprintingList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;
@@ -1372,5 +1373,44 @@ namespace Mirage
 			Mirage.Dbg.WriteLine("GetFingerprintSignatures Execution Time: " + t.Stop().TotalMilliseconds + " ms");
 			return fingerprints;
 		}
+		
+		/// <summary>
+		/// Generate the permutations according to a greedy random algorithm
+		/// </summary>
+		/// <returns>String to be save into the file</returns>
+		public static string GeneratePermutations(PermutationGeneratorService permutationGeneratorService)
+		{
+			int hashTables = 20;
+			int keysPerTable = 5;
+			int startIndex = 0;
+			int endIndex = 8192;
+			
+			StringBuilder final = new StringBuilder();
+			Dictionary<int, int[]> perms = null;
+			perms = permutationGeneratorService.GenerateRandomPermutationsUsingUniqueIndexes(hashTables, keysPerTable, startIndex, endIndex);
+
+			/*Create *.txt string*/
+			if (perms != null)
+				foreach (KeyValuePair<int, int[]> perm in perms)
+			{
+				StringBuilder permutation = new StringBuilder();
+				//permutation.Append(perm.Key + ",'");
+				foreach (int t in perm.Value)
+					permutation.Append(t + ";");
+				//permutation.Append("');");
+				final.AppendLine(permutation.ToString());
+			}
+			return final.ToString();
+		}
+
+		public static void GenerateAndSavePermutations(string outputFilePath) {
+			string permutations = GeneratePermutations(permutationGenerator);
+
+			using (StreamWriter writer = new StreamWriter(outputFilePath))
+			{
+				writer.Write(permutations);
+			}
+		}
+		
 	}
 }

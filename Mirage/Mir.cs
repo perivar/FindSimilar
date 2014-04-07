@@ -469,7 +469,7 @@ namespace Mirage
 				                 		    || skipDurationAboveSeconds <= 0
 				                 		    || duration < 0) {
 
-				                 			if(!Analyzer.AnalyzeAndAddCompleteNew(fileInfo, db, databaseService)) {
+				                 			if(!Analyzer.AnalyzeAndAddComplete(fileInfo, db, databaseService)) {
 				                 				//if(!Analyzer.AnalyzeAndAddSoundfingerprinting(fileInfo)) {
 				                 				//if(!Analyzer.AnalyzeAndAddScms(fileInfo, db)) {
 				                 				Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
@@ -513,6 +513,8 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
+				//Analyzer.GenerateAndSavePermutations("perms-test.csv");
+				
 				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.AudioFingerprinting;

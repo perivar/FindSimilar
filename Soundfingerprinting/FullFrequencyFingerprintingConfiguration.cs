@@ -50,7 +50,7 @@
 			if (useRandomStride) {
 				// 0,046 sec is 2028 / 44100	or 	1472/32000
 				// use a 128 ms random stride instead = 4096, since every 46 ms gives way too many fingerprints to query efficiently
-				Stride = new IncrementalRandomStride(0, 4096, SamplesPerFingerprint);
+				Stride = new IncrementalRandomStride(1, 4096, SamplesPerFingerprint);
 			} else {
 				// 0,928 sec is	5115 / 5512 or 40924 / 44100	or	29695/32000
 				Stride = new IncrementalStaticStride(29695, SamplesPerFingerprint);
@@ -60,6 +60,12 @@
 			WindowFunction = new HannWindow(WindowSize);
 			NormalizeSignal = true; 	// true;
 			UseDynamicLogBase = false;	// false;
+			
+			// Number of LSH tables
+			NumberOfHashTables = 25;
+
+			// Number of Min Hash keys per 1 hash function (1 LSH table)
+			NumberOfKeys = 4;
 		}
 		
 		/// <summary>
@@ -165,5 +171,15 @@
 		/// Whether to use a dynamic log base
 		/// </summary>
 		public bool UseDynamicLogBase { get; private set; }
+		
+		/// <summary>
+		///   Number of LSH tables
+		/// </summary>
+		public int NumberOfHashTables { get; private set; }
+		
+		/// <summary>
+		///   Number of Min Hash keys per 1 hash function (1 LSH table)
+		/// </summary>
+		public int NumberOfKeys { get; private set; }
 	}
 }
