@@ -44,14 +44,18 @@ using FindSimilar;
 using FindSimilar.AudioProxies; // BassProxy
 using CommonUtils.Audio.NAudio; // AudioUtilsNAudio
 
+using Soundfingerprinting;
 using Soundfingerprinting.DbStorage;
+using Soundfingerprinting.Audio.Services;
+using Soundfingerprinting.Fingerprinting;
+using Soundfingerprinting.Hashing;
 
 // Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.15";
+		public static string VERSION = "1.0.16";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -418,9 +422,9 @@ namespace Mirage
 		/// </summary>
 		/// <param name="path">Path to directory</param>
 		/// <param name="db">MandelEllis or Scms Database Instance</param>
-		/// <param name="databaseService">Fingerprinting Database Instance</param>
+		/// <param name="repository">Soundfingerprinting Repository</param>
 		/// <param name="skipDurationAboveSeconds">Skip files with duration longer than this number of seconds (0 or less disables this)</param>
-		public static void ScanDirectory(string path, Db db, DatabaseService databaseService, double skipDurationAboveSeconds) {
+		public static void ScanDirectory(string path, Db db, Repository repository, double skipDurationAboveSeconds) {
 			
 			Stopwatch stopWatch = Stopwatch.StartNew();
 			
@@ -438,7 +442,7 @@ namespace Mirage
 				
 				// Get all already processed files stored in the database and store in memory
 				// It seems to work well with huge volumes of file (200k)
-				IList<string> filesAlreadyProcessed = databaseService.ReadTrackFilenames();
+				IList<string> filesAlreadyProcessed = repository.DatabaseService.ReadTrackFilenames();
 				Console.Out.WriteLine("Database contains {0} already processed files.", filesAlreadyProcessed.Count);
 
 				// find the files that has not already been added to the database
@@ -469,8 +473,8 @@ namespace Mirage
 				                 		    || skipDurationAboveSeconds <= 0
 				                 		    || duration < 0) {
 
-				                 			if(!Analyzer.AnalyzeAndAddComplete(fileInfo, db, databaseService)) {
-				                 				//if(!Analyzer.AnalyzeAndAddSoundfingerprinting(fileInfo)) {
+				                 			if(!Analyzer.AnalyzeAndAddComplete(fileInfo, db, repository)) {
+				                 				//if(!Analyzer.AnalyzeAndAddSoundfingerprinting(fileInfo, repository)) {
 				                 				//if(!Analyzer.AnalyzeAndAddScms(fileInfo, db)) {
 				                 				Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 				                 				IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
@@ -513,8 +517,6 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
-				//Analyzer.GenerateAndSavePermutations("perms-test.csv");
-				
 				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.AudioFingerprinting;
@@ -610,8 +612,16 @@ namespace Mirage
 				
 				// Get database
 				Db mandelEllisScmsDatabase = new Db(); // For MandelEllis and SCMS
+
+				// Instansiate soundfingerprinting Repository
+				FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
 				DatabaseService databaseService = DatabaseService.Instance; // For AudioFingerprinting
 
+				//IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
+				IPermutations permutations = new LocalPermutations("perms-new.csv", ",");
+				
+				Repository repository = new Repository(permutations, databaseService, fingerprintService);
+				
 				if (scanPath != "") {
 					if (IOUtils.IsDirectory(scanPath)) {
 						if (resetdb) {
@@ -627,7 +637,7 @@ namespace Mirage
 							databaseService.RemoveTrackTable();
 							databaseService.AddTrackTable();
 						}
-						ScanDirectory(scanPath, mandelEllisScmsDatabase, databaseService, skipDurationAboveSeconds);
+						ScanDirectory(scanPath, mandelEllisScmsDatabase, repository, skipDurationAboveSeconds);
 					} else {
 						Console.Out.WriteLine("No directory found {0}!", scanPath);
 					}

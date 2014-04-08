@@ -88,5 +88,18 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 		///   Number of Min Hash keys per 1 hash function (1 LSH table)
 		/// </summary>
 		int NumberOfKeys { get; }
+		
+		/// <summary>
+		/// Fingerprint start index
+		/// </summary>
+		int StartFingerprintIndex { get; }
+
+		/// <summary>
+		/// Each fingerprint will be LogBins x FingerprintLength x 2 Bits long
+		/// e.g. 128 x 32 x 2 = 8192
+		/// or 128 x 40 x 2 = 10240
+		/// This would be the max fingerprint index.
+		/// </summary>
+		int EndFingerprintIndex { get; }
 	}
 }

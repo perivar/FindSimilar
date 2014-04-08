@@ -98,11 +98,8 @@ namespace Mirage
 		private static MandelEllisExtractor mandelEllisExtractor = new MandelEllisExtractor(SAMPLING_RATE, WINDOW_SIZE, MFCC_COEFFICIENTS, MEL_COEFFICIENTS);
 		
 		// Soundfingerprinting static variables
-		private static FingerprintService fingerprintService = GetSoundfingerprintingService();
 		private static IFingerprintingConfiguration fingerprintingConfigCreation = new FullFrequencyFingerprintingConfiguration();
 		private static IFingerprintingConfiguration fingerprintingConfigQuerying = new FullFrequencyFingerprintingConfiguration(true);
-		private static PermutationGeneratorService permutationGenerator = new PermutationGeneratorService();
-		private static IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
 		
 		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
 		{
@@ -377,10 +374,11 @@ namespace Mirage
 		/// Method to analyze and add using the soundfingerprinting methods
 		/// </summary>
 		/// <param name="filePath">full file path</param>
+		/// <param name="repository">Soundfingerprinting Repository</param>
 		/// <param name="doOutputDebugInfo">decide whether to output debug info like spectrogram and audiofile (default value can be set)</param>
 		/// <param name="useHaarWavelet">decide whether to use haar wavelet compression or DCT compression</param>
 		/// <returns>true if successful</returns>
-		public static bool AnalyzeAndAddSoundfingerprinting(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
+		public static bool AnalyzeAndAddSoundfingerprinting(FileInfo filePath, Repository repository, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -398,9 +396,6 @@ namespace Mirage
 			track.Id = -1; // this will be set by the insert method
 			
 			// Get fingerprint signatures using the Soundfingerprinting methods
-			DatabaseService databaseService = DatabaseService.Instance; // For AudioFingerprinting
-			Repository repository = new Repository(permutations, databaseService, fingerprintService);
-
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
 			List<double[][]> spectralImages;
@@ -413,7 +408,7 @@ namespace Mirage
 				#region Debug for Soundfingerprinting Method
 				if (doOutputDebugInfo) {
 					// Image Service
-					ImageService imageService = new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+					ImageService imageService = new ImageService(repository.FingerprintService.SpectrumService, repository.FingerprintService.WaveletService);
 					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
 					
 					logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
@@ -438,11 +433,11 @@ namespace Mirage
 		/// </summary>
 		/// <param name="filePath">full file path</param>
 		/// <param name="db">Scms database (Mirage)</param>
-		/// <param name="databaseService">soundfingerprinting database</param>
+		/// <param name="repository">Soundfingerprinting Repository</param>
 		/// <param name="doOutputDebugInfo">decide whether to output debug info like spectrogram and audiofile (default value can be set)</param>
 		/// <param name="useHaarWavelet">decide whether to use haar wavelet compression or DCT compression</param>
 		/// <returns>true if successful</returns>
-		public static bool AnalyzeAndAddComplete(FileInfo filePath, Db db, DatabaseService databaseService, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
+		public static bool AnalyzeAndAddComplete(FileInfo filePath, Db db, Repository repository, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -459,9 +454,6 @@ namespace Mirage
 			track.Tags = param.Tags;
 			track.Id = -1; // this will be set by the insert method
 			
-			// Get fingerprint signatures using the Soundfingerprinting methods
-			Repository repository = new Repository(permutations, databaseService, fingerprintService);
-
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
 			List<double[][]> spectralImages;
@@ -474,7 +466,7 @@ namespace Mirage
 				#region Debug for Soundfingerprinting Method
 				if (doOutputDebugInfo) {
 					// Image Service
-					ImageService imageService = new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+					ImageService imageService = new ImageService(repository.FingerprintService.SpectrumService, repository.FingerprintService.WaveletService);
 					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
 					
 					logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
@@ -498,7 +490,7 @@ namespace Mirage
 			return true;
 		}
 		
-		public static bool AnalyzeAndAddCompleteNew(FileInfo filePath, Db db, DatabaseService databaseService, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
+		public static bool AnalyzeAndAddCompleteNew(FileInfo filePath, Db db, Repository repository, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -515,9 +507,6 @@ namespace Mirage
 			track.Tags = param.Tags;
 			track.Id = -1; // this will be set by the insert method
 			
-			// Get fingerprint signatures using the Soundfingerprinting methods
-			Repository repository = new Repository(permutations, databaseService, fingerprintService);
-
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
 			List<double[][]> spectralImages;
@@ -526,7 +515,7 @@ namespace Mirage
 				#region Debug for Soundfingerprinting Method
 				if (doOutputDebugInfo) {
 					// Image Service
-					ImageService imageService = new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+					ImageService imageService = new ImageService(repository.FingerprintService.SpectrumService, repository.FingerprintService.WaveletService);
 					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
 
 					// store logSpectrogram as Matrix
@@ -1067,7 +1056,7 @@ namespace Mirage
 		/// </summary>
 		/// <param name="filePath">input file</param>
 		/// <returns>a dictionary of similar tracks</returns>
-		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath) {
+		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath, Repository repository) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -1075,17 +1064,13 @@ namespace Mirage
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
 			param.FingerprintingConfiguration = fingerprintingConfigQuerying;
 			
-			// Get database
-			DatabaseService databaseService = DatabaseService.Instance;
-			Repository repository = new Repository(permutations, databaseService, fingerprintService);
-
 			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  1, param);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;
 		}
 		
-		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath) {
+		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath, Repository repository) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -1093,10 +1078,6 @@ namespace Mirage
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
 			param.FingerprintingConfiguration = fingerprintingConfigQuerying;
 			
-			// Get database
-			DatabaseService databaseService = DatabaseService.Instance;
-			Repository repository = new Repository(permutations, databaseService, fingerprintService);
-
 			// TODO: i don't really know how the threshold tables work.
 			// 1 returns more similar hits
 			// 2 returns sometimes only the one we search for
@@ -1320,7 +1301,7 @@ namespace Mirage
 			return sb.ToString();
 		}
 		
-		private static FingerprintService GetSoundfingerprintingService() {
+		public static FingerprintService GetSoundfingerprintingService() {
 
 			// Audio service
 			IAudioService audioService = new AudioService();
@@ -1378,33 +1359,40 @@ namespace Mirage
 		/// Generate the permutations according to a greedy random algorithm
 		/// </summary>
 		/// <returns>String to be save into the file</returns>
-		public static string GeneratePermutations(PermutationGeneratorService permutationGeneratorService)
+		private static string GeneratePermutations(PermutationGeneratorService permutationGeneratorService)
 		{
-			int hashTables = 20;
-			int keysPerTable = 5;
-			int startIndex = 0;
-			int endIndex = 8192;
+			// Original perm.csv file has 100 rows with 255 values in it seperated by comma
+			int hashTables = fingerprintingConfigCreation.NumberOfHashTables;
+			int keysPerTable = fingerprintingConfigCreation.NumberOfKeys;
+
+			int startIndex = fingerprintingConfigCreation.StartFingerprintIndex;
+			int endIndex = fingerprintingConfigCreation.EndFingerprintIndex;
 			
 			StringBuilder final = new StringBuilder();
 			Dictionary<int, int[]> perms = null;
 			perms = permutationGeneratorService.GenerateRandomPermutationsUsingUniqueIndexes(hashTables, keysPerTable, startIndex, endIndex);
 
-			/*Create *.txt string*/
 			if (perms != null)
 				foreach (KeyValuePair<int, int[]> perm in perms)
 			{
 				StringBuilder permutation = new StringBuilder();
-				//permutation.Append(perm.Key + ",'");
 				foreach (int t in perm.Value)
-					permutation.Append(t + ";");
-				//permutation.Append("');");
+					permutation.Append(t + ",");
+
 				final.AppendLine(permutation.ToString());
 			}
 			return final.ToString();
 		}
 
-		public static void GenerateAndSavePermutations(string outputFilePath) {
-			string permutations = GeneratePermutations(permutationGenerator);
+		/// <summary>
+		/// Generate the permutations according to a greedy random algorithm and save to the outputfile
+		/// </summary>
+		/// <param name="outputFilePath">output file, e.g. 'perms-new.csv'</param>
+		/// <example>
+		/// Analyzer.GenerateAndSavePermutations("perms-new.csv");
+		/// </example>
+		public static void GenerateAndSavePermutations(PermutationGeneratorService permutationGeneratorService, string outputFilePath) {
+			string permutations = GeneratePermutations(permutationGeneratorService);
 
 			using (StreamWriter writer = new StreamWriter(outputFilePath))
 			{

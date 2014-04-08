@@ -32,10 +32,13 @@
 			SamplesPerFingerprint = FingerprintLength * Overlap;
 			
 			// (Originally this was 32, but 40 seems to work better with SCMS?!)
+			LogBins = 40;
+			
 			// Each fingerprint will be LogBins x FingerprintLength x 2 Bits long
 			// e.g. 128 x 32 x 2 = 8192
 			// or 128 x 40 x 2 = 10240
-			LogBins = 40;
+			StartFingerprintIndex = 0;
+			EndFingerprintIndex = LogBins * FingerprintLength * 2;
 			
 			// Reduce the frequency range
 			MinFrequency = 40; 		// 318; 	Full Frequency: 20
@@ -181,5 +184,18 @@
 		///   Number of Min Hash keys per 1 hash function (1 LSH table)
 		/// </summary>
 		public int NumberOfKeys { get; private set; }
+		
+		/// <summary>
+		/// Fingerprint start index
+		/// </summary>
+		public int StartFingerprintIndex { get; private set; }
+
+		/// <summary>
+		/// Each fingerprint will be LogBins x FingerprintLength x 2 Bits long
+		/// e.g. 128 x 32 x 2 = 8192
+		/// or 128 x 40 x 2 = 10240
+		/// </summary>
+		public int EndFingerprintIndex { get; private set; }
+
 	}
 }

@@ -18,6 +18,9 @@ using FindSimilar.AudioProxies;
 using Mirage;
 using Comirva.Audio.Feature;
 
+using Soundfingerprinting;
+using Soundfingerprinting.Fingerprinting;
+using Soundfingerprinting.Hashing;
 using Soundfingerprinting.Dao;
 using Soundfingerprinting.Dao.Entities;
 using Soundfingerprinting.DbStorage;
@@ -45,7 +48,9 @@ namespace FindSimilar
 		private string selectedFilePath = null;
 		private double percentage = DEFAULT_PERCENTAGE_ENABLED;
 		
+		// Soundfingerprinting
 		private DatabaseService databaseService = null;
+		private Repository repository = null;
 		
 		BindingSource bs = new BindingSource();
 		BindingList<QueryResult> queryResultList; // = new BindingList<QueryResult>();
@@ -75,7 +80,15 @@ namespace FindSimilar
 			 */
 			
 			this.db = new Db();
+			
+			// Instansiate soundfingerprinting Repository
+			FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
 			this.databaseService = DatabaseService.Instance;
+
+			//IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
+			IPermutations permutations = new LocalPermutations("perms-new.csv", ",");
+			
+			repository = new Repository(permutations, databaseService, fingerprintService);
 			
 			if (rbScms.Checked) {
 				IgnoreFileLengthCheckBox.Visible = true;
@@ -453,7 +466,7 @@ namespace FindSimilar
 				FileInfo fi = new FileInfo(queryPath);
 				if (fi.Exists) {
 					
-					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(fi);
+					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(fi, repository);
 					queryResultList = new BindingList<QueryResult>( queryList );
 					
 					bs.DataSource = queryResultList;
@@ -475,7 +488,7 @@ namespace FindSimilar
 				Track track = databaseService.ReadTrackById(queryId);
 				if (track != null) {
 					
-					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(new FileInfo(track.FilePath));
+					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(new FileInfo(track.FilePath), repository);
 					queryResultList = new BindingList<QueryResult>( queryList );
 					
 					bs.DataSource = queryResultList;

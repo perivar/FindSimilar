@@ -45,6 +45,10 @@
 			this.fingerprintService = fingerprintService;
 		}
 		
+		public FingerprintService FingerprintService { get { return this.fingerprintService; } }
+
+		public DatabaseService DatabaseService { get { return this.dbService; } }
+		
 		/// <summary>
 		/// Find Similar Tracks using passed audio file as input
 		/// </summary>

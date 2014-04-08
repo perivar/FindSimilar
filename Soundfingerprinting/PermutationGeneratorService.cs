@@ -18,8 +18,8 @@
 		/// </summary>
 		/// <param name = "tables">L tables [E.g. 20]</param>
 		/// <param name = "keysPerTable">K keys per table [E.g. 5]</param>
-		/// <param name = "startIndex">Start index in the permutation set</param>
-		/// <param name = "endIndex">End index in the permutation set</param>
+		/// <param name = "startIndex">Start index of the permutation [E.g. 0]</param>
+		/// <param name = "endIndex">End index of the permutation [E.g. 8192]</param>
 		/// <returns>Dictionary with index of permutation and the list itself</returns>
 		public Dictionary<int, int[]> GenerateRandomPermutationsUsingUniqueIndexes(int tables, int keysPerTable, int startIndex, int endIndex)
 		{

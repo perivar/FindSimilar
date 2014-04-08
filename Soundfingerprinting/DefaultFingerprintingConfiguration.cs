@@ -28,9 +28,21 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 			
 			TopWavelets = 200;
 			LogBins = 32;
+			
+			// Each fingerprint will be LogBins x FingerprintLength x 2 Bits long
+			// e.g. 128 x 32 x 2 = 8192
+			StartFingerprintIndex = 0;
+			EndFingerprintIndex = LogBins * FingerprintLength * 2;
+			
 			WindowFunction = new HannWindow(WindowSize);
 			NormalizeSignal = true;
 			UseDynamicLogBase = false;
+			
+			// Number of LSH tables
+			NumberOfHashTables = 25;
+
+			// Number of Min Hash keys per 1 hash function (1 LSH table)
+			NumberOfKeys = 4;
 		}
 
 		/// <summary>
@@ -130,5 +142,16 @@ namespace Soundfingerprinting.Fingerprinting.Configuration
 		///   Number of Min Hash keys per 1 hash function (1 LSH table)
 		/// </summary>
 		public int NumberOfKeys { get; private set; }
+		
+		/// <summary>
+		/// Fingerprint start index
+		/// </summary>
+		public int StartFingerprintIndex { get; private set; }
+
+		/// <summary>
+		/// Each fingerprint will be LogBins x FingerprintLength x 2 Bits long
+		/// e.g. 128 x 32 x 2 = 8192
+		/// </summary>
+		public int EndFingerprintIndex { get; private set; }
 	}
 }
