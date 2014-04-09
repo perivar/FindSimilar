@@ -55,7 +55,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.16";
+		public static string VERSION = "1.0.17";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -517,9 +517,8 @@ namespace Mirage
 			[STAThread]
 			public static void Main(string[] args) {
 
-				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
+				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.SCMS;
 				//Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
-				Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.AudioFingerprinting;
 				
 				string scanPath = "";
 				double skipDurationAboveSeconds = -1; // less than zero disables this
@@ -592,6 +591,14 @@ namespace Mirage
 				}
 				if(CommandLine["resetdb"] != null) {
 					resetdb = true;
+				}
+				if(CommandLine["permutations"] != null) {
+					Console.WriteLine("Generating hash permutations for used by the Soundfingerprinting methods.");
+					Console.WriteLine("Saving to file: {0}", "perms-new.csv");
+					Console.WriteLine();
+					PermutationGeneratorService permutationGeneratorService = new PermutationGeneratorService();
+					Analyzer.GenerateAndSavePermutations(permutationGeneratorService, "perms-new.csv");
+					return;
 				}
 				if(CommandLine["?"] != null) {
 					PrintUsage();
@@ -669,6 +676,7 @@ namespace Mirage
 				Console.WriteLine("\t-scandir=<scan directory path and create audio fingerprints - ignore existing files>");
 				Console.WriteLine("\t-match=<path to the wave file to find matches for>");
 				Console.WriteLine("\t-matchid=<database id to the wave file to find matches for>");
+				Console.WriteLine("\t-permutations\tGenerate Permutation file used by Soundfingerprinting methods");
 				Console.WriteLine();
 				Console.WriteLine("Optional Arguments:");
 				Console.WriteLine("\t-gui\t<open up the Find Similar Client GUI>");
