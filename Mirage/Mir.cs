@@ -55,7 +55,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.17";
+		public static string VERSION = "1.0.19";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -424,7 +424,7 @@ namespace Mirage
 		/// <param name="db">MandelEllis or Scms Database Instance</param>
 		/// <param name="repository">Soundfingerprinting Repository</param>
 		/// <param name="skipDurationAboveSeconds">Skip files with duration longer than this number of seconds (0 or less disables this)</param>
-		public static void ScanDirectory(string path, Db db, Repository repository, double skipDurationAboveSeconds) {
+		public static void ScanDirectory(string path, Db db, Repository repository, double skipDurationAboveSeconds, bool silent=false) {
 			
 			Stopwatch stopWatch = Stopwatch.StartNew();
 			
@@ -441,7 +441,7 @@ namespace Mirage
 				Console.Out.WriteLine("Found {0} files in scan directory.", filesAll.Count());
 				
 				// Get all already processed files stored in the database and store in memory
-				// It seems to work well with huge volumes of file (200k)
+				// It seems to work well with huge volumes of files (200k)
 				IList<string> filesAlreadyProcessed = repository.DatabaseService.ReadTrackFilenames();
 				Console.Out.WriteLine("Database contains {0} already processed files.", filesAlreadyProcessed.Count);
 
@@ -461,7 +461,7 @@ namespace Mirage
 				                 	foreach (string file in filesRemaining)
 				                 	{
 				                 		#endif
-
+				                 		
 				                 		FileInfo fileInfo = new FileInfo(file);
 
 				                 		// Try to use Un4Seen Bass to check duration
@@ -480,11 +480,16 @@ namespace Mirage
 				                 				IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
 				                 			} else {
 				                 				Console.Out.WriteLine("[{1}/{2} - {3}/{4}] Succesfully added {0} to database. (Thread: {5})", fileInfo.Name, filesCounter, filesRemaining.Count, filesAllCounter, filesAll.Count(), Thread.CurrentThread.ManagedThreadId);
-				                 				filesCounter++;
-				                 				filesAllCounter++;
+				                 				
+				                 				//filesCounter++;
+				                 				//filesAllCounter++;
+				                 				
+				                 				// Threadsafe increment
+				                 				Interlocked.Increment(ref filesCounter);
+				                 				Interlocked.Increment(ref filesAllCounter);
 				                 			}
 				                 		} else {
-				                 			Console.Out.WriteLine("Skipping {0} since duration exceeds limit ({1:0.00} > {2:0.00} sec.)", fileInfo.Name, duration, skipDurationAboveSeconds);
+				                 			if (!silent) Console.Out.WriteLine("Skipping {0} since duration exceeds limit ({1:0.00} > {2:0.00} sec.)", fileInfo.Name, duration, skipDurationAboveSeconds);
 				                 		}
 				                 		
 				                 		fileInfo = null;
@@ -503,6 +508,9 @@ namespace Mirage
 				                 catch (PathTooLongException PathEx)
 				                 {
 				                 	Console.WriteLine(PathEx.Message);
+				                 }
+				                 catch (System.NullReferenceException NullEx) {
+				                 	Console.WriteLine(NullEx.Message);
 				                 }
 
 				                 Console.WriteLine("Time used: {0}", stopWatch.Elapsed);
@@ -527,6 +535,7 @@ namespace Mirage
 				int numToTake = 20;
 				double percentage = 0.4; // percentage below and above when querying
 				bool resetdb = false;
+				bool silent = false;
 				AudioFeature.DistanceType distanceType = AudioFeature.DistanceType.KullbackLeiblerDivergence;
 				
 				// Command line parsing
@@ -592,12 +601,15 @@ namespace Mirage
 				if(CommandLine["resetdb"] != null) {
 					resetdb = true;
 				}
+				if(CommandLine["silent"] != null) {
+					silent = true;
+				}
 				if(CommandLine["permutations"] != null) {
 					Console.WriteLine("Generating hash permutations for used by the Soundfingerprinting methods.");
-					Console.WriteLine("Saving to file: {0}", "perms-new.csv");
+					Console.WriteLine("Saving to file: {0}", "Soundfingerprinting\\perms-new.csv");
 					Console.WriteLine();
 					PermutationGeneratorService permutationGeneratorService = new PermutationGeneratorService();
-					Analyzer.GenerateAndSavePermutations(permutationGeneratorService, "perms-new.csv");
+					Analyzer.GenerateAndSavePermutations(permutationGeneratorService, "Soundfingerprinting\\perms-new.csv");
 					return;
 				}
 				if(CommandLine["?"] != null) {
@@ -625,7 +637,7 @@ namespace Mirage
 				DatabaseService databaseService = DatabaseService.Instance; // For AudioFingerprinting
 
 				//IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-				IPermutations permutations = new LocalPermutations("perms-new.csv", ",");
+				IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms-new.csv", ",");
 				
 				Repository repository = new Repository(permutations, databaseService, fingerprintService);
 				
@@ -644,7 +656,8 @@ namespace Mirage
 							databaseService.RemoveTrackTable();
 							databaseService.AddTrackTable();
 						}
-						ScanDirectory(scanPath, mandelEllisScmsDatabase, repository, skipDurationAboveSeconds);
+						Console.WriteLine("FindSimilar. Version {0}.", VERSION);
+						ScanDirectory(scanPath, mandelEllisScmsDatabase, repository, skipDurationAboveSeconds, silent);
 					} else {
 						Console.Out.WriteLine("No directory found {0}!", scanPath);
 					}
@@ -682,6 +695,7 @@ namespace Mirage
 				Console.WriteLine("\t-gui\t<open up the Find Similar Client GUI>");
 				Console.WriteLine("\t-resetdb\t<clean database, used together with scandir>");
 				Console.WriteLine("\t-skipduration=x.x <skip files longer than x seconds, used together with scandir>");
+				Console.WriteLine("\t-silent\t<do not output so much info, used together with scandir>");
 				Console.WriteLine("\t-num=<number of matches to return when querying>");
 				Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
 				Console.WriteLine("\t-type=<distance method to use when querying. Choose between:>");

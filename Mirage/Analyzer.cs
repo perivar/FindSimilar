@@ -323,7 +323,7 @@ namespace Mirage
 
 			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
 			if (audiodata == null || audiodata.Length == 0)  {
-				Dbg.WriteLine("Error! - No Audio Found");
+				Dbg.WriteLine("GetWorkUnitParameterObjectFromAudioFile - Error - No Audio Found!");
 				return null;
 			}
 			
@@ -440,9 +440,11 @@ namespace Mirage
 		public static bool AnalyzeAndAddComplete(FileInfo filePath, Db db, Repository repository, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO, bool useHaarWavelet = true) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
-
+			
 			// get work config from the audio file
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
+			if (param == null) return false;
+			
 			param.FingerprintingConfiguration = fingerprintingConfigCreation;
 			string fileName = param.FileName;
 
@@ -460,33 +462,41 @@ namespace Mirage
 			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints, out spectralImages)) {
 
 				// store logSpectrogram as Matrix
-				Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
-				logSpectrogramMatrix = logSpectrogramMatrix.Transpose();
-				
-				#region Debug for Soundfingerprinting Method
-				if (doOutputDebugInfo) {
-					// Image Service
-					ImageService imageService = new ImageService(repository.FingerprintService.SpectrumService, repository.FingerprintService.WaveletService);
-					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
+				try {
+					Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
+					logSpectrogramMatrix = logSpectrogramMatrix.Transpose();
 					
-					logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
-					
-					if (DEBUG_OUTPUT_TEXT) {
-						logSpectrogramMatrix.WriteCSV(fileName + "_specgram_log.csv", ";");
+					#region Debug for Soundfingerprinting Method
+					if (doOutputDebugInfo) {
+						// Image Service
+						ImageService imageService = new ImageService(repository.FingerprintService.SpectrumService, repository.FingerprintService.WaveletService);
+						imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
+						
+						logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
+						
+						if (DEBUG_OUTPUT_TEXT) {
+							logSpectrogramMatrix.WriteCSV(fileName + "_specgram_log.csv", ";");
+						}
 					}
-				}
-				#endregion
-				
-				// Insert Statistical Cluster Model Similarity Audio Feature as well
-				if (!AnalyseAndAddScmsUsingLogSpectrogram(logSpectrogramMatrix, param, db, track.Id, doOutputDebugInfo, useHaarWavelet)) {
-					// Failed, but ignore?
+					#endregion
+					
+					// Insert Statistical Cluster Model Similarity Audio Feature as well
+					if (!AnalyseAndAddScmsUsingLogSpectrogram(logSpectrogramMatrix, param, db, track.Id, doOutputDebugInfo, useHaarWavelet)) {
+						Dbg.WriteLine("AnalyzeAndAddComplete - Failed inserting Statistical Cluster Model Similarity Audio Feature");
+						// Failed, but ignore!
+					}
+				} catch (Exception e) {
+					Dbg.WriteLine("AnalyzeAndAddComplete - Failed creating Statistical Cluster Model Similarity Audio Feature");
+					Dbg.WriteLine(e.Message);
+					// Failed, but ignore!
 				}
 			} else {
-				// failed
+				// Failed
 				return false;
 			}
 
-			Dbg.WriteLine ("AnalyzeAndAddComplete - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			
+			Dbg.WriteLine("AnalyzeAndAddComplete - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return true;
 		}
 		
@@ -1082,7 +1092,7 @@ namespace Mirage
 			// 1 returns more similar hits
 			// 2 returns sometimes only the one we search for
 			// even 0 seem to work (like 1)
-			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  0, param);
+			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys, 0, param);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprintingList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;

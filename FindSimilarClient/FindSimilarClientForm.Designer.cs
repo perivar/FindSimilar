@@ -59,6 +59,8 @@
 			this.txtFilterResults = new System.Windows.Forms.TextBox();
 			this.lblFilterResults = new System.Windows.Forms.Label();
 			this.btnClearFilter = new System.Windows.Forms.Button();
+			this.lblFileCount = new System.Windows.Forms.Label();
+			this.database_count = new System.Windows.Forms.Label();
 			this.tabControl1.SuspendLayout();
 			this.tabFileSearch.SuspendLayout();
 			this.tabIdSearch.SuspendLayout();
@@ -100,9 +102,9 @@
 			// AudioFilePlayBtn
 			// 
 			this.AudioFilePlayBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.AudioFilePlayBtn.Location = new System.Drawing.Point(627, 2);
+			this.AudioFilePlayBtn.Location = new System.Drawing.Point(616, 2);
 			this.AudioFilePlayBtn.Name = "AudioFilePlayBtn";
-			this.AudioFilePlayBtn.Size = new System.Drawing.Size(38, 23);
+			this.AudioFilePlayBtn.Size = new System.Drawing.Size(49, 23);
 			this.AudioFilePlayBtn.TabIndex = 3;
 			this.AudioFilePlayBtn.Text = "Play";
 			this.AudioFilePlayBtn.UseVisualStyleBackColor = true;
@@ -219,26 +221,26 @@
 									this.openFileLocationToolStripMenuItem,
 									this.dumpDebugInfoToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(169, 70);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(158, 70);
 			// 
 			// findSimilarToolStripMenuItem
 			// 
 			this.findSimilarToolStripMenuItem.Name = "findSimilarToolStripMenuItem";
-			this.findSimilarToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
+			this.findSimilarToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
 			this.findSimilarToolStripMenuItem.Text = "Find Similar";
 			this.findSimilarToolStripMenuItem.Click += new System.EventHandler(this.FindSimilarToolStripMenuItemClick);
 			// 
 			// openFileLocationToolStripMenuItem
 			// 
 			this.openFileLocationToolStripMenuItem.Name = "openFileLocationToolStripMenuItem";
-			this.openFileLocationToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
+			this.openFileLocationToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
 			this.openFileLocationToolStripMenuItem.Text = "Open file location";
 			this.openFileLocationToolStripMenuItem.Click += new System.EventHandler(this.OpenFileLocationToolStripMenuItemClick);
 			// 
 			// dumpDebugInfoToolStripMenuItem
 			// 
 			this.dumpDebugInfoToolStripMenuItem.Name = "dumpDebugInfoToolStripMenuItem";
-			this.dumpDebugInfoToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
+			this.dumpDebugInfoToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
 			this.dumpDebugInfoToolStripMenuItem.Text = "Dump debug info";
 			this.dumpDebugInfoToolStripMenuItem.Click += new System.EventHandler(this.DumpDebugInfoToolStripMenuItemClick);
 			// 
@@ -265,9 +267,9 @@
 			// ResetBtn
 			// 
 			this.ResetBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.ResetBtn.Location = new System.Drawing.Point(613, 12);
+			this.ResetBtn.Location = new System.Drawing.Point(632, 12);
 			this.ResetBtn.Name = "ResetBtn";
-			this.ResetBtn.Size = new System.Drawing.Size(75, 23);
+			this.ResetBtn.Size = new System.Drawing.Size(49, 23);
 			this.ResetBtn.TabIndex = 6;
 			this.ResetBtn.Text = "Reset";
 			this.ResetBtn.UseVisualStyleBackColor = true;
@@ -278,9 +280,9 @@
 			this.autoPlayCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.autoPlayCheckBox.Checked = true;
 			this.autoPlayCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.autoPlayCheckBox.Location = new System.Drawing.Point(535, 12);
+			this.autoPlayCheckBox.Location = new System.Drawing.Point(559, 12);
 			this.autoPlayCheckBox.Name = "autoPlayCheckBox";
-			this.autoPlayCheckBox.Size = new System.Drawing.Size(75, 24);
+			this.autoPlayCheckBox.Size = new System.Drawing.Size(71, 24);
 			this.autoPlayCheckBox.TabIndex = 7;
 			this.autoPlayCheckBox.Text = "Auto Play";
 			this.autoPlayCheckBox.UseVisualStyleBackColor = true;
@@ -307,7 +309,7 @@
 			// 
 			// version
 			// 
-			this.version.Location = new System.Drawing.Point(64, 6);
+			this.version.Location = new System.Drawing.Point(54, 6);
 			this.version.Name = "version";
 			this.version.Size = new System.Drawing.Size(102, 17);
 			this.version.TabIndex = 10;
@@ -316,7 +318,7 @@
 			// rbScms
 			// 
 			this.rbScms.Anchor = System.Windows.Forms.AnchorStyles.Top;
-			this.rbScms.Location = new System.Drawing.Point(244, 0);
+			this.rbScms.Location = new System.Drawing.Point(183, 0);
 			this.rbScms.Name = "rbScms";
 			this.rbScms.Size = new System.Drawing.Size(58, 24);
 			this.rbScms.TabIndex = 11;
@@ -328,7 +330,7 @@
 			// 
 			this.rbSoundfingerprinting.Anchor = System.Windows.Forms.AnchorStyles.Top;
 			this.rbSoundfingerprinting.Checked = true;
-			this.rbSoundfingerprinting.Location = new System.Drawing.Point(299, 0);
+			this.rbSoundfingerprinting.Location = new System.Drawing.Point(235, 0);
 			this.rbSoundfingerprinting.Name = "rbSoundfingerprinting";
 			this.rbSoundfingerprinting.Size = new System.Drawing.Size(120, 24);
 			this.rbSoundfingerprinting.TabIndex = 12;
@@ -363,12 +365,32 @@
 			this.btnClearFilter.UseVisualStyleBackColor = true;
 			this.btnClearFilter.Click += new System.EventHandler(this.BtnClearFilterClick);
 			// 
+			// lblFileCount
+			// 
+			this.lblFileCount.Anchor = System.Windows.Forms.AnchorStyles.Top;
+			this.lblFileCount.Location = new System.Drawing.Point(361, 6);
+			this.lblFileCount.Name = "lblFileCount";
+			this.lblFileCount.Size = new System.Drawing.Size(100, 18);
+			this.lblFileCount.TabIndex = 16;
+			this.lblFileCount.Text = "Files in database:";
+			// 
+			// database_count
+			// 
+			this.database_count.Anchor = System.Windows.Forms.AnchorStyles.Top;
+			this.database_count.Location = new System.Drawing.Point(450, 6);
+			this.database_count.Name = "database_count";
+			this.database_count.Size = new System.Drawing.Size(91, 17);
+			this.database_count.TabIndex = 17;
+			this.database_count.Text = "database_count";
+			// 
 			// FindSimilarClientForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(700, 395);
 			this.ContextMenuStrip = this.contextMenuStrip1;
+			this.Controls.Add(this.database_count);
+			this.Controls.Add(this.lblFileCount);
 			this.Controls.Add(this.btnClearFilter);
 			this.Controls.Add(this.lblFilterResults);
 			this.Controls.Add(this.txtFilterResults);
@@ -398,6 +420,8 @@
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
+		private System.Windows.Forms.Label lblFileCount;
+		private System.Windows.Forms.Label database_count;
 		private System.Windows.Forms.Button btnClearFilter;
 		private System.Windows.Forms.Label lblFilterResults;
 		private System.Windows.Forms.TextBox txtFilterResults;
@@ -429,5 +453,8 @@
 		private System.Windows.Forms.TabPage tabFileSearch;
 		private System.Windows.Forms.TabControl tabControl1;
 		
+
+		
+
 	}
 }

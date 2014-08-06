@@ -19,7 +19,6 @@
     <RunCodeAnalysis>False</RunCodeAnalysis>
     <SourceAnalysisOverrideSettingsFile>C:\Users\perivar.nerseth\AppData\Roaming\ICSharpCode/SharpDevelop4\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
     <RunSourceAnalysis>False</RunSourceAnalysis>
-    <NoWin32Manifest>False</NoWin32Manifest>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
@@ -48,7 +47,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Projects" -skipduration=30 -resetdb</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Projects" -skipduration=30</StartArguments>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">
@@ -480,6 +479,9 @@
     <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
     <None Include="README.txt" />
     <Content Include="Soundfingerprinting\perms.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Soundfingerprinting\perms-new.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="Wavelets\app.config" />

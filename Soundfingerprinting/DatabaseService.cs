@@ -282,7 +282,6 @@ namespace Soundfingerprinting.DbStorage
 			
 			try {
 				dbcmd.Prepare();
-				//dbcmd.ExecuteNonQuery();
 				track.Id = Convert.ToInt32(dbcmd.ExecuteScalar());
 				dbcmd.Dispose();
 			} catch (Exception e) {
@@ -327,7 +326,6 @@ namespace Soundfingerprinting.DbStorage
 						dbFilePathParam.Value = track.FilePath;
 						dbTagsParam.Value = string.Join(";", track.Tags.Select(x => x.Key + "=" + x.Value));
 						
-						//dbcmd.ExecuteNonQuery();
 						track.Id = Convert.ToInt32(dbcmd.ExecuteScalar());
 					}
 					transaction.Commit();
@@ -428,6 +426,19 @@ namespace Soundfingerprinting.DbStorage
 		#endregion
 
 		#region Reads
+		public int GetTrackCount() {
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			dbcmd.CommandText = "SELECT Count(*) FROM [tracks]";
+			int count = Convert.ToInt32(dbcmd.ExecuteScalar());
+			
+			dbcmd.Dispose();
+			return count;
+		}
+		
 		public IDictionary<Track, int> ReadDuplicatedTracks()
 		{
 			throw new NotImplementedException();

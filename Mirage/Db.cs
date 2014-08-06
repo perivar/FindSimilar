@@ -237,6 +237,23 @@ namespace Mirage
 		#endregion
 
 		/// <summary>
+		/// Return the number of tracks in the database
+		/// </summary>
+		/// <returns>the number of tracks in the database</returns>
+		public int GetTrackCount() {
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			dbcmd.CommandText = "SELECT Count(*) FROM mirage";
+			int count = Convert.ToInt32(dbcmd.ExecuteScalar());
+			
+			dbcmd.Dispose();
+			return count;
+		}
+		
+		/// <summary>
 		/// Return all trackids from the database
 		/// </summary>
 		/// <returns>and int array of the database tracks</returns>

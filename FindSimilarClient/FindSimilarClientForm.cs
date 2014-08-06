@@ -53,7 +53,7 @@ namespace FindSimilar
 		private Repository repository = null;
 		
 		BindingSource bs = new BindingSource();
-		BindingList<QueryResult> queryResultList; // = new BindingList<QueryResult>();
+		BindingList<QueryResult> queryResultList;
 
 		public FindSimilarClientForm()
 		{
@@ -68,17 +68,6 @@ namespace FindSimilar
 			this.version.Text = Mirage.Mir.VERSION;
 			this.DistanceTypeCombo.DataSource = Enum.GetValues(typeof(AudioFeature.DistanceType));
 			
-			/*
-			this.dataGridView1.Columns.Add("Id", "Id");
-			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-
-			this.dataGridView1.Columns.Add("Path", "Path");
-			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-			
-			this.dataGridView1.Columns.Add("Duration_Similarity", "Duration (ms) / Similarity");
-			this.dataGridView1.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-			 */
-			
 			this.db = new Db();
 			
 			// Instansiate soundfingerprinting Repository
@@ -86,7 +75,7 @@ namespace FindSimilar
 			this.databaseService = DatabaseService.Instance;
 
 			//IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-			IPermutations permutations = new LocalPermutations("perms-new.csv", ",");
+			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms-new.csv", ",");
 			
 			repository = new Repository(permutations, databaseService, fingerprintService);
 			
@@ -151,12 +140,6 @@ namespace FindSimilar
 		#region Drag and Drop
 		void TabPage1DragEnter(object sender, DragEventArgs e)
 		{
-			/*
-			foreach ( var item in e.Data.GetFormats() ) {
-				MessageBox.Show( item );
-			}
-			 */
-
 			if (e.Data.GetDataPresent(DataFormats.FileDrop)) {
 				e.Effect = DragDropEffects.Copy;
 			} else if (e.Data.GetDataPresent(DataFormats.Text)) {
@@ -182,6 +165,7 @@ namespace FindSimilar
 				AudioFileQueryTextBox.Text = droppedText;
 			}
 		}
+
 		#endregion
 		
 		#region DataGridView Navigation
@@ -226,6 +210,7 @@ namespace FindSimilar
 
 				// check value
 				if (e.Button == MouseButtons.Left) {
+					
 					if (dragCell.Value != null) {
 						
 						// The DoDragDrop method of a control is used to start a drag and drop operation.
@@ -237,7 +222,17 @@ namespace FindSimilar
 						// DragDropEffects.None and DragDropEffects.Scroll.
 						
 						string cellContent = dragCell.Value.ToString();
-						dataGridView1.DoDragDrop(cellContent, DragDropEffects.Copy);
+						//string dataFormat = DataFormats.Text;
+						//dataGridView1.DoDragDrop(cellContent, DragDropEffects.Copy);
+						
+						string filePath = cellContent;
+						if (File.Exists(filePath)) {
+							string dataFormat = DataFormats.FileDrop;
+							string[] filePathArray = { filePath };
+							DataObject dataObject = new DataObject(dataFormat, filePathArray);
+							dataGridView1.DoDragDrop(dataObject, DragDropEffects.Copy);
+						}
+
 					}
 				}
 			}
@@ -248,7 +243,6 @@ namespace FindSimilar
 		void FindSimilarToolStripMenuItemClick(object sender, EventArgs e)
 		{
 			if (dataGridView1.SelectedRows[0].Cells[0].Value != null) {
-				//string queryPath = (string) dataGridView1.SelectedRows[0].Cells[1].Value;
 				int queryId = (int) dataGridView1.SelectedRows[0].Cells[0].Value;
 				FindById(queryId);
 			}
@@ -256,13 +250,23 @@ namespace FindSimilar
 		
 		void OpenFileLocationToolStripMenuItemClick(object sender, EventArgs e)
 		{
-			string path = Path.GetDirectoryName(selectedFilePath);
-			System.Diagnostics.Process.Start(path);
+			if (!File.Exists(selectedFilePath))	{
+				return;
+			}
+			
+			string args = string.Format("/e, /select, \"{0}\"", selectedFilePath);
+
+			ProcessStartInfo info = new ProcessStartInfo();
+			info.FileName = "explorer";
+			info.Arguments = args;
+			Process.Start(info);
 		}
 
 		void DumpDebugInfoToolStripMenuItemClick(object sender, EventArgs e)
 		{
 			FileInfo fileInfo = new FileInfo(selectedFilePath);
+			
+			//TODO: Must also use right analyser, sound analyser missing completely
 			
 			AudioFeature feature = null;
 			
@@ -365,6 +369,8 @@ namespace FindSimilar
 			
 			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+
+			this.database_count.Text = db.GetTrackCount().ToString();
 		}
 
 		private void ReadAllTracksSoundfingerprinting() {
@@ -387,6 +393,8 @@ namespace FindSimilar
 			
 			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+			
+			this.database_count.Text = databaseService.GetTrackCount().ToString();
 		}
 		#endregion
 		
@@ -508,7 +516,7 @@ namespace FindSimilar
 			if (queryString != "") {
 				
 				// search for tracks
-				string whereClause = string.Format("WHERE tags like '%{0}%' or title like '%{0}%'", queryString);
+				string whereClause = string.Format("WHERE tags like '%{0}%' or title like '%{0}%' or filepath like '%{0}%'", queryString);
 				IList<Track> tracks = databaseService.ReadTracks(whereClause);
 
 				var fingerprintList = (from row in tracks
@@ -623,6 +631,7 @@ namespace FindSimilar
 			}
 		}
 		#endregion
+		
 	}
 	
 	// http://stackoverflow.com/questions/17309270/datagridview-binding-source-filter

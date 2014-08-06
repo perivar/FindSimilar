@@ -18,6 +18,8 @@
 	
 	// for debuggin and outputting images
 	using Soundfingerprinting.Image;
+	
+	using Mirage;
 
 	/// <summary>
 	/// Singleton class for repository container
@@ -115,11 +117,20 @@
 			int thresholdTables,
 			WorkUnitParameterObject param) {
 			
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+			
 			// Get fingerprints
 			double[][] logSpectrogram;
 			List<double[][]> spectralImages;
 			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram, out spectralImages);
 
+			// TODO: If the number of signatures is to big, only keep the first 10 to avoid a very time consuming search?
+			if (signatures.Count > 10) {
+				signatures.RemoveRange(10, signatures.Count - 10);
+				Dbg.WriteLine("Only using the first 10 fingerprints.");
+			}
+			
 			long elapsedMiliseconds = 0;
 			
 			// Query the database using Min Hash
@@ -150,6 +161,7 @@
 
 			Dictionary<Track, double> stats = joined.ToDictionary(Key => Key.track, Value => Value.Similarity);
 			
+			Dbg.WriteLine ("Find Similar From Audio Samples - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return stats;
 		}
 		
@@ -167,11 +179,20 @@
 			int thresholdTables,
 			WorkUnitParameterObject param) {
 			
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+
 			// Get fingerprints
 			double[][] logSpectrogram;
 			List<double[][]> spectralImages;
 			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram, out spectralImages);
 
+			// TODO: If the number of signatures is to big, only keep the first 10 to avoid a very time consuming search?
+			if (signatures.Count > 10) {
+				signatures.RemoveRange(10, signatures.Count - 10);
+				Dbg.WriteLine("FindSimilarFromAudioSamplesList - Only using the first 10 fingerprints.");
+			}
+			
 			long elapsedMiliseconds = 0;
 			
 			// Query the database using Min Hash
@@ -208,6 +229,7 @@
 			                       	Similarity = o.Value.Similarity
 			                       }).ToList();
 			
+			Dbg.WriteLine ("FindSimilarFromAudioSamplesList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return fingerprintList;
 		}
 		
