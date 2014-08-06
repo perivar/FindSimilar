@@ -30,13 +30,13 @@ namespace Mirage
 {
 	public class Dbg
 	{
-		//[Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void WriteLine(String l, params object[] args)
 		{
 			Console.WriteLine (l, args);
 		}
 
-		//[Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void Write(String l)
 		{
 			Console.Write (l);
