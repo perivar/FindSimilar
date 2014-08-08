@@ -55,7 +55,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.19";
+		public static string VERSION = "1.0.20";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -424,6 +424,7 @@ namespace Mirage
 		/// <param name="db">MandelEllis or Scms Database Instance</param>
 		/// <param name="repository">Soundfingerprinting Repository</param>
 		/// <param name="skipDurationAboveSeconds">Skip files with duration longer than this number of seconds (0 or less disables this)</param>
+		/// <param name="silent">true if silent mode (reduced console output)</param>
 		public static void ScanDirectory(string path, Db db, Repository repository, double skipDurationAboveSeconds, bool silent=false) {
 			
 			Stopwatch stopWatch = Stopwatch.StartNew();

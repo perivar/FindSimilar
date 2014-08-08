@@ -45,6 +45,7 @@
 			this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.findSimilarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.copyFileURLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.dumpDebugInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.DistanceTypeCombo = new System.Windows.Forms.ComboBox();
@@ -61,6 +62,7 @@
 			this.btnClearFilter = new System.Windows.Forms.Button();
 			this.lblFileCount = new System.Windows.Forms.Label();
 			this.database_count = new System.Windows.Forms.Label();
+			this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
 			this.tabControl1.SuspendLayout();
 			this.tabFileSearch.SuspendLayout();
 			this.tabIdSearch.SuspendLayout();
@@ -219,28 +221,36 @@
 			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
 									this.findSimilarToolStripMenuItem,
 									this.openFileLocationToolStripMenuItem,
+									this.copyFileURLToolStripMenuItem,
 									this.dumpDebugInfoToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(158, 70);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(200, 92);
 			// 
 			// findSimilarToolStripMenuItem
 			// 
 			this.findSimilarToolStripMenuItem.Name = "findSimilarToolStripMenuItem";
-			this.findSimilarToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+			this.findSimilarToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
 			this.findSimilarToolStripMenuItem.Text = "Find Similar";
 			this.findSimilarToolStripMenuItem.Click += new System.EventHandler(this.FindSimilarToolStripMenuItemClick);
 			// 
 			// openFileLocationToolStripMenuItem
 			// 
 			this.openFileLocationToolStripMenuItem.Name = "openFileLocationToolStripMenuItem";
-			this.openFileLocationToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+			this.openFileLocationToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
 			this.openFileLocationToolStripMenuItem.Text = "Open file location";
 			this.openFileLocationToolStripMenuItem.Click += new System.EventHandler(this.OpenFileLocationToolStripMenuItemClick);
+			// 
+			// copyFileURLToolStripMenuItem
+			// 
+			this.copyFileURLToolStripMenuItem.Name = "copyFileURLToolStripMenuItem";
+			this.copyFileURLToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+			this.copyFileURLToolStripMenuItem.Text = "Copy file URL to Clipboard";
+			this.copyFileURLToolStripMenuItem.Click += new System.EventHandler(this.CopyFileURLToolStripMenuItemClick);
 			// 
 			// dumpDebugInfoToolStripMenuItem
 			// 
 			this.dumpDebugInfoToolStripMenuItem.Name = "dumpDebugInfoToolStripMenuItem";
-			this.dumpDebugInfoToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+			this.dumpDebugInfoToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
 			this.dumpDebugInfoToolStripMenuItem.Text = "Dump debug info";
 			this.dumpDebugInfoToolStripMenuItem.Click += new System.EventHandler(this.DumpDebugInfoToolStripMenuItemClick);
 			// 
@@ -383,6 +393,14 @@
 			this.database_count.TabIndex = 17;
 			this.database_count.Text = "database_count";
 			// 
+			// backgroundWorker1
+			// 
+			this.backgroundWorker1.WorkerReportsProgress = true;
+			this.backgroundWorker1.WorkerSupportsCancellation = true;
+			this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.BackgroundWorker1DoWork);
+			this.backgroundWorker1.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.BackgroundWorker1ProgressChanged);
+			this.backgroundWorker1.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.BackgroundWorker1RunWorkerCompleted);
+			// 
 			// FindSimilarClientForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -420,6 +438,8 @@
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
+		private System.ComponentModel.BackgroundWorker backgroundWorker1;
+		private System.Windows.Forms.ToolStripMenuItem copyFileURLToolStripMenuItem;
 		private System.Windows.Forms.Label lblFileCount;
 		private System.Windows.Forms.Label database_count;
 		private System.Windows.Forms.Button btnClearFilter;
@@ -452,8 +472,6 @@
 		private System.Windows.Forms.TabPage tabIdSearch;
 		private System.Windows.Forms.TabPage tabFileSearch;
 		private System.Windows.Forms.TabControl tabControl1;
-		
-
 		
 
 	}

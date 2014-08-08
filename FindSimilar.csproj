@@ -165,6 +165,12 @@
     <Compile Include="CoMIRVA\Matrix.cs" />
     <Compile Include="CoMIRVA\QRDecomposition.cs" />
     <Compile Include="CoMIRVA\SingularValueDecomposition.cs" />
+    <Compile Include="FindSimilarClient\ISplashForm.cs" />
+    <Compile Include="FindSimilarClient\SplashSceenWaitingForm.cs" />
+    <Compile Include="FindSimilarClient\SplashSceenWaitingForm.Designer.cs">
+      <DependentUpon>SplashSceenWaitingForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FindSimilarClient\SplashScreen.cs" />
     <Compile Include="ImagePHash.cs" />
     <Compile Include="ImageAverageHash.cs" />
     <Compile Include="MatchBox\MelFilterBank.cs" />
@@ -489,6 +495,9 @@
   <ItemGroup>
     <EmbeddedResource Include="FindSimilarClient\FindSimilarClientForm.resx">
       <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FindSimilarClient\SplashSceenWaitingForm.resx">
+      <DependentUpon>SplashSceenWaitingForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />

@@ -47,6 +47,8 @@ using Soundfingerprinting.DbStorage.Entities;
 using Soundfingerprinting.SoundTools;
 using Soundfingerprinting.Audio.Strides;
 
+using FindSimilar; // for SplashScreen
+
 namespace Mirage
 {
 	public class Analyzer
@@ -101,6 +103,7 @@ namespace Mirage
 		private static IFingerprintingConfiguration fingerprintingConfigCreation = new FullFrequencyFingerprintingConfiguration();
 		private static IFingerprintingConfiguration fingerprintingConfigQuerying = new FullFrequencyFingerprintingConfiguration(true);
 		
+		#region Analyze Mandel Ellis and Scms Methods
 		public static AudioFeature AnalyzeMandelEllis(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO)
 		{
 			DbgTimer t = new DbgTimer();
@@ -311,65 +314,9 @@ namespace Mirage
 			Dbg.WriteLine ("AnalyzeScms - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return audioFeature;
 		}
+		#endregion
 		
-		/// <summary>
-		/// Return information from the Audio File
-		/// </summary>
-		/// <param name="filePath">filepath object</param>
-		/// <returns>a WorkUnitParameter object</returns>
-		public static WorkUnitParameterObject GetWorkUnitParameterObjectFromAudioFile(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO) {
-			DbgTimer t = new DbgTimer();
-			t.Start ();
-
-			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
-			if (audiodata == null || audiodata.Length == 0)  {
-				Dbg.WriteLine("GetWorkUnitParameterObjectFromAudioFile - Error - No Audio Found!");
-				return null;
-			}
-			
-			// Name of file being processed
-			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
-			
-			#if DEBUG
-			if (DEBUG_INFO_VERBOSE) {
-				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, fileName + "_audiodata.ascii");
-				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, fileName + "_audiodata.txt");
-			}
-			#endif
-			
-			if (doOutputDebugInfo) {
-				DrawGraph(MathUtils.FloatToDouble(audiodata), fileName + "_audiodata.png");
-			}
-			
-			// Calculate duration in ms
-			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
-			
-			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
-			// Matlab multiplies with 2^15 (32768)
-			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
-			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER);
-			
-			// zero pad if the audio file is too short to perform a mfcc
-			if (audiodata.Length < (WINDOW_SIZE + OVERLAP))
-			{
-				int lenNew = WINDOW_SIZE + OVERLAP;
-				Array.Resize<float>(ref audiodata, lenNew);
-			}
-			
-			// work config
-			WorkUnitParameterObject param = new WorkUnitParameterObject();
-			param.AudioSamples = audiodata;
-			param.PathToAudioFile = filePath.FullName;
-			param.MillisecondsToProcess = SECONDS_TO_ANALYZE * 1000;
-			param.StartAtMilliseconds = 0;
-			param.FileName = fileName;
-			param.DurationInMs = duration;
-			param.Tags = GetTagInfoFromFile(filePath.FullName);
-
-			Dbg.WriteLine ("Get Audio File Parameters - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
-			return param;
-		}
-		
+		#region Analyze and add to database methods
 		/// <summary>
 		/// Method to analyze and add using the soundfingerprinting methods
 		/// </summary>
@@ -384,6 +331,8 @@ namespace Mirage
 
 			// get work config from the audio file
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
+			if (param == null) return false;
+			
 			param.FingerprintingConfiguration = fingerprintingConfigCreation;
 			string fileName = param.FileName;
 
@@ -402,22 +351,28 @@ namespace Mirage
 			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints, out spectralImages)) {
 
 				// store logSpectrogram as Matrix
-				Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
-				logSpectrogramMatrix = logSpectrogramMatrix.Transpose();
-				
-				#region Debug for Soundfingerprinting Method
-				if (doOutputDebugInfo) {
-					// Image Service
-					ImageService imageService = new ImageService(repository.FingerprintService.SpectrumService, repository.FingerprintService.WaveletService);
-					imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
+				try {
+					Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
+					logSpectrogramMatrix = logSpectrogramMatrix.Transpose();
 					
-					logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
-					
-					if (DEBUG_OUTPUT_TEXT) {
-						logSpectrogramMatrix.WriteCSV(fileName + "_specgram_log.csv", ";");
+					#region Debug for Soundfingerprinting Method
+					if (doOutputDebugInfo) {
+						// Image Service
+						ImageService imageService = new ImageService(repository.FingerprintService.SpectrumService, repository.FingerprintService.WaveletService);
+						imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
+						
+						logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
+						
+						if (DEBUG_OUTPUT_TEXT) {
+							logSpectrogramMatrix.WriteCSV(fileName + "_specgram_log.csv", ";");
+						}
 					}
+					#endregion
+					
+				} catch (Exception e) {
+					Console.Out.WriteLine("Failed! Could not store log spectrogram as matrix {0}!", fileName);
+					// Failed, but ignore!
 				}
-				#endregion
 			} else {
 				// failed
 				Console.Out.WriteLine("Failed! Could not compute the soundfingerprint {0}!", fileName);
@@ -750,7 +705,9 @@ namespace Mirage
 			Dbg.WriteLine ("AnalyzeAndAddScms - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return true;
 		}
+		#endregion
 		
+		#region AnalyseAndAddScms Methods
 		/// <summary>
 		/// Add the log spectrogram matrix as a Statistical Cluster Model Similarity class to the database
 		/// </summary>
@@ -1060,11 +1017,14 @@ namespace Mirage
 			Dbg.WriteLine ("AnalyseAndAddScmsUsingFingerprints2 - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return true;
 		}
+		#endregion
 		
+		#region Find Similar Tracks using Soundfingerprinting Methods
 		/// <summary>
 		/// Query the database for perceptually similar tracks using the sound fingerprinting methods
 		/// </summary>
 		/// <param name="filePath">input file</param>
+		/// <param name="repository">the database (repository)</param>
 		/// <returns>a dictionary of similar tracks</returns>
 		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath, Repository repository) {
 			DbgTimer t = new DbgTimer();
@@ -1080,14 +1040,30 @@ namespace Mirage
 			return candidates;
 		}
 		
+		/// <summary>
+		/// Query the database for perceptually similar tracks using the sound fingerprinting methods
+		/// </summary>
+		/// <param name="filePath">input file</param>
+		/// <param name="repository">the database (repository)</param>
+		/// <returns>a list of query results objects (e.g. similar tracks)</returns>
 		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath, Repository repository) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
+			SplashScreen.UpdateStatus("Reading audio file ...");
+			SplashScreen.UpdateInfo("");
+			
 			// get work config from the audio file
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
+			if (param == null) {
+				SplashScreen.UpdateInfo("Failed reading audio file!");
+				return null;
+			}
+			
 			param.FingerprintingConfiguration = fingerprintingConfigQuerying;
 			
+			SplashScreen.UpdateInfo("Successfully reading audio file!");
+
 			// TODO: i don't really know how the threshold tables work.
 			// 1 returns more similar hits
 			// 2 returns sometimes only the one we search for
@@ -1097,6 +1073,7 @@ namespace Mirage
 			Dbg.WriteLine ("SimilarTracksSoundfingerprintingList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;
 		}
+		#endregion
 		
 		/// <summary>
 		/// Read tags from file using the BASS plugin
@@ -1148,6 +1125,11 @@ namespace Mirage
 			return tags;
 		}
 
+		/// <summary>
+		/// Replace invalid characters with empty strings.
+		/// </summary>
+		/// <param name="strIn">string</param>
+		/// <returns>formatted string</returns>
 		private static string CleanTagValue(string uncleanValue) {
 			return StringUtils.RemoveInvalidCharacters(uncleanValue);
 		}
@@ -1249,6 +1231,7 @@ namespace Mirage
 		}
 		#endregion
 		
+		#region Get Bit String methods
 		/// <summary>
 		/// Computes the perceptual hash of an audio file as a bitstring using the mfcc matrix
 		/// </summary>
@@ -1310,7 +1293,70 @@ namespace Mirage
 
 			return sb.ToString();
 		}
+		#endregion
 		
+		/// <summary>
+		/// Return information from the Audio File
+		/// </summary>
+		/// <param name="filePath">filepath object</param>
+		/// <returns>a WorkUnitParameter object</returns>
+		public static WorkUnitParameterObject GetWorkUnitParameterObjectFromAudioFile(FileInfo filePath, bool doOutputDebugInfo=DEFAULT_DEBUG_INFO) {
+			DbgTimer t = new DbgTimer();
+			t.Start ();
+
+			float[] audiodata = AudioFileReader.Decode(filePath.FullName, SAMPLING_RATE, SECONDS_TO_ANALYZE);
+			if (audiodata == null || audiodata.Length == 0)  {
+				Dbg.WriteLine("GetWorkUnitParameterObjectFromAudioFile - Error - No Audio Found!");
+				return null;
+			}
+			
+			// Name of file being processed
+			string fileName = StringUtils.RemoveNonAsciiCharacters(Path.GetFileNameWithoutExtension(filePath.Name));
+			
+			#if DEBUG
+			if (DEBUG_INFO_VERBOSE) {
+				if (DEBUG_OUTPUT_TEXT) WriteAscii(audiodata, fileName + "_audiodata.ascii");
+				if (DEBUG_OUTPUT_TEXT) WriteF3Formatted(audiodata, fileName + "_audiodata.txt");
+			}
+			#endif
+			
+			if (doOutputDebugInfo) {
+				DrawGraph(MathUtils.FloatToDouble(audiodata), fileName + "_audiodata.png");
+			}
+			
+			// Calculate duration in ms
+			double duration = (double) audiodata.Length / SAMPLING_RATE * 1000;
+			
+			// Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
+			// Matlab multiplies with 2^15 (32768)
+			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
+			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER);
+			
+			// zero pad if the audio file is too short to perform a mfcc
+			if (audiodata.Length < (WINDOW_SIZE + OVERLAP))
+			{
+				int lenNew = WINDOW_SIZE + OVERLAP;
+				Array.Resize<float>(ref audiodata, lenNew);
+			}
+			
+			// work config
+			WorkUnitParameterObject param = new WorkUnitParameterObject();
+			param.AudioSamples = audiodata;
+			param.PathToAudioFile = filePath.FullName;
+			param.MillisecondsToProcess = SECONDS_TO_ANALYZE * 1000;
+			param.StartAtMilliseconds = 0;
+			param.FileName = fileName;
+			param.DurationInMs = duration;
+			param.Tags = GetTagInfoFromFile(filePath.FullName);
+
+			Dbg.WriteLine ("Get Audio File Parameters - Execution Time: {0} ms", t.Stop().TotalMilliseconds);
+			return param;
+		}
+		
+		/// <summary>
+		/// Return the Soundfingerprinting Service
+		/// </summary>
+		/// <returns>the Soundfingerprinting Service</returns>
 		public static FingerprintService GetSoundfingerprintingService() {
 
 			// Audio service
@@ -1365,6 +1411,7 @@ namespace Mirage
 			return fingerprints;
 		}
 		
+		#region Generate Permutations used by MinHash methods
 		/// <summary>
 		/// Generate the permutations according to a greedy random algorithm
 		/// </summary>
@@ -1409,6 +1456,7 @@ namespace Mirage
 				writer.Write(permutations);
 			}
 		}
+		#endregion
 		
 	}
 }

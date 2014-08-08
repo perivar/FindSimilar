@@ -21,6 +21,8 @@
 	
 	using Mirage;
 
+	using FindSimilar; // for SplashScreen
+	
 	/// <summary>
 	/// Singleton class for repository container
 	/// </summary>
@@ -104,7 +106,7 @@
 		}
 		
 		/// <summary>
-		/// Find Similar Tracks using passed audio samples as input
+		/// Find Similar Tracks using passed audio samples as input and return a Dictionary
 		/// </summary>
 		/// <param name="lshHashTables">Number of hash tables from the database</param>
 		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
@@ -166,7 +168,7 @@
 		}
 		
 		/// <summary>
-		/// Find Similar Tracks using passed audio samples as input
+		/// Find Similar Tracks using passed audio samples as input and return a List
 		/// </summary>
 		/// <param name="lshHashTables">Number of hash tables from the database</param>
 		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
@@ -182,19 +184,28 @@
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
+			SplashScreen.UpdateStatus("Creating fingerprints from audio samples ...");
+			SplashScreen.UpdateInfo("");
+			
 			// Get fingerprints
 			double[][] logSpectrogram;
 			List<double[][]> spectralImages;
 			List<bool[]> signatures = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram, out spectralImages);
 
+			SplashScreen.UpdateInfo(String.Format("Successfully created {0} fingerprints.", signatures.Count));
+			
 			// TODO: If the number of signatures is to big, only keep the first 10 to avoid a very time consuming search?
 			if (signatures.Count > 10) {
 				signatures.RemoveRange(10, signatures.Count - 10);
 				Dbg.WriteLine("FindSimilarFromAudioSamplesList - Only using the first 10 fingerprints.");
+				SplashScreen.UpdateInfo(String.Format("Only using the first {0} fingerprints.", 10));
 			}
 			
 			long elapsedMiliseconds = 0;
 			
+			SplashScreen.UpdateStatus("Searching for similar fingerprints ...");
+			SplashScreen.UpdateInfo("");
+
 			// Query the database using Min Hash
 			Dictionary<int, QueryStats> allCandidates = QueryFingerprintManager.QueryOneSongMinHash(
 				signatures,
@@ -205,9 +216,13 @@
 				thresholdTables,
 				ref elapsedMiliseconds);
 
+			SplashScreen.UpdateInfo(String.Format("Found {0} candidates.", allCandidates.Count));
+			
 			IEnumerable<int> ids = allCandidates.Select(p => p.Key);
 			IList<Track> tracks = dbService.ReadTrackById(ids);
 
+			SplashScreen.UpdateInfo(String.Format("Reading {0} tracks.", tracks.Count));
+			
 			// Order by Hamming Similarity
 			// TODO: What does the 0.4 number do here?
 			// there doesn't seem to be any change using another number?!

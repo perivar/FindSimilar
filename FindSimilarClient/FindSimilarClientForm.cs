@@ -3,6 +3,9 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Data;
 
+using System.Threading;
+using System.Threading.Tasks;
+
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -54,7 +57,10 @@ namespace FindSimilar
 		
 		BindingSource bs = new BindingSource();
 		BindingList<QueryResult> queryResultList;
-
+		
+		// waiting splash screen
+		private SplashSceenWaitingForm splashScreen;
+		
 		public FindSimilarClientForm()
 		{
 			//
@@ -260,6 +266,13 @@ namespace FindSimilar
 			info.FileName = "explorer";
 			info.Arguments = args;
 			Process.Start(info);
+		}
+		
+		void CopyFileURLToolStripMenuItemClick(object sender, System.EventArgs e)
+		{
+			if (selectedFilePath != null) {
+				Clipboard.SetText(selectedFilePath);
+			}
 		}
 
 		void DumpDebugInfoToolStripMenuItemClick(object sender, EventArgs e)
@@ -469,19 +482,29 @@ namespace FindSimilar
 		#endregion
 
 		#region Find Soundfingerprinting methods
+		class BackgroundWorkerArgument {
+			
+			public FileInfo QueryFile { get; set; }
+			public List<QueryResult> QueryResultList { get; set; }
+		}
+		
 		private void FindByFilePathSoundfingerprinting(string queryPath) {
 			if (queryPath != "") {
 				FileInfo fi = new FileInfo(queryPath);
 				if (fi.Exists) {
 					
-					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(fi, repository);
-					queryResultList = new BindingList<QueryResult>( queryList );
-					
-					bs.DataSource = queryResultList;
-					dataGridView1.DataSource = queryResultList;
-					
-					this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-					this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+					if (backgroundWorker1.IsBusy != true) {
+						BackgroundWorkerArgument bgWorkerObject = new BackgroundWorkerArgument {
+							QueryFile = fi
+						};
+						
+						// Send argument to our worker thread
+						backgroundWorker1.RunWorkerAsync(bgWorkerObject);
+						
+						// Start please wait screen
+						splashScreen = new SplashSceenWaitingForm();
+						splashScreen.Show();
+					}
 
 				} else {
 					MessageBox.Show("File does not exist!");
@@ -496,19 +519,81 @@ namespace FindSimilar
 				Track track = databaseService.ReadTrackById(queryId);
 				if (track != null) {
 					
-					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(new FileInfo(track.FilePath), repository);
-					queryResultList = new BindingList<QueryResult>( queryList );
-					
-					bs.DataSource = queryResultList;
-					dataGridView1.DataSource = queryResultList;
-					
-					this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-					this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+					if (backgroundWorker1.IsBusy != true) {
+						
+						// create background worker arugment
+						BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
+							QueryFile = new FileInfo(track.FilePath)
+						};
+						
+						// Start please wait screen
+						splashScreen = new SplashSceenWaitingForm();
+						splashScreen.DoWork += new SplashSceenWaitingForm.DoWorkEventHandler(findSimilarSearch_DoWork);
+						splashScreen.Argument = bgWorkerArg;
+						
+						// check return value
+						DialogResult result = splashScreen.ShowDialog();
+						if (result == DialogResult.Cancel) {
+							//the user clicked cancel
+						}
+						else if (result == DialogResult.Abort) {
+							//an unhandled exception occured in user function
+							//you may get the exception information:
+							MessageBox.Show(splashScreen.Result.Error.Message);
+						}
+						else if (result == DialogResult.OK) {
+							//the background worker finished normally
+							
+							//the result of the background worker is stored in splashScreen.Result
+							BackgroundWorkerArgument argObject = splashScreen.Result.Result as BackgroundWorkerArgument;
+							
+							// Get query list from the argument object
+							queryResultList = new BindingList<QueryResult>( argObject.QueryResultList );
+							
+							// update grid
+							bs.DataSource = queryResultList;
+							dataGridView1.DataSource = queryResultList;
 
+							this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+							this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+						}
+					}
+					
 				} else {
 					MessageBox.Show("File-id does not exist!");
 				}
 			}
+		}
+		
+		void findSimilarSearch_DoWork(SplashSceenWaitingForm sender, DoWorkEventArgs e)
+		{
+			// e.Argument always contains whatever was sent to the background worker
+			// in RunWorkerAsync. We can simply cast it to its original type.
+			BackgroundWorkerArgument argObject = e.Argument as BackgroundWorkerArgument;
+
+			/*
+			//do something long...
+			for (int i = 0; i < 100; i++)
+			{
+				//notify progress to the form
+				sender.SetProgress(i, "Step " + i.ToString() + " / 100...");
+				
+				Thread.Sleep(100);
+				
+				//check if the user clicked cancel
+				if (sender.CancellationPending)
+				{
+					e.Cancel = true;
+					return;
+				}
+			}
+			 */
+			
+			// Perform a time consuming operation and report progress.
+			List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(argObject.QueryFile, repository);
+			
+			argObject.QueryResultList = queryList;
+			e.Result = argObject;
 		}
 		
 		private void FindByStringSoundfingerprinting(string queryString) {
@@ -632,8 +717,72 @@ namespace FindSimilar
 		}
 		#endregion
 		
+		#region Soundfingerprinting background worker thread
+		void BackgroundWorker1DoWork(object sender, DoWorkEventArgs e)
+		{
+			BackgroundWorker worker = sender as BackgroundWorker;
+
+			// TODO: support cancelling the consuming operation
+			//while (!worker.CancellationPending)
+			//{
+			//...
+			//worker.ReportProgress((i * 10));
+			//}
+
+			//if (worker.CancellationPending)
+			//{
+			// e.Cancel = true;
+			//}
+			//}
+			
+			// e.Argument always contains whatever was sent to the background worker
+			// in RunWorkerAsync. We can simply cast it to its original type.
+			BackgroundWorkerArgument argObject = e.Argument as BackgroundWorkerArgument;
+			
+			// Perform a time consuming operation and report progress.
+			List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(argObject.QueryFile, repository);
+			
+			argObject.QueryResultList = queryList;
+			e.Result = argObject;
+		}
+		
+		void BackgroundWorker1RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+		{
+			if ((e.Cancelled == true)) {
+				Dbg.WriteLine("BackgroundWorker Canceled!");
+			}
+
+			else if (!(e.Error == null)) {
+				Dbg.WriteLine("BackgroundWorker Error: " + e.Error.Message);
+			}
+
+			else {
+				BackgroundWorkerArgument argObject = e.Result as BackgroundWorkerArgument;
+				
+				// Get query list from the argument object
+				queryResultList = new BindingList<QueryResult>( argObject.QueryResultList );
+				
+				bs.DataSource = queryResultList;
+				dataGridView1.DataSource = queryResultList;
+
+				this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+				this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+				
+				Dbg.WriteLine("BackgroundWorker Done!");
+			}
+			
+			//SplashScreen.Close();
+			this.splashScreen.Close();
+			this.splashScreen.Dispose();
+		}
+		
+		void BackgroundWorker1ProgressChanged(object sender, ProgressChangedEventArgs e)
+		{
+			Dbg.WriteLine(e.ProgressPercentage.ToString() + "%");
+		}
+		#endregion
 	}
-	
+
 	// http://stackoverflow.com/questions/17309270/datagridview-binding-source-filter
 	public class QueryResult {
 		public QueryResult() { }
