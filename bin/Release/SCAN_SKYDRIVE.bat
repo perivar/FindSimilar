@@ -1,3 +1,3 @@
-REM FindSimilar.exe -scandir="C:\Users\perivar.nerseth\SkyDrive\Audio\FL Studio Projects" -skipduration=30
+REM FindSimilar.exe -scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -skipduration=30
 
-FindSimilar.exe -scandir="C:\Users\perivar.nerseth\SkyDrive\Audio" -skipduration=30 -resetdb
+FindSimilar.exe -scandir="C:\Users\perivar.nerseth\OneDrive\Audio" -skipduration=30 -resetdb

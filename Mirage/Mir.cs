@@ -55,7 +55,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.20";
+		public static string VERSION = "1.0.21";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		

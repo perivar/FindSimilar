@@ -14,7 +14,7 @@ namespace FindSimilar
 	/// <summary>
 	/// Description of SplashSceenWaitingForm.
 	/// </summary>
-	public partial class SplashSceenWaitingForm : Form, ISplashForm
+	public partial class SplashSceenWaitingForm : Form
 	{
 		int lastPercent;
 		string lastStatus;
@@ -59,11 +59,6 @@ namespace FindSimilar
 		public string DefaultStatusText { get; set; }
 		
 		/// <summary>
-		/// Default information text.
-		/// </summary>
-		public string DefaultInfoText { get; set; }
-
-		/// <summary>
 		/// Delegate for the DoWork event.
 		/// </summary>
 		/// <param name="sender">The source of the event.</param>
@@ -86,7 +81,6 @@ namespace FindSimilar
 			// TODO: Add constructor code after the InitializeComponent() call.
 			//
 			DefaultStatusText = "Please wait...";
-			DefaultInfoText = "";
 			CancellingText = "Cancelling operation...";
 		}
 		
@@ -95,11 +89,6 @@ namespace FindSimilar
 			lblStatus.Text = status;
 		}
 		
-		public void UpdateInfo(string info)
-		{
-			lblInfo.Text = info;
-		}
-
 		public void UpdateProgress(int progress)
 		{
 			progressBar.Value = progress;
@@ -118,6 +107,7 @@ namespace FindSimilar
 				worker.ReportProgress(progressBar.Minimum - 1, status);
 			}
 		}
+		
 		/// <summary>
 		/// Changes the progress bar value only.
 		/// </summary>
@@ -130,6 +120,7 @@ namespace FindSimilar
 				worker.ReportProgress(percent);
 			}
 		}
+		
 		/// <summary>
 		/// Changes both progress bar value and status text.
 		/// </summary>
@@ -187,27 +178,27 @@ namespace FindSimilar
 		
 		void SplashSceenWaitingFormLoad(object sender, EventArgs e)
 		{
-			//reset to defaults just in case the user wants to reuse the form
+			// reset to defaults just in case the user wants to reuse the form
 			Result = null;
 			buttonCancel.Enabled = true;
 			progressBar.Value = progressBar.Minimum;
 			UpdateStatus(DefaultStatusText);
-			UpdateInfo(DefaultInfoText);
 			lastStatus = DefaultStatusText;
 			lastPercent = progressBar.Minimum;
 			
-			//start the background worker as soon as the form is loaded
+			// start the background worker as soon as the form is loaded
 			worker.RunWorkerAsync(Argument);
 		}
 		
 		void ButtonCancelClick(object sender, EventArgs e)
 		{
-			//notify the background worker we want to cancel
+			// notify the background worker we want to cancel
 			worker.CancelAsync();
 			
-			//disable the cancel button and change the status text
+			// disable the cancel button and change the status text
 			buttonCancel.Enabled = false;
 			UpdateStatus(CancellingText);
 		}
+		
 	}
 }

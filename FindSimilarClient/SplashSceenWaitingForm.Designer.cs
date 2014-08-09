@@ -39,7 +39,6 @@ namespace FindSimilar
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SplashSceenWaitingForm));
 			this.pictureBox1 = new System.Windows.Forms.PictureBox();
 			this.lblStatus = new System.Windows.Forms.Label();
-			this.lblInfo = new System.Windows.Forms.Label();
 			this.progressBar = new System.Windows.Forms.ProgressBar();
 			this.worker = new System.ComponentModel.BackgroundWorker();
 			this.buttonCancel = new System.Windows.Forms.Button();
@@ -58,20 +57,12 @@ namespace FindSimilar
 			// 
 			// lblStatus
 			// 
-			this.lblStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.lblStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblStatus.Location = new System.Drawing.Point(117, 40);
 			this.lblStatus.Name = "lblStatus";
-			this.lblStatus.Size = new System.Drawing.Size(251, 23);
+			this.lblStatus.Size = new System.Drawing.Size(251, 41);
 			this.lblStatus.TabIndex = 1;
 			this.lblStatus.Text = "Status";
-			// 
-			// lblInfo
-			// 
-			this.lblInfo.Location = new System.Drawing.Point(117, 63);
-			this.lblInfo.Name = "lblInfo";
-			this.lblInfo.Size = new System.Drawing.Size(251, 18);
-			this.lblInfo.TabIndex = 2;
-			this.lblInfo.Text = "Information";
 			// 
 			// progressBar
 			// 
@@ -90,7 +81,7 @@ namespace FindSimilar
 			// 
 			// buttonCancel
 			// 
-			this.buttonCancel.Location = new System.Drawing.Point(168, 121);
+			this.buttonCancel.Location = new System.Drawing.Point(176, 121);
 			this.buttonCancel.Name = "buttonCancel";
 			this.buttonCancel.Size = new System.Drawing.Size(75, 23);
 			this.buttonCancel.TabIndex = 5;
@@ -106,10 +97,9 @@ namespace FindSimilar
 			this.ClientSize = new System.Drawing.Size(424, 156);
 			this.Controls.Add(this.buttonCancel);
 			this.Controls.Add(this.progressBar);
-			this.Controls.Add(this.lblInfo);
 			this.Controls.Add(this.lblStatus);
 			this.Controls.Add(this.pictureBox1);
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
 			this.Name = "SplashSceenWaitingForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
 			this.Text = "Please wait ...";
@@ -120,7 +110,6 @@ namespace FindSimilar
 		private System.Windows.Forms.Button buttonCancel;
 		private System.ComponentModel.BackgroundWorker worker;
 		private System.Windows.Forms.ProgressBar progressBar;
-		private System.Windows.Forms.Label lblInfo;
 		private System.Windows.Forms.Label lblStatus;
 		private System.Windows.Forms.PictureBox pictureBox1;
 	}

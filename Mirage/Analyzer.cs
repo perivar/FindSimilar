@@ -135,6 +135,7 @@ namespace Mirage
 
 			// get work config from the audio file
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath, doOutputDebugInfo);
+			if (param == null) return null;
 			string fileName = param.FileName;
 			
 			// used to save wave files in the debug inverse methods
@@ -369,7 +370,7 @@ namespace Mirage
 					}
 					#endregion
 					
-				} catch (Exception e) {
+				} catch (Exception) {
 					Console.Out.WriteLine("Failed! Could not store log spectrogram as matrix {0}!", fileName);
 					// Failed, but ignore!
 				}
@@ -1025,16 +1026,25 @@ namespace Mirage
 		/// </summary>
 		/// <param name="filePath">input file</param>
 		/// <param name="repository">the database (repository)</param>
+		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
 		/// <returns>a dictionary of similar tracks</returns>
-		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath, Repository repository) {
+		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath, Repository repository, SplashSceenWaitingForm splashScreen) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
 			// get work config from the audio file
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
+			if (param == null) {
+				return null;
+			}
+			
 			param.FingerprintingConfiguration = fingerprintingConfigQuerying;
 			
-			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  1, param);
+			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(param.FingerprintingConfiguration.NumberOfHashTables,
+			                                                                              param.FingerprintingConfiguration.NumberOfKeys,
+			                                                                              1,
+			                                                                              param,
+			                                                                              splashScreen);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;
@@ -1045,30 +1055,41 @@ namespace Mirage
 		/// </summary>
 		/// <param name="filePath">input file</param>
 		/// <param name="repository">the database (repository)</param>
+		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
+		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 = return all candidates, 2+ = return only exact matches)</param>
 		/// <returns>a list of query results objects (e.g. similar tracks)</returns>
-		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath, Repository repository) {
+		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath, Repository repository, SplashSceenWaitingForm splashScreen, int thresholdTables) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
-			SplashScreen.UpdateStatus("Reading audio file ...");
-			SplashScreen.UpdateInfo("");
+			if (splashScreen != null) splashScreen.SetProgress(0, "Reading audio file ...");
 			
 			// get work config from the audio file
 			WorkUnitParameterObject param = GetWorkUnitParameterObjectFromAudioFile(filePath);
 			if (param == null) {
-				SplashScreen.UpdateInfo("Failed reading audio file!");
+				if (splashScreen != null) splashScreen.SetProgress(0, "Failed reading audio file!");
 				return null;
 			}
 			
 			param.FingerprintingConfiguration = fingerprintingConfigQuerying;
 			
-			SplashScreen.UpdateInfo("Successfully reading audio file!");
+			if (splashScreen != null) splashScreen.SetProgress(1, "Successfully reading audio file!");
 
-			// TODO: i don't really know how the threshold tables work.
-			// 1 returns more similar hits
-			// 2 returns sometimes only the one we search for
-			// even 0 seem to work (like 1)
-			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys, 0, param);
+			// This is how the threshold tables work:
+			// For each signature created from a query file we retrieve a number of candidates
+			// based on how many fingerprints that are associated to the same hash bucket.
+			// if the number of fingerprints associated to the same hash bucket is relatively high
+			// the likelyhood for this being an exact match is also very high.
+			// Therefore a value of 0 or 1 basically means return every track that has an association
+			// to the same hash bucket, while a number higher than that increases the accuracy for
+			// only matching identical matches.
+			// 0 and 1 returns many matches
+			// 2 returns sometimes only the one we search for (exact match)
+			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(param.FingerprintingConfiguration.NumberOfHashTables,
+			                                                                                      param.FingerprintingConfiguration.NumberOfKeys,
+			                                                                                      thresholdTables,
+			                                                                                      param,
+			                                                                                      splashScreen);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprintingList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;

@@ -257,6 +257,7 @@ namespace FindSimilar
 		void OpenFileLocationToolStripMenuItemClick(object sender, EventArgs e)
 		{
 			if (!File.Exists(selectedFilePath))	{
+				MessageBox.Show("File does not exist!");
 				return;
 			}
 			
@@ -278,8 +279,11 @@ namespace FindSimilar
 		void DumpDebugInfoToolStripMenuItemClick(object sender, EventArgs e)
 		{
 			FileInfo fileInfo = new FileInfo(selectedFilePath);
+			if (!fileInfo.Exists) {
+				MessageBox.Show("File does not exist!");
+			}
 			
-			//TODO: Must also use right analyser, sound analyser missing completely
+			// TODO: Must also use right analyser, sound analyser missing completely
 			
 			AudioFeature feature = null;
 			
@@ -487,84 +491,49 @@ namespace FindSimilar
 			public FileInfo QueryFile { get; set; }
 			public List<QueryResult> QueryResultList { get; set; }
 		}
-		
-		private void FindByFilePathSoundfingerprinting(string queryPath) {
-			if (queryPath != "") {
-				FileInfo fi = new FileInfo(queryPath);
-				if (fi.Exists) {
-					
-					if (backgroundWorker1.IsBusy != true) {
-						BackgroundWorkerArgument bgWorkerObject = new BackgroundWorkerArgument {
-							QueryFile = fi
-						};
-						
-						// Send argument to our worker thread
-						backgroundWorker1.RunWorkerAsync(bgWorkerObject);
-						
-						// Start please wait screen
-						splashScreen = new SplashSceenWaitingForm();
-						splashScreen.Show();
-					}
 
-				} else {
-					MessageBox.Show("File does not exist!");
-				}
-			}
-		}
-		
-		private void FindByIdSoundfingerprinting(int queryId) {
+		private void DoSoundfingerprintingsSearch(BackgroundWorkerArgument bgWorkerArg) {
 			
-			if (queryId != -1) {
+			// Start "please wait" screen
+			splashScreen = new SplashSceenWaitingForm();
+			splashScreen.DoWork += new SplashSceenWaitingForm.DoWorkEventHandler(findSimilarSearch_DoWork);
+			splashScreen.Argument = bgWorkerArg;
+			
+			// check return value
+			DialogResult result = splashScreen.ShowDialog();
+			if (result == DialogResult.Cancel) {
+				// the user clicked cancel
+			}
+			else if (result == DialogResult.Abort) {
+				// an unhandled exception occured in user function
+				// you may get the exception information:
+				MessageBox.Show(splashScreen.Result.Error.Message);
+			}
+			else if (result == DialogResult.OK) {
+				// the background worker finished normally
 				
-				Track track = databaseService.ReadTrackById(queryId);
-				if (track != null) {
+				// the result of the background worker is stored in splashScreen.Result
+				BackgroundWorkerArgument argObject = splashScreen.Result.Result as BackgroundWorkerArgument;
+				
+				if (argObject.QueryResultList != null) {
+					// Get query list from the argument object
+					queryResultList = new BindingList<QueryResult>( argObject.QueryResultList );
 					
-					if (backgroundWorker1.IsBusy != true) {
-						
-						// create background worker arugment
-						BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
-							QueryFile = new FileInfo(track.FilePath)
-						};
-						
-						// Start please wait screen
-						splashScreen = new SplashSceenWaitingForm();
-						splashScreen.DoWork += new SplashSceenWaitingForm.DoWorkEventHandler(findSimilarSearch_DoWork);
-						splashScreen.Argument = bgWorkerArg;
-						
-						// check return value
-						DialogResult result = splashScreen.ShowDialog();
-						if (result == DialogResult.Cancel) {
-							//the user clicked cancel
-						}
-						else if (result == DialogResult.Abort) {
-							//an unhandled exception occured in user function
-							//you may get the exception information:
-							MessageBox.Show(splashScreen.Result.Error.Message);
-						}
-						else if (result == DialogResult.OK) {
-							//the background worker finished normally
-							
-							//the result of the background worker is stored in splashScreen.Result
-							BackgroundWorkerArgument argObject = splashScreen.Result.Result as BackgroundWorkerArgument;
-							
-							// Get query list from the argument object
-							queryResultList = new BindingList<QueryResult>( argObject.QueryResultList );
-							
-							// update grid
-							bs.DataSource = queryResultList;
-							dataGridView1.DataSource = queryResultList;
+					// update grid
+					bs.DataSource = queryResultList;
+					dataGridView1.DataSource = queryResultList;
 
-							this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-							this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-						}
-					}
-					
-				} else {
-					MessageBox.Show("File-id does not exist!");
+					this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+					this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 				}
 			}
 		}
 		
+		/// <summary>
+		/// Method to run in the background while showing a "Please wait" screen
+		/// </summary>
+		/// <param name="sender">The "Please wait" screen form</param>
+		/// <param name="e">Event arguments</param>
 		void findSimilarSearch_DoWork(SplashSceenWaitingForm sender, DoWorkEventArgs e)
 		{
 			// e.Argument always contains whatever was sent to the background worker
@@ -590,10 +559,58 @@ namespace FindSimilar
 			 */
 			
 			// Perform a time consuming operation and report progress.
-			List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(argObject.QueryFile, repository);
+			int thresholdTables = 0; // return all matches
+			List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(argObject.QueryFile, repository, sender, thresholdTables);
 			
+			// and set the result
 			argObject.QueryResultList = queryList;
 			e.Result = argObject;
+		}
+		
+		private void FindByFilePathSoundfingerprinting(string queryPath) {
+			if (queryPath != "") {
+				FileInfo fi = new FileInfo(queryPath);
+				if (fi.Exists) {
+					
+					// create background worker arugment
+					BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
+						QueryFile = fi
+					};
+					
+					// and do the search
+					DoSoundfingerprintingsSearch(bgWorkerArg);
+
+				} else {
+					MessageBox.Show("File does not exist!");
+				}
+			}
+		}
+		
+		private void FindByIdSoundfingerprinting(int queryId) {
+			
+			if (queryId != -1) {
+				
+				Track track = databaseService.ReadTrackById(queryId);
+				if (track != null) {
+
+					if (track.FilePath != null && File.Exists(track.FilePath)) {
+						
+						// create background worker arugment
+						BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
+							QueryFile = new FileInfo(track.FilePath)
+						};
+						
+						// and do the search
+						DoSoundfingerprintingsSearch(bgWorkerArg);
+						
+					} else {
+						MessageBox.Show("File does not exist!");
+					}
+					
+				} else {
+					MessageBox.Show("File-id does not exist!");
+				}
+			}
 		}
 		
 		private void FindByStringSoundfingerprinting(string queryString) {
@@ -714,71 +731,6 @@ namespace FindSimilar
 				dataGridView1.DataSource = queryResultList;
 				dataGridView1.Update();
 			}
-		}
-		#endregion
-		
-		#region Soundfingerprinting background worker thread
-		void BackgroundWorker1DoWork(object sender, DoWorkEventArgs e)
-		{
-			BackgroundWorker worker = sender as BackgroundWorker;
-
-			// TODO: support cancelling the consuming operation
-			//while (!worker.CancellationPending)
-			//{
-			//...
-			//worker.ReportProgress((i * 10));
-			//}
-
-			//if (worker.CancellationPending)
-			//{
-			// e.Cancel = true;
-			//}
-			//}
-			
-			// e.Argument always contains whatever was sent to the background worker
-			// in RunWorkerAsync. We can simply cast it to its original type.
-			BackgroundWorkerArgument argObject = e.Argument as BackgroundWorkerArgument;
-			
-			// Perform a time consuming operation and report progress.
-			List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(argObject.QueryFile, repository);
-			
-			argObject.QueryResultList = queryList;
-			e.Result = argObject;
-		}
-		
-		void BackgroundWorker1RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-		{
-			if ((e.Cancelled == true)) {
-				Dbg.WriteLine("BackgroundWorker Canceled!");
-			}
-
-			else if (!(e.Error == null)) {
-				Dbg.WriteLine("BackgroundWorker Error: " + e.Error.Message);
-			}
-
-			else {
-				BackgroundWorkerArgument argObject = e.Result as BackgroundWorkerArgument;
-				
-				// Get query list from the argument object
-				queryResultList = new BindingList<QueryResult>( argObject.QueryResultList );
-				
-				bs.DataSource = queryResultList;
-				dataGridView1.DataSource = queryResultList;
-
-				this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-				this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-				
-				Dbg.WriteLine("BackgroundWorker Done!");
-			}
-			
-			//SplashScreen.Close();
-			this.splashScreen.Close();
-			this.splashScreen.Dispose();
-		}
-		
-		void BackgroundWorker1ProgressChanged(object sender, ProgressChangedEventArgs e)
-		{
-			Dbg.WriteLine(e.ProgressPercentage.ToString() + "%");
 		}
 		#endregion
 	}

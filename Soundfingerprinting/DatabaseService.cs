@@ -239,11 +239,10 @@ namespace Soundfingerprinting.DbStorage
 						// attempt to rollback the transaction
 						try {
 							transaction.Rollback();
-						} catch (Exception e2) {
+						} catch (Exception) {
 							// do nothing
 						}
 						throw e1;
-						return false;
 					}
 				}
 			}
@@ -286,7 +285,6 @@ namespace Soundfingerprinting.DbStorage
 				dbcmd.Dispose();
 			} catch (Exception e) {
 				throw e;
-				return false;
 			}
 			return true;
 		}
@@ -335,7 +333,7 @@ namespace Soundfingerprinting.DbStorage
 					// attempt to rollback the transaction
 					try {
 						transaction.Rollback();
-					} catch (Exception e2) {
+					} catch (Exception) {
 						// do nothing
 					}
 					throw e1;
@@ -413,11 +411,10 @@ namespace Soundfingerprinting.DbStorage
 						// attempt to rollback the transaction
 						try {
 							transaction.Rollback();
-						} catch (Exception e2) {
+						} catch (Exception) {
 							// do nothing
 						}
 						throw e1;
-						return false;
 					}
 				}
 			}

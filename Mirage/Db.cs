@@ -207,7 +207,7 @@ namespace Mirage
 				//dbcmd.ExecuteNonQuery();
 				trackid = Convert.ToInt32(dbcmd.ExecuteScalar());
 				dbcmd.Dispose();
-			} catch (Exception e) {
+			} catch (Exception) {
 				return -1;
 			}
 			return trackid;

@@ -12,6 +12,9 @@
 	using Soundfingerprinting.DbStorage;
 	using Soundfingerprinting.DbStorage.Entities;
 	using Soundfingerprinting.Hashing;
+	
+	using FindSimilar; // for splash screen
+	using System.Threading; // for Thread.Sleep
 
 	public static class QueryFingerprintManager
 	{
@@ -22,8 +25,9 @@
 		/// <param name="dbService">DatabaseService used to query the underlying database</param>
 		/// <param name="lshHashTables">Number of hash tables from the database</param>
 		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
-		/// <param name="thresholdTables">Threshold percentage [0.07 for 20 LHash Tables, 0.17 for 25 LHashTables]</param>
+		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 = return all candidates, 2+ = return only exact matches)</param>
 		/// <param name="queryTime">Set by the method, representing the query length</param>
+		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
 		/// <returns>Dictionary with Tracks ID's and the Query Statistics</returns>
 		public static Dictionary<Int32, QueryStats> QueryOneSongMinHash(
 			IEnumerable<bool[]> signatures,
@@ -32,27 +36,46 @@
 			int lshHashTables,
 			int lshGroupsPerKey,
 			int thresholdTables,
-			ref long queryTime)
+			ref long queryTime,
+			SplashSceenWaitingForm splashScreen)
 		{
 			Stopwatch stopWatch = new Stopwatch();
 			stopWatch.Start();
+			
+			int signatureCounter = 0;
+			int signatureTotalCount = signatures.Count();
 			Dictionary<int, QueryStats> stats = new Dictionary<int, QueryStats>();
-			foreach (bool[] signature in signatures)
-			{
-				if (signature == null)
-				{
+			foreach (bool[] signature in signatures) {
+				
+				#region Please Wait Splash Screen
+				// calculate a percentage between 5 and 90
+				int percentage = (int) ((float) (5 + signatureCounter) / (float) signatureTotalCount * 90);
+				if (splashScreen != null) splashScreen.SetProgress(percentage, String.Format("Searching for similar fingerprints. (Signature {0} of {1})", signatureCounter+1, signatureTotalCount));
+				signatureCounter++;
+				
+				// check if the user clicked cancel
+				if (splashScreen.CancellationPending) {
+					break;
+				}
+				#endregion
+
+				if (signature == null) {
 					continue;
 				}
-
-				// Compute Min Hash on randomly selected fingerprints
-				int[] bin = minHash.ComputeMinHashSignature(signature);
 				
-				Dictionary<int, long> hashes = minHash.GroupMinHashToLSHBuckets(bin, lshHashTables, lshGroupsPerKey); /*Find all candidates by querying the database*/
+				// Compute Min Hash on randomly selected fingerprint
+				int[] bin = minHash.ComputeMinHashSignature(signature);
+
+				// Find all candidates by querying the database
+				Dictionary<int, long> hashes = minHash.GroupMinHashToLSHBuckets(bin, lshHashTables, lshGroupsPerKey);
 				long[] hashbuckets = hashes.Values.ToArray();
 				IDictionary<int, IList<HashBinMinHash>> candidates = dbService.ReadFingerprintsByHashBucketLsh(hashbuckets);
+				
+				// Reduce the potential candidates list if the number of hash tables found for each signature are less than the threshold
 				Dictionary<int, IList<HashBinMinHash>> potentialCandidates = SelectPotentialMatchesOutOfEntireDataset(candidates, thresholdTables);
-				if (potentialCandidates.Count > 0)
-				{
+				
+				// get the final candidate list by only using the potential candidate list
+				if (potentialCandidates.Count > 0) {
 					IList<Fingerprint> fingerprints = dbService.ReadFingerprintById(potentialCandidates.Keys);
 					Dictionary<Fingerprint, int> finalCandidates = fingerprints.ToDictionary(finger => finger, finger => potentialCandidates[finger.Id].Count);
 					ArrangeCandidatesAccordingToFingerprints(
