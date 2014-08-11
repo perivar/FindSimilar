@@ -1026,9 +1026,8 @@ namespace Mirage
 		/// </summary>
 		/// <param name="filePath">input file</param>
 		/// <param name="repository">the database (repository)</param>
-		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
 		/// <returns>a dictionary of similar tracks</returns>
-		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath, Repository repository, SplashSceenWaitingForm splashScreen) {
+		public static Dictionary<Track, double> SimilarTracksSoundfingerprinting(FileInfo filePath, Repository repository) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -1040,11 +1039,11 @@ namespace Mirage
 			
 			param.FingerprintingConfiguration = fingerprintingConfigQuerying;
 			
+			// Find similar using 0 for threshold tables, meaning all matches
 			Dictionary<Track, double> candidates = repository.FindSimilarFromAudioSamples(param.FingerprintingConfiguration.NumberOfHashTables,
 			                                                                              param.FingerprintingConfiguration.NumberOfKeys,
-			                                                                              1,
-			                                                                              param,
-			                                                                              splashScreen);
+			                                                                              0,
+			                                                                              param);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprinting - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
 			return candidates;
@@ -1055,10 +1054,15 @@ namespace Mirage
 		/// </summary>
 		/// <param name="filePath">input file</param>
 		/// <param name="repository">the database (repository)</param>
+		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 and 1 = return all candidates, 2+ = return only exact matches)</param>
+		/// <param name="optimizeSignatureCount">Reduce the number of signatures in order to increase the search performance</param>
 		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
-		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 = return all candidates, 2+ = return only exact matches)</param>
 		/// <returns>a list of query results objects (e.g. similar tracks)</returns>
-		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath, Repository repository, SplashSceenWaitingForm splashScreen, int thresholdTables) {
+		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath,
+		                                                                                 Repository repository,
+		                                                                                 int thresholdTables,
+		                                                                                 bool optimizeSignatureCount,
+		                                                                                 SplashSceenWaitingForm splashScreen) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
@@ -1089,6 +1093,7 @@ namespace Mirage
 			                                                                                      param.FingerprintingConfiguration.NumberOfKeys,
 			                                                                                      thresholdTables,
 			                                                                                      param,
+			                                                                                      optimizeSignatureCount,
 			                                                                                      splashScreen);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprintingList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);

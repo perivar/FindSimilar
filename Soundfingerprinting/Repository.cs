@@ -41,7 +41,7 @@
 		private DatabaseService dbService;
 		private FingerprintService fingerprintService;
 		
-		private static bool OPTIMIZE_SIGNATURE_COUNT = false; // reduce the number of signatures in order to increase the search performance
+		//private static bool OPTIMIZE_SIGNATURE_COUNT = false; // reduce the number of signatures in order to increase the search performance
 		private static int MAX_SIGNATURE_COUNT = 10; // the number of signatures to reduce to
 		
 		public Repository(IPermutations permutations, DatabaseService dbService, FingerprintService fingerprintService)
@@ -116,16 +116,14 @@
 		/// </summary>
 		/// <param name="lshHashTables">Number of hash tables from the database</param>
 		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
-		/// <param name="thresholdTables">Threshold percentage [0.07 for 20 LHash Tables, 0.17 for 25 LHashTables]</param>
+		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 and 1 = return all candidates, 2+ = return only exact matches)</param>
 		/// <param name="param">Audio File Work Unit Parameter Object</param>
-		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
 		/// <returns>a dictionary of perceptually similar tracks</returns>
 		public Dictionary<Track, double> FindSimilarFromAudioSamples(
 			int lshHashTables,
 			int lshGroupsPerKey,
 			int thresholdTables,
-			WorkUnitParameterObject param,
-			SplashSceenWaitingForm splashScreen) {
+			WorkUnitParameterObject param) {
 			
 			DbgTimer t = new DbgTimer();
 			t.Start ();
@@ -146,7 +144,7 @@
 				lshGroupsPerKey,
 				thresholdTables,
 				ref elapsedMiliseconds,
-				splashScreen);
+				null);
 
 			IEnumerable<int> ids = allCandidates.Select(p => p.Key);
 			IList<Track> tracks = dbService.ReadTrackById(ids);
@@ -175,8 +173,9 @@
 		/// </summary>
 		/// <param name="lshHashTables">Number of hash tables from the database</param>
 		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
-		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 = return all candidates, 2+ = return only exact matches)</param>
+		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 and 1 = return all candidates, 2+ = return only exact matches)</param>
 		/// <param name="param">Audio File Work Unit Parameter Object</param>
+		/// <param name="optimizeSignatureCount">Reduce the number of signatures in order to increase the search performance</param>
 		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
 		/// <returns>a list of perceptually similar tracks</returns>
 		public List<FindSimilar.QueryResult> FindSimilarFromAudioSamplesList(
@@ -184,6 +183,7 @@
 			int lshGroupsPerKey,
 			int thresholdTables,
 			WorkUnitParameterObject param,
+			bool optimizeSignatureCount,
 			SplashSceenWaitingForm splashScreen) {
 			
 			DbgTimer t = new DbgTimer();
@@ -199,7 +199,7 @@
 			if (splashScreen != null) splashScreen.SetProgress(3, String.Format("Successfully created {0} fingerprints.", signatures.Count));
 			
 			// If the number of signatures is to big, only keep the first MAX_SIGNATURE_COUNT to avoid a very time consuming search
-			if (OPTIMIZE_SIGNATURE_COUNT && signatures.Count > MAX_SIGNATURE_COUNT) {
+			if (optimizeSignatureCount && signatures.Count > MAX_SIGNATURE_COUNT) {
 				if (splashScreen != null) splashScreen.SetProgress(4, String.Format("Only using the first {0} fingerprints out of {1}.", MAX_SIGNATURE_COUNT, signatures.Count));
 				signatures.RemoveRange(MAX_SIGNATURE_COUNT, signatures.Count - MAX_SIGNATURE_COUNT);
 				Dbg.WriteLine("Only using the first {0} fingerprints.", MAX_SIGNATURE_COUNT);

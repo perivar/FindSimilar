@@ -62,6 +62,8 @@
 			this.btnClearFilter = new System.Windows.Forms.Button();
 			this.lblFileCount = new System.Windows.Forms.Label();
 			this.database_count = new System.Windows.Forms.Label();
+			this.ThresholdTablesCombo = new System.Windows.Forms.ComboBox();
+			this.LessAccurateCheckBox = new System.Windows.Forms.CheckBox();
 			this.tabControl1.SuspendLayout();
 			this.tabFileSearch.SuspendLayout();
 			this.tabIdSearch.SuspendLayout();
@@ -77,7 +79,7 @@
 			this.tabControl1.Controls.Add(this.tabFileSearch);
 			this.tabControl1.Controls.Add(this.tabIdSearch);
 			this.tabControl1.Controls.Add(this.tabStringSearch);
-			this.tabControl1.Location = new System.Drawing.Point(12, 29);
+			this.tabControl1.Location = new System.Drawing.Point(12, 46);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
 			this.tabControl1.Size = new System.Drawing.Size(676, 55);
@@ -204,12 +206,12 @@
 									| System.Windows.Forms.AnchorStyles.Right)));
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.ContextMenuStrip = this.contextMenuStrip1;
-			this.dataGridView1.Location = new System.Drawing.Point(12, 114);
+			this.dataGridView1.Location = new System.Drawing.Point(12, 132);
 			this.dataGridView1.MultiSelect = false;
 			this.dataGridView1.Name = "dataGridView1";
 			this.dataGridView1.ReadOnly = true;
 			this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-			this.dataGridView1.Size = new System.Drawing.Size(676, 269);
+			this.dataGridView1.Size = new System.Drawing.Size(676, 262);
 			this.dataGridView1.TabIndex = 3;
 			this.dataGridView1.SelectionChanged += new System.EventHandler(this.DataGridView1SelectionChanged);
 			this.dataGridView1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.DataGridView1KeyPress);
@@ -257,7 +259,7 @@
 			// 
 			this.DistanceTypeCombo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.DistanceTypeCombo.FormattingEnabled = true;
-			this.DistanceTypeCombo.Location = new System.Drawing.Point(538, 89);
+			this.DistanceTypeCombo.Location = new System.Drawing.Point(538, 105);
 			this.DistanceTypeCombo.Name = "DistanceTypeCombo";
 			this.DistanceTypeCombo.Size = new System.Drawing.Size(150, 21);
 			this.DistanceTypeCombo.TabIndex = 4;
@@ -265,7 +267,7 @@
 			// 
 			// GoBtn
 			// 
-			this.GoBtn.Location = new System.Drawing.Point(12, 88);
+			this.GoBtn.Location = new System.Drawing.Point(12, 104);
 			this.GoBtn.Name = "GoBtn";
 			this.GoBtn.Size = new System.Drawing.Size(95, 23);
 			this.GoBtn.TabIndex = 5;
@@ -276,7 +278,7 @@
 			// ResetBtn
 			// 
 			this.ResetBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.ResetBtn.Location = new System.Drawing.Point(632, 12);
+			this.ResetBtn.Location = new System.Drawing.Point(632, 41);
 			this.ResetBtn.Name = "ResetBtn";
 			this.ResetBtn.Size = new System.Drawing.Size(49, 23);
 			this.ResetBtn.TabIndex = 6;
@@ -289,7 +291,7 @@
 			this.autoPlayCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.autoPlayCheckBox.Checked = true;
 			this.autoPlayCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.autoPlayCheckBox.Location = new System.Drawing.Point(559, 12);
+			this.autoPlayCheckBox.Location = new System.Drawing.Point(559, 41);
 			this.autoPlayCheckBox.Name = "autoPlayCheckBox";
 			this.autoPlayCheckBox.Size = new System.Drawing.Size(71, 24);
 			this.autoPlayCheckBox.TabIndex = 7;
@@ -300,7 +302,7 @@
 			// IgnoreFileLengthCheckBox
 			// 
 			this.IgnoreFileLengthCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.IgnoreFileLengthCheckBox.Location = new System.Drawing.Point(413, 88);
+			this.IgnoreFileLengthCheckBox.Location = new System.Drawing.Point(413, 104);
 			this.IgnoreFileLengthCheckBox.Name = "IgnoreFileLengthCheckBox";
 			this.IgnoreFileLengthCheckBox.Size = new System.Drawing.Size(119, 24);
 			this.IgnoreFileLengthCheckBox.TabIndex = 8;
@@ -350,7 +352,7 @@
 			// 
 			// txtFilterResults
 			// 
-			this.txtFilterResults.Location = new System.Drawing.Point(197, 90);
+			this.txtFilterResults.Location = new System.Drawing.Point(197, 106);
 			this.txtFilterResults.Name = "txtFilterResults";
 			this.txtFilterResults.Size = new System.Drawing.Size(149, 20);
 			this.txtFilterResults.TabIndex = 13;
@@ -358,7 +360,7 @@
 			// 
 			// lblFilterResults
 			// 
-			this.lblFilterResults.Location = new System.Drawing.Point(125, 93);
+			this.lblFilterResults.Location = new System.Drawing.Point(125, 109);
 			this.lblFilterResults.Name = "lblFilterResults";
 			this.lblFilterResults.Size = new System.Drawing.Size(72, 19);
 			this.lblFilterResults.TabIndex = 14;
@@ -366,7 +368,7 @@
 			// 
 			// btnClearFilter
 			// 
-			this.btnClearFilter.Location = new System.Drawing.Point(352, 88);
+			this.btnClearFilter.Location = new System.Drawing.Point(352, 104);
 			this.btnClearFilter.Name = "btnClearFilter";
 			this.btnClearFilter.Size = new System.Drawing.Size(42, 23);
 			this.btnClearFilter.TabIndex = 15;
@@ -377,7 +379,7 @@
 			// lblFileCount
 			// 
 			this.lblFileCount.Anchor = System.Windows.Forms.AnchorStyles.Top;
-			this.lblFileCount.Location = new System.Drawing.Point(361, 6);
+			this.lblFileCount.Location = new System.Drawing.Point(376, 6);
 			this.lblFileCount.Name = "lblFileCount";
 			this.lblFileCount.Size = new System.Drawing.Size(100, 18);
 			this.lblFileCount.TabIndex = 16;
@@ -386,18 +388,40 @@
 			// database_count
 			// 
 			this.database_count.Anchor = System.Windows.Forms.AnchorStyles.Top;
-			this.database_count.Location = new System.Drawing.Point(450, 6);
+			this.database_count.Location = new System.Drawing.Point(465, 6);
 			this.database_count.Name = "database_count";
 			this.database_count.Size = new System.Drawing.Size(91, 17);
 			this.database_count.TabIndex = 17;
 			this.database_count.Text = "database_count";
 			// 
+			// ThresholdTablesCombo
+			// 
+			this.ThresholdTablesCombo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.ThresholdTablesCombo.FormattingEnabled = true;
+			this.ThresholdTablesCombo.Location = new System.Drawing.Point(538, 104);
+			this.ThresholdTablesCombo.Name = "ThresholdTablesCombo";
+			this.ThresholdTablesCombo.Size = new System.Drawing.Size(150, 21);
+			this.ThresholdTablesCombo.TabIndex = 18;
+			// 
+			// LessAccurateCheckBox
+			// 
+			this.LessAccurateCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.LessAccurateCheckBox.Location = new System.Drawing.Point(402, 101);
+			this.LessAccurateCheckBox.Name = "LessAccurateCheckBox";
+			this.LessAccurateCheckBox.Size = new System.Drawing.Size(130, 31);
+			this.LessAccurateCheckBox.TabIndex = 19;
+			this.LessAccurateCheckBox.Text = "Less Accurate (faster)";
+			this.LessAccurateCheckBox.UseVisualStyleBackColor = true;
+			this.LessAccurateCheckBox.CheckedChanged += new System.EventHandler(this.LessAccurateCheckBoxCheckedChanged);
+			// 
 			// FindSimilarClientForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(700, 395);
+			this.ClientSize = new System.Drawing.Size(700, 406);
 			this.ContextMenuStrip = this.contextMenuStrip1;
+			this.Controls.Add(this.LessAccurateCheckBox);
+			this.Controls.Add(this.ThresholdTablesCombo);
 			this.Controls.Add(this.database_count);
 			this.Controls.Add(this.lblFileCount);
 			this.Controls.Add(this.btnClearFilter);
@@ -429,6 +453,8 @@
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
+		private System.Windows.Forms.CheckBox LessAccurateCheckBox;
+		private System.Windows.Forms.ComboBox ThresholdTablesCombo;
 		private System.Windows.Forms.ToolStripMenuItem copyFileURLToolStripMenuItem;
 		private System.Windows.Forms.Label lblFileCount;
 		private System.Windows.Forms.Label database_count;

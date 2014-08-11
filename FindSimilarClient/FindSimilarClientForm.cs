@@ -41,6 +41,8 @@ namespace FindSimilar
 		//private static Analyzer.AnalysisMethod analysisMethod = Analyzer.AnalysisMethod.MandelEllis;
 		
 		private static int DEFAULT_NUM_TO_TAKE = 200;
+		
+		// used for SCMS or Mandel Ellis searching
 		private static double DEFAULT_PERCENTAGE_ENABLED = 0.8;
 		private static double DEFAULT_PERCENTAGE_DISABLED = 1.0;
 
@@ -58,8 +60,21 @@ namespace FindSimilar
 		BindingSource bs = new BindingSource();
 		BindingList<QueryResult> queryResultList;
 		
-		// waiting splash screen
+		// Waiting splash screen
 		private SplashSceenWaitingForm splashScreen;
+		
+		// Threshold tables for use with Soundfingerprinting searching
+		enum ThresholdTables {
+			Show_All = 1,
+			Limit_2 = 2,
+			Limit_3 = 3,
+			Limit_4 = 4,
+			Limit_5 = 5,
+			Limit_6 = 6,
+			Limit_7 = 7,
+			Limit_8 = 8,
+			Limit_9 = 9
+		}
 		
 		public FindSimilarClientForm()
 		{
@@ -73,10 +88,12 @@ namespace FindSimilar
 			//
 			this.version.Text = Mirage.Mir.VERSION;
 			this.DistanceTypeCombo.DataSource = Enum.GetValues(typeof(AudioFeature.DistanceType));
+			this.ThresholdTablesCombo.DataSource = Enum.GetValues(typeof(ThresholdTables));
 			
+			// Instansiate SCMS or Mandel Ellis Repository
 			this.db = new Db();
 			
-			// Instansiate soundfingerprinting Repository
+			// Instansiate Soundfingerprinting Repository
 			FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
 			this.databaseService = DatabaseService.Instance;
 
@@ -88,9 +105,13 @@ namespace FindSimilar
 			if (rbScms.Checked) {
 				IgnoreFileLengthCheckBox.Visible = true;
 				DistanceTypeCombo.Visible = true;
+				LessAccurateCheckBox.Visible = false;
+				ThresholdTablesCombo.Visible = false;
 			} else {
 				IgnoreFileLengthCheckBox.Visible = false;
 				DistanceTypeCombo.Visible = false;
+				LessAccurateCheckBox.Visible = true;
+				ThresholdTablesCombo.Visible = true;
 			}
 			
 			ReadAllTracks();
@@ -362,6 +383,15 @@ namespace FindSimilar
 			}
 		}
 		
+		void LessAccurateCheckBoxCheckedChanged(object sender, EventArgs e)
+		{
+			if (LessAccurateCheckBox.Checked) {
+				
+			} else {
+				
+			}
+		}
+		
 		void FindSimilarClientFormFormClosing(object sender, FormClosingEventArgs e)
 		{
 			if (player != null) player.Dispose();
@@ -490,6 +520,8 @@ namespace FindSimilar
 			
 			public FileInfo QueryFile { get; set; }
 			public List<QueryResult> QueryResultList { get; set; }
+			public int ThresholdTables { get; set; }
+			public bool OptimizeSignatureCount { get; set; }
 		}
 
 		private void DoSoundfingerprintingsSearch(BackgroundWorkerArgument bgWorkerArg) {
@@ -539,28 +571,13 @@ namespace FindSimilar
 			// e.Argument always contains whatever was sent to the background worker
 			// in RunWorkerAsync. We can simply cast it to its original type.
 			BackgroundWorkerArgument argObject = e.Argument as BackgroundWorkerArgument;
-
-			/*
-			//do something long...
-			for (int i = 0; i < 100; i++)
-			{
-				//notify progress to the form
-				sender.SetProgress(i, "Step " + i.ToString() + " / 100...");
-				
-				Thread.Sleep(100);
-				
-				//check if the user clicked cancel
-				if (sender.CancellationPending)
-				{
-					e.Cancel = true;
-					return;
-				}
-			}
-			 */
 			
 			// Perform a time consuming operation and report progress.
-			int thresholdTables = 0; // return all matches
-			List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(argObject.QueryFile, repository, sender, thresholdTables);
+			List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(argObject.QueryFile,
+			                                                                            repository,
+			                                                                            argObject.ThresholdTables,
+			                                                                            argObject.OptimizeSignatureCount,
+			                                                                            sender);
 			
 			// and set the result
 			argObject.QueryResultList = queryList;
@@ -574,7 +591,9 @@ namespace FindSimilar
 					
 					// create background worker arugment
 					BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
-						QueryFile = fi
+						QueryFile = fi,
+						ThresholdTables = (int) ThresholdTablesCombo.SelectedValue,
+						OptimizeSignatureCount = LessAccurateCheckBox.Checked
 					};
 					
 					// and do the search
@@ -597,7 +616,9 @@ namespace FindSimilar
 						
 						// create background worker arugment
 						BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
-							QueryFile = new FileInfo(track.FilePath)
+							QueryFile = new FileInfo(track.FilePath),
+							ThresholdTables = (int) ThresholdTablesCombo.SelectedValue,
+							OptimizeSignatureCount = LessAccurateCheckBox.Checked
 						};
 						
 						// and do the search
@@ -698,10 +719,15 @@ namespace FindSimilar
 			if (rbScms.Checked) {
 				IgnoreFileLengthCheckBox.Visible = true;
 				DistanceTypeCombo.Visible = true;
+				LessAccurateCheckBox.Visible = false;
+				ThresholdTablesCombo.Visible = false;
 			} else {
 				IgnoreFileLengthCheckBox.Visible = false;
 				DistanceTypeCombo.Visible = false;
+				LessAccurateCheckBox.Visible = true;
+				ThresholdTablesCombo.Visible = true;
 			}
+			
 			ReadAllTracks();
 		}
 		
@@ -733,6 +759,7 @@ namespace FindSimilar
 			}
 		}
 		#endregion
+		
 	}
 
 	// http://stackoverflow.com/questions/17309270/datagridview-binding-source-filter
