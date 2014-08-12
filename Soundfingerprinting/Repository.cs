@@ -41,8 +41,7 @@
 		private DatabaseService dbService;
 		private FingerprintService fingerprintService;
 		
-		//private static bool OPTIMIZE_SIGNATURE_COUNT = false; // reduce the number of signatures in order to increase the search performance
-		private static int MAX_SIGNATURE_COUNT = 10; // the number of signatures to reduce to
+		private static int MAX_SIGNATURE_COUNT = 5; // the number of signatures to reduce to
 		
 		public Repository(IPermutations permutations, DatabaseService dbService, FingerprintService fingerprintService)
 		{

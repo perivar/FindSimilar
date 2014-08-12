@@ -49,7 +49,7 @@ namespace FindSimilar
 			// 
 			this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
 			this.pictureBox1.InitialImage = null;
-			this.pictureBox1.Location = new System.Drawing.Point(36, 40);
+			this.pictureBox1.Location = new System.Drawing.Point(26, 53);
 			this.pictureBox1.Name = "pictureBox1";
 			this.pictureBox1.Size = new System.Drawing.Size(66, 67);
 			this.pictureBox1.TabIndex = 0;
@@ -58,17 +58,17 @@ namespace FindSimilar
 			// lblStatus
 			// 
 			this.lblStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.lblStatus.Location = new System.Drawing.Point(117, 40);
+			this.lblStatus.Location = new System.Drawing.Point(117, 53);
 			this.lblStatus.Name = "lblStatus";
-			this.lblStatus.Size = new System.Drawing.Size(251, 41);
+			this.lblStatus.Size = new System.Drawing.Size(289, 41);
 			this.lblStatus.TabIndex = 1;
 			this.lblStatus.Text = "Status";
 			// 
 			// progressBar
 			// 
-			this.progressBar.Location = new System.Drawing.Point(117, 84);
+			this.progressBar.Location = new System.Drawing.Point(117, 97);
 			this.progressBar.Name = "progressBar";
-			this.progressBar.Size = new System.Drawing.Size(251, 23);
+			this.progressBar.Size = new System.Drawing.Size(289, 23);
 			this.progressBar.TabIndex = 4;
 			// 
 			// worker
@@ -81,7 +81,7 @@ namespace FindSimilar
 			// 
 			// buttonCancel
 			// 
-			this.buttonCancel.Location = new System.Drawing.Point(176, 121);
+			this.buttonCancel.Location = new System.Drawing.Point(176, 140);
 			this.buttonCancel.Name = "buttonCancel";
 			this.buttonCancel.Size = new System.Drawing.Size(75, 23);
 			this.buttonCancel.TabIndex = 5;
@@ -94,7 +94,7 @@ namespace FindSimilar
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.SystemColors.ControlLightLight;
-			this.ClientSize = new System.Drawing.Size(424, 156);
+			this.ClientSize = new System.Drawing.Size(441, 175);
 			this.Controls.Add(this.buttonCancel);
 			this.Controls.Add(this.progressBar);
 			this.Controls.Add(this.lblStatus);

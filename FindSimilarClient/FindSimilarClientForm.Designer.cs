@@ -79,7 +79,7 @@
 			this.tabControl1.Controls.Add(this.tabFileSearch);
 			this.tabControl1.Controls.Add(this.tabIdSearch);
 			this.tabControl1.Controls.Add(this.tabStringSearch);
-			this.tabControl1.Location = new System.Drawing.Point(12, 46);
+			this.tabControl1.Location = new System.Drawing.Point(12, 27);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
 			this.tabControl1.Size = new System.Drawing.Size(676, 55);
@@ -206,12 +206,12 @@
 									| System.Windows.Forms.AnchorStyles.Right)));
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.ContextMenuStrip = this.contextMenuStrip1;
-			this.dataGridView1.Location = new System.Drawing.Point(12, 132);
+			this.dataGridView1.Location = new System.Drawing.Point(12, 113);
 			this.dataGridView1.MultiSelect = false;
 			this.dataGridView1.Name = "dataGridView1";
 			this.dataGridView1.ReadOnly = true;
 			this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-			this.dataGridView1.Size = new System.Drawing.Size(676, 262);
+			this.dataGridView1.Size = new System.Drawing.Size(676, 283);
 			this.dataGridView1.TabIndex = 3;
 			this.dataGridView1.SelectionChanged += new System.EventHandler(this.DataGridView1SelectionChanged);
 			this.dataGridView1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.DataGridView1KeyPress);
@@ -225,33 +225,33 @@
 									this.copyFileURLToolStripMenuItem,
 									this.dumpDebugInfoToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(215, 92);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(200, 92);
 			// 
 			// findSimilarToolStripMenuItem
 			// 
 			this.findSimilarToolStripMenuItem.Name = "findSimilarToolStripMenuItem";
-			this.findSimilarToolStripMenuItem.Size = new System.Drawing.Size(214, 22);
+			this.findSimilarToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
 			this.findSimilarToolStripMenuItem.Text = "Find Similar";
 			this.findSimilarToolStripMenuItem.Click += new System.EventHandler(this.FindSimilarToolStripMenuItemClick);
 			// 
 			// openFileLocationToolStripMenuItem
 			// 
 			this.openFileLocationToolStripMenuItem.Name = "openFileLocationToolStripMenuItem";
-			this.openFileLocationToolStripMenuItem.Size = new System.Drawing.Size(214, 22);
+			this.openFileLocationToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
 			this.openFileLocationToolStripMenuItem.Text = "Open file location";
 			this.openFileLocationToolStripMenuItem.Click += new System.EventHandler(this.OpenFileLocationToolStripMenuItemClick);
 			// 
 			// copyFileURLToolStripMenuItem
 			// 
 			this.copyFileURLToolStripMenuItem.Name = "copyFileURLToolStripMenuItem";
-			this.copyFileURLToolStripMenuItem.Size = new System.Drawing.Size(214, 22);
+			this.copyFileURLToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
 			this.copyFileURLToolStripMenuItem.Text = "Copy file URL to Clipboard";
 			this.copyFileURLToolStripMenuItem.Click += new System.EventHandler(this.CopyFileURLToolStripMenuItemClick);
 			// 
 			// dumpDebugInfoToolStripMenuItem
 			// 
 			this.dumpDebugInfoToolStripMenuItem.Name = "dumpDebugInfoToolStripMenuItem";
-			this.dumpDebugInfoToolStripMenuItem.Size = new System.Drawing.Size(214, 22);
+			this.dumpDebugInfoToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
 			this.dumpDebugInfoToolStripMenuItem.Text = "Dump debug info";
 			this.dumpDebugInfoToolStripMenuItem.Click += new System.EventHandler(this.DumpDebugInfoToolStripMenuItemClick);
 			// 
@@ -259,7 +259,7 @@
 			// 
 			this.DistanceTypeCombo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.DistanceTypeCombo.FormattingEnabled = true;
-			this.DistanceTypeCombo.Location = new System.Drawing.Point(538, 105);
+			this.DistanceTypeCombo.Location = new System.Drawing.Point(538, 86);
 			this.DistanceTypeCombo.Name = "DistanceTypeCombo";
 			this.DistanceTypeCombo.Size = new System.Drawing.Size(150, 21);
 			this.DistanceTypeCombo.TabIndex = 4;
@@ -267,7 +267,7 @@
 			// 
 			// GoBtn
 			// 
-			this.GoBtn.Location = new System.Drawing.Point(12, 104);
+			this.GoBtn.Location = new System.Drawing.Point(12, 85);
 			this.GoBtn.Name = "GoBtn";
 			this.GoBtn.Size = new System.Drawing.Size(95, 23);
 			this.GoBtn.TabIndex = 5;
@@ -278,7 +278,7 @@
 			// ResetBtn
 			// 
 			this.ResetBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.ResetBtn.Location = new System.Drawing.Point(632, 41);
+			this.ResetBtn.Location = new System.Drawing.Point(632, 22);
 			this.ResetBtn.Name = "ResetBtn";
 			this.ResetBtn.Size = new System.Drawing.Size(49, 23);
 			this.ResetBtn.TabIndex = 6;
@@ -291,7 +291,7 @@
 			this.autoPlayCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.autoPlayCheckBox.Checked = true;
 			this.autoPlayCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.autoPlayCheckBox.Location = new System.Drawing.Point(559, 41);
+			this.autoPlayCheckBox.Location = new System.Drawing.Point(559, 22);
 			this.autoPlayCheckBox.Name = "autoPlayCheckBox";
 			this.autoPlayCheckBox.Size = new System.Drawing.Size(71, 24);
 			this.autoPlayCheckBox.TabIndex = 7;
@@ -302,7 +302,7 @@
 			// IgnoreFileLengthCheckBox
 			// 
 			this.IgnoreFileLengthCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.IgnoreFileLengthCheckBox.Location = new System.Drawing.Point(413, 104);
+			this.IgnoreFileLengthCheckBox.Location = new System.Drawing.Point(413, 85);
 			this.IgnoreFileLengthCheckBox.Name = "IgnoreFileLengthCheckBox";
 			this.IgnoreFileLengthCheckBox.Size = new System.Drawing.Size(119, 24);
 			this.IgnoreFileLengthCheckBox.TabIndex = 8;
@@ -352,7 +352,7 @@
 			// 
 			// txtFilterResults
 			// 
-			this.txtFilterResults.Location = new System.Drawing.Point(197, 106);
+			this.txtFilterResults.Location = new System.Drawing.Point(197, 87);
 			this.txtFilterResults.Name = "txtFilterResults";
 			this.txtFilterResults.Size = new System.Drawing.Size(149, 20);
 			this.txtFilterResults.TabIndex = 13;
@@ -360,7 +360,7 @@
 			// 
 			// lblFilterResults
 			// 
-			this.lblFilterResults.Location = new System.Drawing.Point(125, 109);
+			this.lblFilterResults.Location = new System.Drawing.Point(125, 90);
 			this.lblFilterResults.Name = "lblFilterResults";
 			this.lblFilterResults.Size = new System.Drawing.Size(72, 19);
 			this.lblFilterResults.TabIndex = 14;
@@ -368,7 +368,7 @@
 			// 
 			// btnClearFilter
 			// 
-			this.btnClearFilter.Location = new System.Drawing.Point(352, 104);
+			this.btnClearFilter.Location = new System.Drawing.Point(352, 85);
 			this.btnClearFilter.Name = "btnClearFilter";
 			this.btnClearFilter.Size = new System.Drawing.Size(42, 23);
 			this.btnClearFilter.TabIndex = 15;
@@ -398,7 +398,7 @@
 			// 
 			this.ThresholdTablesCombo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.ThresholdTablesCombo.FormattingEnabled = true;
-			this.ThresholdTablesCombo.Location = new System.Drawing.Point(538, 104);
+			this.ThresholdTablesCombo.Location = new System.Drawing.Point(538, 85);
 			this.ThresholdTablesCombo.Name = "ThresholdTablesCombo";
 			this.ThresholdTablesCombo.Size = new System.Drawing.Size(150, 21);
 			this.ThresholdTablesCombo.TabIndex = 18;
@@ -406,11 +406,13 @@
 			// LessAccurateCheckBox
 			// 
 			this.LessAccurateCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.LessAccurateCheckBox.Location = new System.Drawing.Point(402, 101);
+			this.LessAccurateCheckBox.Checked = true;
+			this.LessAccurateCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.LessAccurateCheckBox.Location = new System.Drawing.Point(404, 82);
 			this.LessAccurateCheckBox.Name = "LessAccurateCheckBox";
 			this.LessAccurateCheckBox.Size = new System.Drawing.Size(130, 31);
 			this.LessAccurateCheckBox.TabIndex = 19;
-			this.LessAccurateCheckBox.Text = "Less Accurate (faster)";
+			this.LessAccurateCheckBox.Text = "Optimize for big files";
 			this.LessAccurateCheckBox.UseVisualStyleBackColor = true;
 			this.LessAccurateCheckBox.CheckedChanged += new System.EventHandler(this.LessAccurateCheckBoxCheckedChanged);
 			// 
@@ -418,7 +420,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(700, 406);
+			this.ClientSize = new System.Drawing.Size(700, 408);
 			this.ContextMenuStrip = this.contextMenuStrip1;
 			this.Controls.Add(this.LessAccurateCheckBox);
 			this.Controls.Add(this.ThresholdTablesCombo);

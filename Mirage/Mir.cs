@@ -55,7 +55,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.22";
+		public static string VERSION = "1.0.23";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -482,10 +482,9 @@ namespace Mirage
 				                 			} else {
 				                 				Console.Out.WriteLine("[{1}/{2} - {3}/{4}] Succesfully added {0} to database. (Thread: {5})", fileInfo.Name, filesCounter, filesRemaining.Count, filesAllCounter, filesAll.Count(), Thread.CurrentThread.ManagedThreadId);
 				                 				
+				                 				// Threadsafe increment (TODO: doesn't always seem to work?)
 				                 				//filesCounter++;
 				                 				//filesAllCounter++;
-				                 				
-				                 				// Threadsafe increment
 				                 				Interlocked.Increment(ref filesCounter);
 				                 				Interlocked.Increment(ref filesAllCounter);
 				                 			}

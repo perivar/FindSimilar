@@ -47,12 +47,7 @@
 			Dictionary<int, QueryStats> stats = new Dictionary<int, QueryStats>();
 			foreach (bool[] signature in signatures) {
 				
-				#region Please Wait Splash Screen
-				// calculate a percentage between 5 and 90
-				int percentage = (int) ((float) (5 + signatureCounter) / (float) signatureTotalCount * 90);
-				if (splashScreen != null) splashScreen.SetProgress(percentage, String.Format("Searching for similar fingerprints. (Signature {0} of {1})", signatureCounter+1, signatureTotalCount));
-				signatureCounter++;
-				
+				#region Please Wait Splash Screen Cancel Event
 				// check if the user clicked cancel
 				if (splashScreen.CancellationPending) {
 					break;
@@ -65,7 +60,7 @@
 				
 				// Compute Min Hash on randomly selected fingerprint
 				int[] bin = minHash.ComputeMinHashSignature(signature);
-
+				
 				// Find all candidates by querying the database
 				Dictionary<int, long> hashes = minHash.GroupMinHashToLSHBuckets(bin, lshHashTables, lshGroupsPerKey);
 				long[] hashbuckets = hashes.Values.ToArray();
@@ -78,9 +73,19 @@
 				if (potentialCandidates.Count > 0) {
 					IList<Fingerprint> fingerprints = dbService.ReadFingerprintById(potentialCandidates.Keys);
 					Dictionary<Fingerprint, int> finalCandidates = fingerprints.ToDictionary(finger => finger, finger => potentialCandidates[finger.Id].Count);
-					ArrangeCandidatesAccordingToFingerprints(
-						signature, finalCandidates, lshHashTables, lshGroupsPerKey, stats);
+					ArrangeCandidatesAccordingToFingerprints(signature,
+					                                         finalCandidates,
+					                                         lshHashTables,
+					                                         lshGroupsPerKey,
+					                                         stats);
 				}
+				
+				#region Please Wait Splash Screen Update
+				// calculate a percentage between 5 and 90
+				int percentage = (int) ((float) (signatureCounter) / (float) signatureTotalCount * 85) + 5;
+				if (splashScreen != null) splashScreen.SetProgress(percentage, String.Format("Searching for similar fingerprints.\n(Signature {0} of {1})", signatureCounter+1, signatureTotalCount));
+				signatureCounter++;
+				#endregion Updat
 			}
 
 			stopWatch.Stop();
@@ -100,9 +105,10 @@
 		private static Dictionary<Int32, QueryStats> ArrangeCandidatesAccordingToFingerprints(bool[] f, Dictionary<Fingerprint, int> potentialCandidates,
 		                                                                                      int lHashTables, int kKeys, Dictionary<Int32, QueryStats> trackIdQueryStats)
 		{
+			
 			// Most time consuming method while performing the necessary calculation
-			foreach (KeyValuePair<Fingerprint, int> pair in potentialCandidates)
-			{
+			foreach (KeyValuePair<Fingerprint, int> pair in potentialCandidates) {
+
 				Fingerprint fingerprint = pair.Key;
 				int tableVotes = pair.Value;
 				
