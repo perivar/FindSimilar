@@ -55,7 +55,7 @@ namespace Mirage
 {
 	public class Mir
 	{
-		public static string VERSION = "1.0.23";
+		public static string VERSION = "1.0.25";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 		
@@ -520,6 +520,7 @@ namespace Mirage
 				Application.EnableVisualStyles();
 				Application.SetCompatibleTextRenderingDefault(false);
 				Application.Run(new FindSimilarClientForm());
+				//Application.Run(new CompareAudioForm());
 			}
 			
 			[STAThread]
@@ -636,8 +637,8 @@ namespace Mirage
 				FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
 				DatabaseService databaseService = DatabaseService.Instance; // For AudioFingerprinting
 
-				//IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-				IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms-new.csv", ",");
+				IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
+				//IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms-new.csv", ",");
 				
 				Repository repository = new Repository(permutations, databaseService, fingerprintService);
 				

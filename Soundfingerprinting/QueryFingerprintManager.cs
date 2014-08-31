@@ -27,6 +27,7 @@
 		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
 		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 = return all candidates, 2+ = return only exact matches)</param>
 		/// <param name="queryTime">Set by the method, representing the query length</param>
+		/// <param name="doSearchEverything">disregard the local sensitivity hashes and search the whole database</param>
 		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
 		/// <returns>Dictionary with Tracks ID's and the Query Statistics</returns>
 		public static Dictionary<Int32, QueryStats> QueryOneSongMinHash(
@@ -37,7 +38,8 @@
 			int lshGroupsPerKey,
 			int thresholdTables,
 			ref long queryTime,
-			SplashSceenWaitingForm splashScreen)
+			bool doSearchEverything = false,
+			SplashSceenWaitingForm splashScreen = null)
 		{
 			Stopwatch stopWatch = new Stopwatch();
 			stopWatch.Start();
@@ -57,14 +59,21 @@
 				if (signature == null) {
 					continue;
 				}
-				
-				// Compute Min Hash on randomly selected fingerprint
-				int[] bin = minHash.ComputeMinHashSignature(signature);
-				
-				// Find all candidates by querying the database
-				Dictionary<int, long> hashes = minHash.GroupMinHashToLSHBuckets(bin, lshHashTables, lshGroupsPerKey);
-				long[] hashbuckets = hashes.Values.ToArray();
-				IDictionary<int, IList<HashBinMinHash>> candidates = dbService.ReadFingerprintsByHashBucketLsh(hashbuckets);
+
+				IDictionary<int, IList<HashBinMinHash>> candidates = null;
+				if (doSearchEverything) {
+					candidates = dbService.ReadAllFingerprints();
+				} else {
+					// Compute Min Hash on randomly selected fingerprint
+					int[] bin = minHash.ComputeMinHashSignature(signature);
+					
+					// Find all hashbuckets to care about
+					Dictionary<int, long> hashes = minHash.GroupMinHashToLSHBuckets(bin, lshHashTables, lshGroupsPerKey);
+					long[] hashbuckets = hashes.Values.ToArray();
+					
+					// Find all candidates by querying the database for those hashbuckets
+					candidates = dbService.ReadFingerprintsByHashBucketLsh(hashbuckets);
+				}
 				
 				// Reduce the potential candidates list if the number of hash tables found for each signature are less than the threshold
 				Dictionary<int, IList<HashBinMinHash>> potentialCandidates = SelectPotentialMatchesOutOfEntireDataset(candidates, thresholdTables);

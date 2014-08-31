@@ -41,11 +41,10 @@ namespace Soundfingerprinting.Fingerprinting
 				param.MillisecondsToProcess,
 				param.StartAtMilliseconds);
 
-			List<double[][]> spectralImages;
-			return CreateFingerprintsFromAudioSamples(samples, param, out logSpectrogram, out spectralImages);
+			return CreateFingerprintsFromAudioSamples(samples, param, out logSpectrogram);
 		}
 
-		public List<bool[]> CreateFingerprintsFromAudioSamples(float[] samples, WorkUnitParameterObject param, out double[][] logSpectrogram, out List<double[][]> spectralImages)
+		public List<bool[]> CreateFingerprintsFromAudioSamples(float[] samples, WorkUnitParameterObject param, out double[][] logSpectrogram)
 		{
 			IFingerprintingConfiguration configuration = param.FingerprintingConfiguration;
 			AudioServiceConfiguration audioServiceConfiguration = new AudioServiceConfiguration
@@ -70,20 +69,19 @@ namespace Soundfingerprinting.Fingerprinting
 				configuration.Stride,
 				configuration.FingerprintLength,
 				configuration.Overlap,
-				configuration.TopWavelets,
-				out spectralImages);
+				configuration.TopWavelets);
 		}
 
 		public List<bool[]> CreateFingerprintsFromLogSpectrum(
-			double[][] logarithmizedSpectrum, IStride stride, int fingerprintLength, int overlap, int topWavelets, out List<double[][]> spectralImages)
+			double[][] logarithmizedSpectrum, IStride stride, int fingerprintLength, int overlap, int topWavelets)
 		{
 			DbgTimer t = new DbgTimer();
 			t.Start ();
 
 			// Cut the logaritmic spectrogram into smaller spectrograms with one stride between each
-			spectralImages = SpectrumService.CutLogarithmizedSpectrum(logarithmizedSpectrum, stride, fingerprintLength, overlap);
+			List<double[][]> spectralImages = SpectrumService.CutLogarithmizedSpectrum(logarithmizedSpectrum, stride, fingerprintLength, overlap);
 
-			// Then apply the wavelet transform on them to lated reduce the resolution
+			// Then apply the wavelet transform on them to later reduce the resolution
 			// do this in place
 			WaveletService.ApplyWaveletTransformInPlace(spectralImages);
 			

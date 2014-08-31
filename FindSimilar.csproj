@@ -20,6 +20,7 @@
     <SourceAnalysisOverrideSettingsFile>C:\Users\perivar.nerseth\AppData\Roaming\ICSharpCode/SharpDevelop4\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
     <RunSourceAnalysis>False</RunSourceAnalysis>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <NoWin32Manifest>False</NoWin32Manifest>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -47,7 +48,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -skipduration=30</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -skipduration=30 -resetdb</StartArguments>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">
@@ -148,6 +149,10 @@
     <Compile Include="DctLessOptimized.cs" />
     <Compile Include="DiscreteCosineTransform.cs" />
     <Compile Include="FFTUtilsLomont.cs" />
+    <Compile Include="FindSimilarClient\CompareAudioForm.cs" />
+    <Compile Include="FindSimilarClient\CompareAudioForm.Designer.cs">
+      <DependentUpon>CompareAudioForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="FindSimilarClient\FindSimilarClientForm.cs" />
     <Compile Include="FindSimilarClient\FindSimilarClientForm.Designer.cs">
       <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
@@ -166,6 +171,7 @@
     <Compile Include="CoMIRVA\QRDecomposition.cs" />
     <Compile Include="CoMIRVA\SingularValueDecomposition.cs" />
     <Compile Include="FindSimilarClient\ISplashForm.cs" />
+    <Compile Include="FindSimilarClient\PictureBoxWithInterpolationMode.cs" />
     <Compile Include="FindSimilarClient\SplashSceenWaitingForm.cs" />
     <Compile Include="FindSimilarClient\SplashSceenWaitingForm.Designer.cs">
       <DependentUpon>SplashSceenWaitingForm.cs</DependentUpon>
@@ -493,6 +499,9 @@
     <None Include="Wavelets\app.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="FindSimilarClient\CompareAudioForm.resx">
+      <DependentUpon>CompareAudioForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FindSimilarClient\FindSimilarClientForm.resx">
       <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
     </EmbeddedResource>

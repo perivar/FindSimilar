@@ -873,6 +873,47 @@ namespace Soundfingerprinting.DbStorage
 			reader.Close();
 			return result;
 		}
+
+		/// <summary>
+		/// Read all fingerprints ignoring the hash-buckets (e.g. HashBins)
+		/// </summary>
+		/// <returns>Return dictionary with fingerprintids as keys and the corresponding hashbins as values</returns>
+		public IDictionary<int, IList<HashBinMinHash>> ReadAllFingerprints() {
+			
+			IDictionary<int, IList<HashBinMinHash>> result = new Dictionary<int, IList<HashBinMinHash>>();
+			
+			IDbCommand dbcmd;
+			lock (dbcon) {
+				dbcmd = dbcon.CreateCommand();
+			}
+
+			String query = String.Format("SELECT id, hashbin, hashtable, trackid, fingerprintid FROM hashbins");
+			dbcmd.CommandText = query;
+			dbcmd.CommandType = CommandType.Text;
+			dbcmd.Prepare();
+			
+			IDataReader reader = dbcmd.ExecuteReader();
+			while (reader.Read()) {
+				HashBinMinHash hash = new HashBinMinHash();
+				hash.Id = reader.GetInt32(0);
+				hash.Bin = reader.GetInt64(1);
+				hash.HashTable = reader.GetInt32(2);
+				hash.TrackId = reader.GetInt32(3);
+				hash.FingerprintId = reader.GetInt32(4);
+				
+				if (result.ContainsKey(hash.FingerprintId))
+				{
+					result[hash.FingerprintId].Add(hash);
+				}
+				else
+				{
+					result.Add(hash.FingerprintId, new List<HashBinMinHash>(new[] { hash }));
+				}
+			}
+			
+			reader.Close();
+			return result;
+		}
 		#endregion
 
 		#region Deletes

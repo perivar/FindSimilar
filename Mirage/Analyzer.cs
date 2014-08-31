@@ -348,8 +348,7 @@ namespace Mirage
 			// Get fingerprint signatures using the Soundfingerprinting methods
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
-			List<double[][]> spectralImages;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints, out spectralImages)) {
+			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints)) {
 
 				// store logSpectrogram as Matrix
 				try {
@@ -403,7 +402,7 @@ namespace Mirage
 			
 			param.FingerprintingConfiguration = fingerprintingConfigCreation;
 			string fileName = param.FileName;
-
+			
 			// build track
 			Track track = new Track();
 			track.Title = param.FileName;
@@ -414,25 +413,23 @@ namespace Mirage
 			
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
-			List<double[][]> spectralImages;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints, out spectralImages)) {
+			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys, param, out logSpectrogram, out fingerprints)) {
 
 				// store logSpectrogram as Matrix
 				try {
 					Comirva.Audio.Util.Maths.Matrix logSpectrogramMatrix = new Comirva.Audio.Util.Maths.Matrix(logSpectrogram);
 					logSpectrogramMatrix = logSpectrogramMatrix.Transpose();
 					
-					#region Debug for Soundfingerprinting Method
+					#region Output debugging information (Saving spectrograms and/or csv files)
 					if (doOutputDebugInfo) {
-						// Image Service
-						ImageService imageService = new ImageService(repository.FingerprintService.SpectrumService, repository.FingerprintService.WaveletService);
-						imageService.GetLogSpectralImages(logSpectrogram, fingerprintingConfigCreation.Stride, fingerprintingConfigCreation.FingerprintLength, fingerprintingConfigCreation.Overlap, 2).Save(fileName + "_specgram_logimages.png");
-						
-						logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_specgram_logimage.png", true);
-						
+						logSpectrogramMatrix.DrawMatrixImageLogValues(fileName + "_matrix_spectrogram.png", true);
+
 						if (DEBUG_OUTPUT_TEXT) {
-							logSpectrogramMatrix.WriteCSV(fileName + "_specgram_log.csv", ";");
+							logSpectrogramMatrix.WriteCSV(fileName + "_matrix_spectrogram.csv", ";");
 						}
+
+						// Save debug images using fingerprinting methods
+						SaveFingerprintingDebugImages(fileName, logSpectrogram, fingerprints, repository.FingerprintService, param.FingerprintingConfiguration);
 					}
 					#endregion
 					
@@ -475,8 +472,7 @@ namespace Mirage
 			
 			double[][] logSpectrogram;
 			List<bool[]> fingerprints;
-			List<double[][]> spectralImages;
-			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints, out spectralImages)) {
+			if (repository.InsertTrackInDatabaseUsingSamples(track, param.FingerprintingConfiguration.NumberOfHashTables, param.FingerprintingConfiguration.NumberOfKeys,  param, out logSpectrogram, out fingerprints)) {
 				
 				#region Debug for Soundfingerprinting Method
 				if (doOutputDebugInfo) {
@@ -1056,12 +1052,14 @@ namespace Mirage
 		/// <param name="repository">the database (repository)</param>
 		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 and 1 = return all candidates, 2+ = return only exact matches)</param>
 		/// <param name="optimizeSignatureCount">Reduce the number of signatures in order to increase the search performance</param>
+		/// <param name="doSearchEverything">disregard the local sensitivity hashes and search the whole database</param>
 		/// <param name="splashScreen">The "please wait" splash screen (or null)</param>
 		/// <returns>a list of query results objects (e.g. similar tracks)</returns>
 		public static List<FindSimilar.QueryResult> SimilarTracksSoundfingerprintingList(FileInfo filePath,
 		                                                                                 Repository repository,
 		                                                                                 int thresholdTables,
 		                                                                                 bool optimizeSignatureCount,
+		                                                                                 bool doSearchEverything,
 		                                                                                 SplashSceenWaitingForm splashScreen) {
 			DbgTimer t = new DbgTimer();
 			t.Start ();
@@ -1089,15 +1087,16 @@ namespace Mirage
 			// only matching identical matches.
 			// 0 and 1 returns many matches
 			// 2 returns sometimes only the one we search for (exact match)
-			List<FindSimilar.QueryResult> candidates = repository.FindSimilarFromAudioSamplesList(param.FingerprintingConfiguration.NumberOfHashTables,
-			                                                                                      param.FingerprintingConfiguration.NumberOfKeys,
-			                                                                                      thresholdTables,
-			                                                                                      param,
-			                                                                                      optimizeSignatureCount,
-			                                                                                      splashScreen);
+			List<FindSimilar.QueryResult> similarFiles = repository.FindSimilarFromAudioSamplesList(param.FingerprintingConfiguration.NumberOfHashTables,
+			                                                                                        param.FingerprintingConfiguration.NumberOfKeys,
+			                                                                                        thresholdTables,
+			                                                                                        param,
+			                                                                                        optimizeSignatureCount,
+			                                                                                        doSearchEverything,
+			                                                                                        splashScreen);
 
 			Dbg.WriteLine ("SimilarTracksSoundfingerprintingList - Total Execution Time: {0} ms", t.Stop().TotalMilliseconds);
-			return candidates;
+			return similarFiles;
 		}
 		#endregion
 		
@@ -1160,7 +1159,46 @@ namespace Mirage
 			return StringUtils.RemoveInvalidCharacters(uncleanValue);
 		}
 		
-		#region Utility Methods to draw graphs and output text or text files
+		#region Utility Methods to draw graphs, spectrograms and output text or text files
+		
+		public static void SaveFingerprintingDebugImages(string fileName, double[][] logSpectrogram, List<bool[]> fingerprints, FingerprintService fingerprintService, IFingerprintingConfiguration fingerprintConfig) {
+			
+			ImageService imageService = new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
+			
+			int fingerprintsPerRow = 2;
+			imageService.GetSpectrogramImage(logSpectrogram, logSpectrogram.Length, logSpectrogram[0].Length).Save(fileName + "_spectrogram.png");
+			imageService.GetWaveletsImages(logSpectrogram, fingerprintConfig.Stride, fingerprintConfig.FingerprintLength, fingerprintConfig.Overlap, fingerprintsPerRow).Save(fileName + "_wavelets.png");
+			imageService.GetLogSpectralImages(logSpectrogram, fingerprintConfig.Stride, fingerprintConfig.FingerprintLength, fingerprintConfig.Overlap, fingerprintsPerRow).Save(fileName + "_spectrograms.png");
+			imageService.GetImageForFingerprints(fingerprints, fingerprintConfig.FingerprintLength, fingerprintConfig.LogBins, fingerprintsPerRow).Save(fileName + "_fingerprints.png");
+		}
+		
+		/// <summary>
+		/// Save the audio samples as a spectrogram
+		/// </summary>
+		/// <param name="audioSamples">mono float array</param>
+		/// <param name="fileName">filename to save to</param>
+		public static void SaveMirageSpectrogram(float[] audioSamples, string fileName) {
+			
+			// Using StftMirage - which is normally set to this:
+			// StftMirage stftMirage = new StftMirage(WINDOW_SIZE, OVERLAP, new HannWindow());
+			// WINDOW_SIZE = 8192;
+			// OVERLAP = WINDOW_SIZE/2;
+			
+			// 2. Windowing
+			// 3. FFT
+			Comirva.Audio.Util.Maths.Matrix stftdata = stftMirage.Apply(audioSamples);
+
+			if (DEBUG_OUTPUT_TEXT) {
+				stftdata.WriteCSV(fileName + "_stftdata.csv", ";");
+			}
+			
+			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
+			//stftdata.DrawMatrixImageLogValues(fileName + "_mirage_specgram.png", true);
+			
+			// spec gram with log values for the y axis (frequency)
+			stftdata.DrawMatrixImageLogY(fileName + "_mirage_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+		}
+		
 		/// <summary>
 		/// Graphs an array of doubles varying between -1 and 1
 		/// </summary>
@@ -1358,7 +1396,7 @@ namespace Mirage
 			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
 			MathUtils.Multiply(ref audiodata, AUDIO_MULTIPLIER);
 			
-			// zero pad if the audio file is too short to perform a mfcc
+			// zero pad if the audio file is too short to perform a fft
 			if (audiodata.Length < (WINDOW_SIZE + OVERLAP))
 			{
 				int lenNew = WINDOW_SIZE + OVERLAP;
@@ -1418,8 +1456,7 @@ namespace Mirage
 			
 			// Get fingerprints
 			double[][] LogSpectrogram;
-			List<double[][]> spectralImages;
-			List<bool[]> fingerprints = fingerprintService.CreateFingerprintsFromAudioSamples(samples, param, out LogSpectrogram, out spectralImages);
+			List<bool[]> fingerprints = fingerprintService.CreateFingerprintsFromAudioSamples(samples, param, out LogSpectrogram);
 
 			#if DEBUG
 			if (Analyzer.DEBUG_INFO_VERBOSE) {

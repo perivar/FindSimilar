@@ -97,8 +97,8 @@ namespace FindSimilar
 			FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
 			this.databaseService = DatabaseService.Instance;
 
-			//IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms-new.csv", ",");
+			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
+			//IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms-new.csv", ",");
 			
 			repository = new Repository(permutations, databaseService, fingerprintService);
 			
@@ -107,11 +107,13 @@ namespace FindSimilar
 				DistanceTypeCombo.Visible = true;
 				LessAccurateCheckBox.Visible = false;
 				ThresholdTablesCombo.Visible = false;
+				SearchAllFilesCheckbox.Visible = false;
 			} else {
 				IgnoreFileLengthCheckBox.Visible = false;
 				DistanceTypeCombo.Visible = false;
 				LessAccurateCheckBox.Visible = true;
 				ThresholdTablesCombo.Visible = true;
+				SearchAllFilesCheckbox.Visible = true;
 			}
 			
 			ReadAllTracks();
@@ -522,6 +524,7 @@ namespace FindSimilar
 			public List<QueryResult> QueryResultList { get; set; }
 			public int ThresholdTables { get; set; }
 			public bool OptimizeSignatureCount { get; set; }
+			public bool DoSearchEverything { get; set; }
 		}
 
 		private void DoSoundfingerprintingsSearch(BackgroundWorkerArgument bgWorkerArg) {
@@ -577,6 +580,7 @@ namespace FindSimilar
 			                                                                            repository,
 			                                                                            argObject.ThresholdTables,
 			                                                                            argObject.OptimizeSignatureCount,
+			                                                                            argObject.DoSearchEverything,
 			                                                                            sender);
 			
 			// and set the result
@@ -593,7 +597,8 @@ namespace FindSimilar
 					BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
 						QueryFile = fi,
 						ThresholdTables = (int) ThresholdTablesCombo.SelectedValue,
-						OptimizeSignatureCount = LessAccurateCheckBox.Checked
+						OptimizeSignatureCount = LessAccurateCheckBox.Checked,
+						DoSearchEverything = SearchAllFilesCheckbox.Checked
 					};
 					
 					// and do the search
@@ -618,7 +623,8 @@ namespace FindSimilar
 						BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
 							QueryFile = new FileInfo(track.FilePath),
 							ThresholdTables = (int) ThresholdTablesCombo.SelectedValue,
-							OptimizeSignatureCount = LessAccurateCheckBox.Checked
+							OptimizeSignatureCount = LessAccurateCheckBox.Checked,
+							DoSearchEverything = SearchAllFilesCheckbox.Checked
 						};
 						
 						// and do the search
@@ -721,11 +727,13 @@ namespace FindSimilar
 				DistanceTypeCombo.Visible = true;
 				LessAccurateCheckBox.Visible = false;
 				ThresholdTablesCombo.Visible = false;
+				SearchAllFilesCheckbox.Visible = false;
 			} else {
 				IgnoreFileLengthCheckBox.Visible = false;
 				DistanceTypeCombo.Visible = false;
 				LessAccurateCheckBox.Visible = true;
 				ThresholdTablesCombo.Visible = true;
+				SearchAllFilesCheckbox.Visible = true;
 			}
 			
 			ReadAllTracks();

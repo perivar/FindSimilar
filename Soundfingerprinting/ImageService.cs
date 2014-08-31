@@ -39,11 +39,11 @@
 			int imagesPerRow = fingerprintsPerRow; /*5 bitmap images per line*/
 			int fingersCount = fingerprints.Count;
 			int rowCount = (int)Math.Ceiling((float)fingersCount / imagesPerRow);
-			int imageWidth = (imagesPerRow * (width + SpaceBetweenImages)) + SpaceBetweenImages;
+			int imageWidth = (rowCount == 1 ? width + 2 * SpaceBetweenImages : (imagesPerRow * (width + SpaceBetweenImages)) + SpaceBetweenImages);
 			int imageHeight = (rowCount * (height + SpaceBetweenImages)) + SpaceBetweenImages;
 
 			Bitmap image = new Bitmap(imageWidth, imageHeight, PixelFormat.Format16bppRgb565);
-			this.SetBackground(image, Color.White);
+			SetBackground(image, Color.White);
 
 			int verticalOffset = SpaceBetweenImages;
 			int horizontalOffset = SpaceBetweenImages;
@@ -98,54 +98,75 @@
 				graphics.DrawLine(pen, 0, center, width, center);
 			}
 
-			//DrawCopyrightInfo(graphics, 10, 10);
 			return image;
 		}
 
 		public Image GetSpectrogramImage(double[][] spectrum, int width, int height)
 		{
-			Bitmap image = new Bitmap(width, height);
-			Graphics graphics = Graphics.FromImage(image);
-			FillBackgroundColor(width, height, graphics, Color.Black);
-
-			int bands = spectrum[0].Length;
-			double deltaX = (double)(width - 1) / spectrum.Length; /*By how much the image will move to the left*/
-			double deltaY = (double)(height - 1) / (bands + 1); /*By how much the image will move upward*/
-			int prevX = -1;
+			// set some default values
+			bool usePowerSpectrum = false;
+			bool colorize = true;
+			bool flipYscale = true;
+			int forceWidth = width;
+			int forceHeight = height;
 			
+			// amplitude (or magnitude) is the square root of the power spectrum
+			// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
+			// use 20*log10(Y) to get dB from amplitude
+			// the power spectrum is the magnitude spectrum squared
+			// use 10*log10(Y) to get dB from power spectrum
 			double maxValue = spectrum.Max((b) => b.Max((v) => Math.Abs(v)));
-			maxValue = 20 * Math.Log10(maxValue);
-			
-			for (int i = 0, n = spectrum.Length; i < n; i++)
-			{
-				double x = i * deltaX;
-				if ((int)x == prevX)
-				{
-					continue;
-				}
-
-				//double average = spectrum[i].Average(v => Math.Abs(v));
-				for (int j = 0, m = spectrum[0].Length; j < m; j++)
-				{
-					//Color color = ValueToBlackWhiteColor(spectrum[i][j], average);
-					//image.SetPixel((int)x, height - (int)(deltaY * j) - 1, color);
-					
-					double val = 20 * Math.Log10(spectrum[i][j]);
-					Color color = Color.White;
-					if (!double.IsNaN(val) && !double.IsInfinity(val)) {
-						color = ValueToBlackWhiteColor(val, maxValue);
-					}
-					Brush brush = new SolidBrush(color);
-					// draw a small square
-					graphics.FillRectangle(brush, (int)x, height - (int)(deltaY * j) - 1, (int)deltaX + 1, 1);
-				}
-
-				prevX = (int)x;
+			if (usePowerSpectrum) {
+				maxValue = 10 * Math.Log10(maxValue);
+			} else {
+				maxValue = 20 * Math.Log10(maxValue);
 			}
+			
+			if (maxValue == 0.0f)
+				return null;
 
-			//DrawCopyrightInfo(graphics, 10, 10);
-			image = ColorUtils.Colorize(image, 255, ColorUtils.ColorPaletteType.MATLAB);
-			return image;
+			int blockSizeX = 1;
+			int blockSizeY = 1;
+			
+			int rowCount = spectrum[0].Length;
+			int columnCount = spectrum.Length;
+			
+			Bitmap img = new Bitmap(columnCount*blockSizeX, rowCount*blockSizeY);
+			Graphics graphics = Graphics.FromImage(img);
+			
+			for(int column = 0; column < columnCount; column++)
+			{
+				for(int row = 0; row < rowCount; row++)
+				{
+					double val = spectrum[column][row];
+					if (usePowerSpectrum) {
+						val = 10 * Math.Log10(val);
+					} else {
+						val = 20 * Math.Log10(val);
+					}
+					
+					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
+					Brush brush = new SolidBrush(color);
+					
+					if (flipYscale) {
+						// draw a small square
+						graphics.FillRectangle(brush, column*blockSizeX, (rowCount-row-1)*blockSizeY, blockSizeX, blockSizeY);
+					} else {
+						// draw a small square
+						graphics.FillRectangle(brush, column*blockSizeX, row*blockSizeY, blockSizeX, blockSizeY);
+					}
+				}
+			}
+			
+			// Should we resize?
+			if (forceHeight > 0 && forceWidth > 0) {
+				img = (Bitmap) ImageUtils.Resize(img, forceWidth, forceHeight, false);
+			}
+			
+			// Should we colorize?
+			if (colorize) img = ColorUtils.Colorize(img, 255, ColorUtils.ColorPaletteType.MATLAB);
+
+			return img;
 		}
 
 		public Image GetLogSpectralImages(
@@ -157,6 +178,11 @@
 		{
 			List<double[][]> spectralImages = spectrumService.CutLogarithmizedSpectrum(
 				spectrum, strideBetweenConsecutiveImages, fingerprintLength, overlap);
+
+			return GetLogSpectralImages(spectralImages, imagesPerRow);
+		}
+
+		public Image GetLogSpectralImages(List<double[][]> spectralImages, int imagesPerRow) {
 			
 			int blockSizeX = 4;
 			int blockSizeY = 4;
@@ -165,12 +191,11 @@
 			int height = spectralImages[0][0].Length;
 			int fingersCount = spectralImages.Count;
 			int rowCount = (int)Math.Ceiling((float)fingersCount / imagesPerRow);
-			int imageWidth = (blockSizeX * imagesPerRow * (width + SpaceBetweenImages)) + SpaceBetweenImages;
+			int imageWidth = (rowCount == 1 ? (width*blockSizeX) + 2 * SpaceBetweenImages : ((blockSizeX * imagesPerRow * (width + SpaceBetweenImages)) + SpaceBetweenImages));
 			int imageHeight = (blockSizeY * rowCount * (height + SpaceBetweenImages)) + SpaceBetweenImages;
-			//Bitmap image = new Bitmap(imageWidth, imageHeight, PixelFormat.Format16bppRgb565);
+
 			Bitmap image = new Bitmap(imageWidth, imageHeight);
 			Graphics graphics = Graphics.FromImage(image);
-
 			SetBackground(image, Color.White);
 
 			int verticalOffset = SpaceBetweenImages;
@@ -181,22 +206,18 @@
 				double maxValue = spectralImage.Max((b) => b.Max((v) => Math.Abs(v)));
 				maxValue = 20 * Math.Log10(maxValue);
 
-				//double average = spectralImage.Average(col => col.Average(v => Math.Abs(v)));
 				for (int i = 0; i < width /*128*/; i++)
 				{
 					for (int j = 0; j < height /*32*/; j++)
 					{
-						//Color color = ValueToBlackWhiteColor(spectralImage[i][j], average);
-						//image.SetPixel(i + horizontalOffset, j + verticalOffset, color);
-
 						double val = 20 * Math.Log10(spectralImage[i][j]);
 						Color color = Color.White;
 						if (!double.IsNaN(val) && !double.IsInfinity(val)) {
 							color = ValueToBlackWhiteColor(val, maxValue);
 						}
 						Brush brush = new SolidBrush(color);
-						//graphics.FillRectangle(brush, i + horizontalOffset, j + verticalOffset, (int)deltaX + 1, 1);
-						//image.SetPixel(i + horizontalOffset, j + verticalOffset, color);
+						
+						// draw a small square
 						graphics.FillRectangle(brush, (i + horizontalOffset)*blockSizeX, (height - j + verticalOffset + 1)*blockSizeY, blockSizeX, blockSizeY);
 					}
 				}
@@ -216,7 +237,7 @@
 			image = ColorUtils.Colorize(image, 255, ColorUtils.ColorPaletteType.MATLAB);
 			return image;
 		}
-
+		
 		public Image GetWaveletsImages(
 			double[][] spectrum,
 			IStride strideBetweenConsecutiveImages,
@@ -226,16 +247,18 @@
 		{
 			List<double[][]> spectralImages = spectrumService.CutLogarithmizedSpectrum(
 				spectrum, strideBetweenConsecutiveImages, fingerprintLength, overlap);
+			
 			waveletService.ApplyWaveletTransformInPlace(spectralImages);
 
 			int width = spectralImages[0].GetLength(0);
 			int height = spectralImages[0][0].Length;
 			int fingersCount = spectralImages.Count;
 			int rowCount = (int)Math.Ceiling((float)fingersCount / imagesPerRow);
-			int imageWidth = (imagesPerRow * (width + SpaceBetweenImages)) + SpaceBetweenImages;
+			
+			int imageWidth = (rowCount == 1 ? width + 2 * SpaceBetweenImages : ((imagesPerRow * (width + SpaceBetweenImages)) + SpaceBetweenImages));
 			int imageHeight = (rowCount * (height + SpaceBetweenImages)) + SpaceBetweenImages;
+			
 			Bitmap image = new Bitmap(imageWidth, imageHeight, PixelFormat.Format16bppRgb565);
-
 			SetBackground(image, Color.White);
 
 			int verticalOffset = SpaceBetweenImages;
@@ -302,15 +325,6 @@
 			{
 				graphics.FillRectangle(brush, new Rectangle(0, 0, width, height));
 			}
-		}
-
-		private void DrawCopyrightInfo(Graphics graphics, int x, int y)
-		{
-			FontFamily fontFamily = new FontFamily("Courier New");
-			Font font = new Font(fontFamily, 10);
-			Brush textbrush = Brushes.White;
-			Point coordinate = new Point(x, y);
-			graphics.DrawString("https://github.com/AddictedCS/soundfingerprinting", font, textbrush, coordinate);
 		}
 
 		private void DrawGridlines(int width, int height, Graphics graphics)
