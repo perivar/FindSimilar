@@ -1,23 +1,20 @@
 using System;
 using Comirva.Audio.Util.Maths;
 
-/// <summary>
-/// Short Term Fourier Transformation method copied from the Mirage project:
-/// Mirage - High Performance Music Similarity and Automatic Playlist Generator
-/// http://hop.at/mirage
-///
-/// Copyright (C) 2007 Dominik Schnitzer <dominik@schnitzer.at>
-/// Changed and enhanced by Per Ivar Nerseth <perivar@nerseth.com>
-///
-/// This program is free software; you can redistribute it and/or
-/// modify it under the terms of the GNU General Public License
-/// as published by the Free Software Foundation; either version 2
-/// of the License, or (at your option) any later version.
-/// </summary>
 namespace Comirva.Audio {
 
 	/// <summary>
-	/// Class to perform a Short Time Fourier Transformation
+	/// Short Term Fourier Transformation method copied from the Mirage project:
+	/// Mirage - High Performance Music Similarity and Automatic Playlist Generator
+	/// http://hop.at/mirage
+	///
+	/// Copyright (C) 2007 Dominik Schnitzer, dominik@schnitzer.at
+	/// Changed and enhanced by Per Ivar Nerseth, perivar@nerseth.com
+	///
+	/// This program is free software; you can redistribute it and/or
+	/// modify it under the terms of the GNU General Public License
+	/// as published by the Free Software Foundation; either version 2
+	/// of the License, or (at your option) any later version.
 	/// </summary>
 	public class StftMirage
 	{
@@ -45,14 +42,14 @@ namespace Comirva.Audio {
 		/// <returns>A matrix with the result of the STFT</returns>
 		public Matrix Apply(float[] audiodata)
 		{
-			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			var t = new Mirage.DbgTimer();
 			t.Start();
 			
 			int hops = (audiodata.Length - winsize)/ hopsize; // PIN: Removed + 1
 			
 			// Create a Matrix with "winsize" Rows and "hops" Columns
 			// Matrix[Row, Column]
-			Matrix stft = new Matrix(winsize/2, hops);
+			var stft = new Matrix(winsize/2, hops);
 			
 			for (int i = 0; i < hops; i++) {
 				// Lomont RealFFT seems to be the fastest option
@@ -73,14 +70,14 @@ namespace Comirva.Audio {
 		/// <see cref="http://stackoverflow.com/questions/1230906/reverse-spectrogram-a-la-aphex-twin-in-matlab">Reverse Spectrogram A La Aphex Twin in MATLAB</see>
 		public double[] InverseStft(Matrix stft) {
 			
-			Mirage.DbgTimer t = new Mirage.DbgTimer();
+			var t = new Mirage.DbgTimer();
 			t.Start();
 			
 			// stft is a Matrix with "winsize" Rows and "hops" Columns
 			int columns = stft.Columns;
 
 			int signalLengh = winsize + (columns)*hopsize; // PIN: Removed -1 from (columns-1)
-			double[] signal = new double[signalLengh];
+			var signal = new double[signalLengh];
 			
 			// Take the ifft of each column of pixels and piece together the results.
 			for (int i = 0; i < columns; i++) {
